@@ -36,30 +36,66 @@ async function fetchFromGithub(url: string, useAuth = true) {
 }
 
 /**
- * Route handler for /api/github
- * Handles requests for project, activity, contributions, and repos
+ * Fetches and processes recent activity data for a GitHub user for the last 30 days.
  */
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type');
-  const username = searchParams.get('username');
-  const repo = searchParams.get('repo');
+async function getActivity(username: string) {
+  // Return cached data if available and not expired
+  if (
+    githubActivityCache &&
+    Date.now() - githubActivityCache.timestamp < CACHE_DURATION
+  ) {
+    // Check if the cached data is still within the last 30 days (simplified check)
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    if (githubActivityCache.timestamp > thirtyDaysAgo) {
+      return NextResponse.json(githubActivityCache.data);
+    }
+  }
 
   try {
-    if (type === 'activity' && username) {
-      return getActivity(username);
-    } else if (type === 'project' && repo) {
-      return getProjectData(repo);
-    } else if (type === 'contributions' && username) {
-      return getContributions(username);
-    } else if (type === 'repos' && username) {
-      return getRepositories(username);
-    } else {
-      return NextResponse.json({ error: 'Invalid or missing parameters' }, { status: 400 });
+    // Fetch activity from GitHub API for all public events (we'll filter later)
+    const events = await fetchFromGithub(
+      `https://api.github.com/users/${username}/events/public?per_page=100` // Increased per_page to get more events to filter from
+    );
+
+    if (!events) {
+      console.error('GitHub API Error (getActivity - last 30 days): fetchFromGithub failed');
+      return NextResponse.json([], { status: 500, statusText: 'Failed to fetch activity data' });
     }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Filter events to include only those created in the last 30 days
+    const recentEvents = events.filter((event: any) => {
+      const createdAt = new Date(event.created_at);
+      return createdAt >= thirtyDaysAgo;
+    });
+
+    // Transform the recent events data
+    const activityData = recentEvents.map((event: any) => {
+      return {
+        id: event.id,
+        type: event.type,
+        repo: {
+          name: event.repo.name,
+          url: `https://github.com/${event.repo.name}`,
+        },
+        createdAt: event.created_at,
+        payload: event.payload,
+      };
+    });
+
+    // Cache the data
+    githubActivityCache = {
+      data: activityData,
+      timestamp: Date.now(),
+    };
+
+    return NextResponse.json(activityData);
+
   } catch (error: any) {
-    console.error('Error in /api/github:', error);
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+    console.error('Error fetching GitHub activity (last 30 days):', error);
+    return NextResponse.json([]);
   }
 }
 
@@ -339,88 +375,6 @@ async function fallbackContributions(username: string) {
 }
 
 /**
- * Route handler for /api/github/activity
- * Returns recent activity data for a specific user
- */
-export async function GETActivity(request: Request) {
-  const url = new URL(request.url);
-  const username = url.searchParams.get('username');
-
-  if (!username) {
-    return NextResponse.json(
-      { error: 'Missing "username" parameter in query' },
-      { status: 400 }
-    );
-  }
-
-  return getActivity(username);
-}
-
-/**
- * Fetches and processes recent activity data for a GitHub user for the last 30 days.
- */
-async function getActivity(username: string) {
-  // Return cached data if available and not expired
-  if (
-    githubActivityCache &&
-    Date.now() - githubActivityCache.timestamp < CACHE_DURATION
-  ) {
-    // Check if the cached data is still within the last 30 days (simplified check)
-    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-    if (githubActivityCache.timestamp > thirtyDaysAgo) {
-      return NextResponse.json(githubActivityCache.data);
-    }
-  }
-
-  try {
-    // Fetch activity from GitHub API for all public events (we'll filter later)
-    const events = await fetchFromGithub(
-      `https://api.github.com/users/${username}/events/public?per_page=100` // Increased per_page to get more events to filter from
-    );
-
-    if (!events) {
-      console.error('GitHub API Error (getActivity - last 30 days): fetchFromGithub failed');
-      return NextResponse.json([], { status: 500, statusText: 'Failed to fetch activity data' });
-    }
-
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    // Filter events to include only those created in the last 30 days
-    const recentEvents = events.filter((event: any) => {
-      const createdAt = new Date(event.created_at);
-      return createdAt >= thirtyDaysAgo;
-    });
-
-    // Transform the recent events data
-    const activityData = recentEvents.map((event: any) => {
-      return {
-        id: event.id,
-        type: event.type,
-        repo: {
-          name: event.repo.name,
-          url: `https://github.com/${event.repo.name}`,
-        },
-        createdAt: event.created_at,
-        payload: event.payload,
-      };
-    });
-
-    // Cache the data
-    githubActivityCache = {
-      data: activityData,
-      timestamp: Date.now(),
-    };
-
-    return NextResponse.json(activityData);
-
-  } catch (error: any) {
-    console.error('Error fetching GitHub activity (last 30 days):', error);
-    return NextResponse.json([]);
-  }
-}
-
-/**
  * Fetches repository data for a GitHub user
  */
 async function getRepositories(username: string) {
@@ -469,5 +423,33 @@ async function getRepositories(username: string) {
       { error: 'Failed to fetch GitHub repositories' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Route handler for /api/github
+ * Handles requests for project, activity, contributions, and repos
+ */
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type');
+  const username = searchParams.get('username');
+  const repo = searchParams.get('repo');
+
+  try {
+    if (type === 'activity' && username) {
+      return getActivity(username);
+    } else if (type === 'project' && repo) {
+      return getProjectData(repo);
+    } else if (type === 'contributions' && username) {
+      return getContributions(username);
+    } else if (type === 'repos' && username) {
+      return getRepositories(username);
+    } else {
+      return NextResponse.json({ error: 'Invalid or missing parameters' }, { status: 400 });
+    }
+  } catch (error: any) {
+    console.error('Error in /api/github:', error);
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }
