@@ -63,7 +63,33 @@ A modern, professional portfolio website for Tony (cptcr), a 17-year-old backend
 3. **Environment Setup**  
    Create a `.env.local` file in the root directory with the following:
    ```
-   GITHUB_TOKEN=your_github_personal_access_token
+   GITHUB_TOKEN=""
+
+# Discord Integration
+# Your Discord user ID (required for status display)
+DISCORD_USER_ID=
+
+# Discord Bot Token (required to access Discord API)
+# Create a bot at https://discord.com/developers/applications
+DISCORD_BOT_TOKEN=
+
+# Set to 'true' to use Lanyard API instead of Discord API
+# Lanyard is easier to set up but requires you to join their Discord server
+# Visit https://discord.gg/lanyard to set it up
+USE_LANYARD=false
+
+# EMAIL Configuration
+EMAIL_HOST="smtp.mailgun.org"
+EMAIL_ADDRESS=""
+EMAIL_SMTP_PORT=587
+EMAIL_AUTH_USERNAME=""
+EMAIL_AUTH_PASSWORD=""
+EMAIL_SECURE=
+
+# Authentication
+ADMIN_USERNAME=your_admin_username
+ADMIN_PASSWORD=your_secure_password
+JWT_SECRET=generate_a_secure_random_string_here
    ```
    
    Note: The GitHub token is optional but recommended for higher API rate limits and access to GraphQL API.
