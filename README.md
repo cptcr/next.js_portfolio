@@ -4,6 +4,7 @@
 A sleek, professional portfolio for **Tony (cptcr)**, a 17-year-old backend developer focused on **Next.js**, **TypeScript**, and **TailwindCSS**. The site showcases projects, community work, and real-time data integrations to highlight backend skills.
 
 ---
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcptcr%2Fnext.js_portfolio&env=DISCORD_USER_ID,DISCORD_BOT_TOKEN,USE_LANYARD,EMAIL_HOST,EMAIL_AUTH_USERNAME,EMAIL_AUTH_PASSWORD,EMAIL_SECURE,ADMIN_USERNAME,ADMIN_PASSWORD,JWT_SECRET&envDescription=Discord%20Bot%20Token%20(required)%2C%20GitHub%20API%20Key%20(optional)&project-name=nextjs-portfolio&repository-name=Next.js-Portfolio&redirect-url=https%3A%2F%2Fcptcr.dev&demo-title=Next.js%20Portfolio%20with%20Blog%20management&demo-description=This%20is%20a%20Next.js%20Portfolio%20with%20a%20dedicated%20portal%20to%20create%20and%20manage%20blog%20posts.&demo-url=https%3A%2F%2Fcptcr.dev)
 
 ## 🚀 Features
 
