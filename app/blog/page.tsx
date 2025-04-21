@@ -1,5 +1,7 @@
+// app/blog/page.tsx
 import { Metadata } from "next"
-import BlogPosts from "@/components/blog/blog-posts"
+import { getAllPosts } from "@/lib/utils/markdown"
+import BlogList from "@/components/blog/blog-list"
 
 export const metadata: Metadata = {
   title: "Blog | Tony (cptcr)",
@@ -7,6 +9,9 @@ export const metadata: Metadata = {
 }
 
 export default function BlogPage() {
+  // Fetch all blog posts for static generation
+  const posts = getAllPosts();
+  
   return (
     <div className="min-h-screen pt-24">
       {/* Hero Section */}
@@ -28,7 +33,7 @@ export default function BlogPage() {
       <section className="py-12">
         <div className="container px-4">
           <div className="max-w-5xl mx-auto">
-            <BlogPosts />
+            <BlogList posts={posts} />
           </div>
         </div>
       </section>

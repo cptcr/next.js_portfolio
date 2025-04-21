@@ -1,3 +1,5 @@
+// components/contact/contact-form.tsx
+
 "use client"
 
 import { useState, FormEvent } from "react"
@@ -105,15 +107,19 @@ export default function ContactForm() {
     setErrorMessage(null)
     
     try {
-      // In a real application, this would be an API call
-      // For this demo, we'll simulate a network request
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Send the form data to our API route
+      const response = await fetch('/api/form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formState),
+      });
       
-      // Simulate API response
-      const success = Math.random() > 0.2 // 80% success rate for demo
-
-      if (!success) {
-        throw new Error("Server error. Please try again later.")
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.details || 'Something went wrong');
       }
       
       // If successful, clear form and show success message

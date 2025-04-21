@@ -191,25 +191,26 @@ export default function ProjectList() {
       </div>
       
       {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProjects.map((project, index) => (
-          <motion.div
-            key={project.id}
-            id={project.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-          >
-            <ProjectCard 
-              project={project}
-              expanded={expandedProject === project.id}
-              onToggleExpand={() => {
-                setExpandedProject(expandedProject === project.id ? null : project.id)
-              }}
-            />
-          </motion.div>
-        ))}
-      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+  {filteredProjects.map((project, index) => (
+    <motion.div
+      key={project.id}
+      id={project.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+    >
+      <ProjectCard 
+        project={project}
+        expanded={expandedProject === project.id}
+        onToggleExpand={() => {
+          setExpandedProject(expandedProject === project.id ? null : project.id)
+        }}
+      />
+    </motion.div>
+  ))}
+</div>
+
     </div>
   )
 }
