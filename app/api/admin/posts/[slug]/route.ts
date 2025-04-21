@@ -1,13 +1,9 @@
-// app/api/admin/posts/[slug]/route.ts
-
 import { NextResponse } from "next/server"
 import { verify } from "jsonwebtoken"
-import fs from "fs"
-import path from "path"
+import { put, list } from '@vercel/blob';
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me"
-const POSTS_DIRECTORY = path.join(process.cwd(), "posts")
 
 // Middleware to verify authentication
 async function verifyAuth(request: Request) {
@@ -27,7 +23,7 @@ async function verifyAuth(request: Request) {
   }
 }
 
-export async function DELETE(
+export async function PUT(
   request: Request,
   { params }: { params: { slug: string } }
 ) {
@@ -52,96 +48,47 @@ export async function DELETE(
       )
     }
     
-    // Check if file exists
-    const filePath = path.join(POSTS_DIRECTORY, `${slug}.md`)
+    // Parse request body
+    const body = await request.json()
+    const { title, excerpt, category, content, date, featured } = body
     
-    if (!fs.existsSync(filePath)) {
+    // Validate required fields
+    if (!title || !excerpt || !category || !content) {
       return NextResponse.json(
-        { message: "Post not found" },
-        { status: 404 }
+        { message: "Missing required fields" },
+        { status: 400 }
       )
     }
     
-    // Delete the file
-    fs.unlinkSync(filePath)
+    // Create markdown content
+    const markdownContent = `---
+title: "${title}"
+date: "${date || new Date().toISOString()}"
+excerpt: "${excerpt}"
+category: "${category}"
+featured: ${featured || false}
+---
+
+${content}
+`
+    
+    // Update the blob - in Vercel Blob, updating is the same as creating,
+    // it will overwrite the existing blob with the same path
+    const blob = await put(`posts/${slug}.md`, markdownContent, {
+      contentType: 'text/markdown',
+      access: 'public', // or 'private' if you prefer
+    });
     
     // Return success
     return NextResponse.json({
-      message: "Post deleted successfully"
-    })
-  } catch (error) {
-    console.error("Error deleting post:", error)
-    return NextResponse.json(
-      { message: "Failed to delete post", error: String(error) },
-      { status: 500 }
-    )
-  }
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
-  try {
-    // Get slug from params
-    const { slug } = params
-    
-    if (!slug) {
-      return NextResponse.json(
-        { message: "Slug is required" },
-        { status: 400 }
-      )
-    }
-    
-    // Verify authentication
-    const auth = await verifyAuth(request)
-    
-    if (!auth.authenticated) {
-      return NextResponse.json(
-        { message: auth.error },
-        { status: 401 }
-      )
-    }
-    
-    // Check if file exists
-    const filePath = path.join(POSTS_DIRECTORY, `${slug}.md`)
-    
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json(
-        { message: "Post not found" },
-        { status: 404 }
-      )
-    }
-    
-    // Read file content
-    const content = fs.readFileSync(filePath, 'utf-8')
-    
-    // Parse frontmatter and content
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/)
-    const frontmatter = frontmatterMatch?.[1] || ''
-    const postContent = content.replace(/^---\n[\s\S]*?\n---\n/, '')
-    
-    // Parse frontmatter
-    const titleMatch = frontmatter.match(/title: "([^"]*)"/)
-    const dateMatch = frontmatter.match(/date: "([^"]*)"/)
-    const excerptMatch = frontmatter.match(/excerpt: "([^"]*)"/)
-    const categoryMatch = frontmatter.match(/category: "([^"]*)"/)
-    const featuredMatch = frontmatter.match(/featured: (true|false)/)
-    
-    // Return post data
-    return NextResponse.json({
+      message: "Post updated successfully",
       slug,
-      title: titleMatch?.[1] || '',
-      date: dateMatch?.[1] || '',
-      excerpt: excerptMatch?.[1] || '',
-      category: categoryMatch?.[1] || '',
-      featured: featuredMatch?.[1] === 'true',
-      content: postContent
+      url: blob.url
     })
   } catch (error) {
-    console.error("Error fetching post:", error)
+    console.error("Error updating post:", error)
     return NextResponse.json(
-      { message: "Failed to fetch post", error: String(error) },
+      { message: "Failed to update post", error: String(error) },
       { status: 500 }
     )
   }

@@ -15,6 +15,7 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/nodemailer": "^6.4.17",
+    "@vercel/blob": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^10.16.5",

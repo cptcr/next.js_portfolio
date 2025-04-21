@@ -1,19 +1,10 @@
-// app/api/admin/posts/route.ts
-
 import { NextResponse } from "next/server"
 import { verify } from "jsonwebtoken"
-import fs from "fs"
-import path from "path"
+import { put, list, del } from '@vercel/blob';
 import { slugify } from "@/lib/utils/helpers"
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me"
-const POSTS_DIRECTORY = path.join(process.cwd(), "posts")
-
-// Ensure posts directory exists
-if (!fs.existsSync(POSTS_DIRECTORY)) {
-  fs.mkdirSync(POSTS_DIRECTORY, { recursive: true })
-}
 
 // Middleware to verify authentication
 async function verifyAuth(request: Request) {
@@ -60,15 +51,6 @@ export async function POST(request: Request) {
     // Generate slug from title
     const slug = slugify(title)
     
-    // Check if post with this slug already exists
-    const filePath = path.join(POSTS_DIRECTORY, `${slug}.md`)
-    if (fs.existsSync(filePath)) {
-      return NextResponse.json(
-        { message: "A post with this title already exists" },
-        { status: 409 }
-      )
-    }
-    
     // Create markdown content
     const markdownContent = `---
 title: "${title}"
@@ -81,14 +63,17 @@ featured: ${featured || false}
 ${content}
 `
     
-    // Write to file
-    fs.writeFileSync(filePath, markdownContent, "utf-8")
+    // Upload to Vercel Blob
+    const blob = await put(`posts/${slug}.md`, markdownContent, {
+      contentType: 'text/markdown',
+      access: 'public', // or 'private' if you prefer
+    });
     
     // Return success
     return NextResponse.json({
       message: "Post created successfully",
       slug,
-      filePath: `posts/${slug}.md`
+      url: blob.url
     })
   } catch (error) {
     console.error("Error creating post:", error)
@@ -111,42 +96,57 @@ export async function GET(request: Request) {
       )
     }
     
-    // Read all markdown files in posts directory
-    const files = fs.readdirSync(POSTS_DIRECTORY)
-    const posts = files
-      .filter(file => file.endsWith('.md'))
-      .map(file => {
-        const filePath = path.join(POSTS_DIRECTORY, file)
-        const content = fs.readFileSync(filePath, 'utf-8')
-        
-        // Extract frontmatter
-        const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/)
-        const frontmatter = frontmatterMatch?.[1] || ''
-        
-        // Parse frontmatter
-        const titleMatch = frontmatter.match(/title: "([^"]*)"/)
-        const dateMatch = frontmatter.match(/date: "([^"]*)"/)
-        const excerptMatch = frontmatter.match(/excerpt: "([^"]*)"/)
-        const categoryMatch = frontmatter.match(/category: "([^"]*)"/)
-        const featuredMatch = frontmatter.match(/featured: (true|false)/)
-        
-        return {
-          slug: file.replace(/\.md$/, ''),
-          title: titleMatch?.[1] || 'Untitled',
-          date: dateMatch?.[1] || '',
-          excerpt: excerptMatch?.[1] || '',
-          category: categoryMatch?.[1] || '',
-          featured: featuredMatch?.[1] === 'true',
+    // List all blobs in the 'posts' directory
+    const { blobs } = await list({ prefix: 'posts/' });
+    
+    // Process each blob to get post data
+    const posts = await Promise.all(
+      blobs.map(async (blob) => {
+        try {
+          // Fetch the content
+          const response = await fetch(blob.url);
+          const content = await response.text();
+          
+          // Extract slug from path
+          const slug = blob.pathname.replace(/^posts\/|\.md$/g, '');
+          
+          // Extract frontmatter
+          const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+          const frontmatter = frontmatterMatch?.[1] || '';
+          
+          // Parse frontmatter
+          const titleMatch = frontmatter.match(/title: "([^"]*)"/);
+          const dateMatch = frontmatter.match(/date: "([^"]*)"/);
+          const excerptMatch = frontmatter.match(/excerpt: "([^"]*)"/);
+          const categoryMatch = frontmatter.match(/category: "([^"]*)"/);
+          const featuredMatch = frontmatter.match(/featured: (true|false)/);
+          
+          return {
+            slug,
+            title: titleMatch?.[1] || 'Untitled',
+            date: dateMatch?.[1] || '',
+            excerpt: excerptMatch?.[1] || '',
+            category: categoryMatch?.[1] || '',
+            featured: featuredMatch?.[1] === 'true',
+            url: blob.url
+          };
+        } catch (err) {
+          console.error(`Error processing blob ${blob.url}:`, err);
+          return null;
         }
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    );
     
-    return NextResponse.json({ posts })
+    // Filter out any failed processing and sort by date
+    const validPosts = posts.filter(Boolean)
+      .sort((a, b) => new Date(b!.date).getTime() - new Date(a!.date).getTime());
+    
+    return NextResponse.json({ posts: validPosts });
   } catch (error) {
-    console.error("Error fetching posts:", error)
+    console.error("Error fetching posts:", error);
     return NextResponse.json(
       { message: "Failed to fetch posts", error: String(error) },
       { status: 500 }
-    )
+    );
   }
 }

@@ -1,51 +1,59 @@
-# Tony (cptcr) - Portfolio Website
 
-A modern, professional portfolio website for Tony (cptcr), a 17-year-old backend developer with a focus on Next.js, TypeScript, and TailwindCSS. The website showcases skills, projects, and community contributions while integrating real-time data to demonstrate backend skills.
+# Tony (cptcr) — Portfolio Website
+
+A sleek, professional portfolio for **Tony (cptcr)**, a 17-year-old backend developer focused on **Next.js**, **TypeScript**, and **TailwindCSS**. The site showcases projects, community work, and real-time data integrations to highlight backend skills.
+
+---
 
 ## 🚀 Features
 
-- **Modern Design**: Dark-mode focused with accent colors and clean typography
-- **Responsive Layout**: Works seamlessly on mobile, tablet, and desktop screens
-- **Real-time Data Integration**:
-  - GitHub API integration showing contributions, repositories, and activity
-  - Real-time availability status based on Germany timezone
-  - "Quote of the Day" from external API
-- **Interactive Elements**:
-  - Animated page transitions and UI elements using Framer Motion
-  - Interactive project cards with expandable details
+- **Modern UI**: Dark mode with clean typography and accent colors
+- **Responsive Design**: Optimized for mobile, tablet, and desktop
+- **Real-time Integrations**:
+  - GitHub activity, repositories, and contributions via API
+  - Availability status (based on Germany timezone)
+  - “Quote of the Day” from external API
+- **Interactive Experience**:
+  - Smooth page transitions with Framer Motion
+  - Expandable project cards
   - Real-time form validation
-- **Optimized Performance**:
-  - Server-side rendering with Next.js
-  - API route caching
+- **Performance Optimizations**:
+  - Server-side rendering with caching
   - Optimized image loading
 
-## 🔧 Tech Stack
+---
 
-- **Frontend**: 
-  - Next.js 14 with App Router
-  - React 18
-  - TypeScript
-  - TailwindCSS
-  - ShadCN UI Components
-  - Framer Motion for animations
+## 🧱 Tech Stack
 
-- **Backend**:
-  - Next.js API Routes
-  - GitHub API Integration
-  - Real-time data fetching
+### Frontend
+- Next.js 14 (App Router)
+- React 18
+- TypeScript
+- TailwindCSS
+- ShadCN UI
+- Framer Motion
 
-## 📋 Pages
+### Backend
+- Next.js API Routes
+- GitHub API integration
+- Real-time data fetching
 
-1. **Home**: Introduction with animated hero section and featured projects
-2. **About**: Background information, skills, and GitHub contributions dashboard
-3. **Projects**: Showcase of projects with filtering and GitHub activity feed
-4. **Community**: Open source contributions and mentorship activities
-5. **Blog**: Articles with search and filtering capabilities
-6. **Contact**: Contact form with real-time validation and availability indicator
+---
 
-## 🛠️ Installation & Setup
+## 📄 Pages
 
-1. **Clone the repository**
+1. **Home** – Animated hero + featured projects  
+2. **About** – Skills and GitHub dashboard  
+3. **Projects** – Filterable showcase + activity feed  
+4. **Community** – OSS contributions + mentorships  
+5. **Blog** – Searchable, filterable articles  
+6. **Contact** – Live validation + availability indicator  
+
+---
+
+## 🛠️ Setup & Installation
+
+1. **Clone the repo**
    ```bash
    git clone https://github.com/cptcr/portfolio.git
    cd portfolio
@@ -53,106 +61,89 @@ A modern, professional portfolio website for Tony (cptcr), a 17-year-old backend
 
 2. **Install dependencies**
    ```bash
-   npm install
-   # or
-   yarn install
-   # or
-   pnpm install
+   npm install # or yarn or pnpm
    ```
 
-3. **Environment Setup**  
-   Create a `.env.local` file in the root directory with the following:
+3. **Environment config**
+
+   Create a `.env.local` file:
+
+   ```env
+   GITHUB_TOKEN=
+
+   # Discord Integration
+   DISCORD_USER_ID=
+   DISCORD_BOT_TOKEN=
+   USE_LANYARD=false
+
+   # Email
+   EMAIL_HOST=smtp.mailgun.org
+   EMAIL_ADDRESS=
+   EMAIL_SMTP_PORT=587
+   EMAIL_AUTH_USERNAME=
+   EMAIL_AUTH_PASSWORD=
+   EMAIL_SECURE=
+
+   # Auth
+   ADMIN_USERNAME=cptcr
+   ADMIN_PASSWORD=<secure-password>
+   JWT_SECRET=<generate-a-secure-random-string>
    ```
-   GITHUB_TOKEN=""
 
-# Discord Integration
-# Your Discord user ID (required for status display)
-DISCORD_USER_ID=
-
-# Discord Bot Token (required to access Discord API)
-# Create a bot at https://discord.com/developers/applications
-DISCORD_BOT_TOKEN=
-
-# Set to 'true' to use Lanyard API instead of Discord API
-# Lanyard is easier to set up but requires you to join their Discord server
-# Visit https://discord.gg/lanyard to set it up
-USE_LANYARD=false
-
-# EMAIL Configuration
-EMAIL_HOST="smtp.mailgun.org"
-EMAIL_ADDRESS=""
-EMAIL_SMTP_PORT=587
-EMAIL_AUTH_USERNAME=""
-EMAIL_AUTH_PASSWORD=""
-EMAIL_SECURE=
-
-# Authentication
-ADMIN_USERNAME=your_admin_username
-ADMIN_PASSWORD=your_secure_password
-JWT_SECRET=generate_a_secure_random_string_here
-   ```
-   
-   Note: The GitHub token is optional but recommended for higher API rate limits and access to GraphQL API.
-
-4. **Run the development server**
+4. **Start development server**
    ```bash
    npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
    ```
 
-5. **Open [http://localhost:3000](http://localhost:3000) in your browser**
+5. **Open** `http://localhost:3000` in your browser
 
-## 🚀 Deployment
+---
 
-The site is optimized for deployment on Vercel:
+## 🌐 Deployment (Vercel)
 
-1. Connect your GitHub repository to Vercel
-2. Add your environment variables
-3. Deploy with a single click
+1. Connect your GitHub repo to [Vercel](https://vercel.com)
+2. Add environment variables in the Vercel dashboard
+3. Deploy instantly
+
+---
 
 ## 📁 Project Structure
 
 ```
 cptcr-website/
+├── app/            # App Router pages
+│   ├── api/        # API routes
+│   ├── blog/       # Blog system
+│   ├── contact/    # Contact page
+│   └── ...         # Other routes
 │
-├── app/                  # App Router pages and layouts
-│   ├── api/              # API routes
-│   ├── about/            # About page
-│   ├── projects/         # Projects page
-│   ├── community/        # Community page
-│   ├── blog/             # Blog pages
-│   ├── contact/          # Contact page
-│   ├── globals.css       # Global styles
-│   ├── layout.tsx        # Root layout
-│   └── page.tsx          # Home page
+├── components/     # Reusable components
+│   ├── ui/         # UI primitives
+│   ├── layout/     # Layout components
+│   └── [feature]/  # Page-specific components
 │
-├── components/           # React components
-│   ├── ui/               # UI components (buttons, cards, etc.)
-│   ├── layout/           # Layout components
-│   ├── home/             # Home page components
-│   └── [feature]/        # Feature-specific components
+├── lib/            # Utilities & types
+│   ├── api/        
+│   ├── utils/
+│   └── types/
 │
-├── lib/                  # Utility functions and types
-│   ├── api/              # API utilities
-│   ├── utils/            # General utilities
-│   └── types/            # TypeScript types
-│
-├── public/               # Static assets
-├── tailwind.config.js    # TailwindCSS configuration
-└── next.config.js        # Next.js configuration
+├── public/         # Static assets
+├── tailwind.config.js
+└── next.config.js
 ```
+
+---
 
 ## 📝 License
 
-This project is open source and available under the [MIT License](LICENSE).
+Licensed under the [MIT License](LICENSE).
+
+---
 
 ## 👨‍💻 About the Developer
 
-This portfolio was developed by Tony (cptcr), a 17-year-old backend developer from Stuttgart, Germany, specializing in Next.js, TypeScript, and TailwindCSS.
+Built by **Tony (cptcr)**, a 17-year-old backend developer based in Stuttgart, Germany, specializing in modern web stacks.
 
-- GitHub: [github.com/cptcr](https://github.com/cptcr)
-- Twitter: [twitter.com/cptcr](https://twitter.com/cptcr)
-- LinkedIn: [linkedin.com/in/cptcr](https://linkedin.com/in/cptcr)
+- GitHub: [@cptcr](https://github.com/cptcr)  
+- Twitter: [@cptcr](https://twitter.com/cptcr)  
+- LinkedIn: [linkedin.com/in/cptcr](https://linkedin.com/in/cptcr)  

@@ -10,7 +10,12 @@ export const metadata: Metadata = {
 
 export default function BlogPage() {
   // Fetch all blog posts for static generation
-  const posts = getAllPosts();
+  let posts;
+  posts = "Hello World" as any;
+
+  (async () => {
+    posts = await getAllPosts();
+  })();
   
   return (
     <div className="min-h-screen pt-24">
