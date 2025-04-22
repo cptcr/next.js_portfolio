@@ -9,9 +9,15 @@ export const metadata: Metadata = {
 }
 
 export default async function BlogPage() {
-  // Properly fetch posts using async/await
-  const posts = await getAllPosts();
-  
+  let posts: any = []
+
+  try {
+    // Fetch all posts server-side using your existing logic
+    posts = await getAllPosts() || []
+  } catch (error) {
+    console.error("Failed to fetch posts:", error)
+  }
+
   return (
     <div className="min-h-screen pt-24">
       {/* Hero Section */}
