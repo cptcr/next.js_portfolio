@@ -205,7 +205,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
         </div>
         
         <CardTitle className="text-xl">
-          <Link href={`/blog/${post.slug}`} className="hover:text-primary transition-colors">
+          <Link href={`/blog/${post.slug}`} className="hover:text-primary transition-colors truncate">
             {post.title}
           </Link>
         </CardTitle>

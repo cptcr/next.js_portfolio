@@ -8,15 +8,14 @@ export const metadata: Metadata = {
   description: "Tony's blog about backend development, Next.js, TypeScript, and web technologies.",
 }
 
-export default async function BlogPage() {
-  let posts: any = []
+// This forces dynamic rendering on the server
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-  try {
-    // Fetch all posts server-side using your existing logic
-    posts = await getAllPosts() || []
-  } catch (error) {
-    console.error("Failed to fetch posts:", error)
-  }
+export default async function BlogPage() {
+  // Fetch all posts server-side using the existing logic
+  // Since we're using force-dynamic, this will fetch fresh data on each request
+  const posts = await getAllPosts() || [];
 
   return (
     <div className="min-h-screen pt-24">

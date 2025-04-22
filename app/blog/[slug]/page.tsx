@@ -1,3 +1,4 @@
+// app/blog/[slug]/page.tsx
 import { Metadata } from "next"
 import Link from "next/link"
 import { Calendar, Clock, ArrowLeft } from "lucide-react"
@@ -10,6 +11,10 @@ interface Props {
     slug: string
   }
 }
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug(params.slug)
@@ -26,7 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// Generate static paths for all blog posts
+// Generate static paths for initial build
+// With dynamic rendering, these will be updated at runtime
 export async function generateStaticParams() {
   const paths = getAllPostSlugs();
   return paths;
