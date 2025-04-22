@@ -955,3 +955,204 @@ export default function SettingsPanel(): JSX.Element {
                   Reset Display Settings
                 </Button>
               </div>
+              </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Account Settings */}
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+              <CardDescription>
+                Update your profile details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4 items-start mb-6">
+                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center relative">
+                  {settings.account.avatar ? (
+                    <img 
+                      src={settings.account.avatar} 
+                      alt={settings.account.displayName} 
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-12 w-12 text-muted-foreground" />
+                  )}
+                  <Button size="icon" className="w-8 h-8 rounded-full absolute bottom-0 right-0 bg-primary" variant="default">
+                    <Camera className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2 flex-1">
+                  <Label htmlFor="bio">Biography</Label>
+                  <Textarea 
+                    id="bio" 
+                    placeholder="Tell us about yourself" 
+                    className="min-h-[100px]"
+                    value={settings.account.bio}
+                    onChange={(e) => handleInputChange('account', 'bio', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">This information may be displayed on your author profile.</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display-name">Display Name</Label>
+                  <Input 
+                    id="display-name" 
+                    placeholder="Your Name" 
+                    value={settings.account.displayName}
+                    onChange={(e) => handleInputChange('account', 'displayName', e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="you@example.com" 
+                    value={settings.account.email}
+                    onChange={(e) => handleInputChange('account', 'email', e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Security</CardTitle>
+              <CardDescription>
+                Update your username and password
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input 
+                  id="username" 
+                  placeholder="username" 
+                  value={settings.account.username}
+                  onChange={(e) => handleInputChange('account', 'username', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used for logging in. Changing this will require you to log in again.
+                </p>
+              </div>
+              
+              <Separator className="my-4" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input 
+                  id="current-password" 
+                  type="password" 
+                  value={settings.security.currentPassword}
+                  onChange={(e) => handleSecurityChange('currentPassword', e.target.value)}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input 
+                    id="new-password" 
+                    type="password" 
+                    value={settings.security.newPassword}
+                    onChange={(e) => handleSecurityChange('newPassword', e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm New Password</Label>
+                  <Input 
+                    id="confirm-password" 
+                    type="password" 
+                    value={settings.security.confirmPassword}
+                    onChange={(e) => handleSecurityChange('confirmPassword', e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handlePasswordChange} 
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Update Credentials
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Footer with save button */}
+      <div className="flex justify-between items-center">
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            setResetType("all");
+            setResetDialogOpen(true);
+          }}
+        >
+          Reset All Settings
+        </Button>
+        <Button 
+          disabled={!settings.isDirty || isSaving}
+          onClick={handleSaveSettings}
+          className={cn(
+            "min-w-[120px]",
+            saveSuccess && "bg-green-500 hover:bg-green-600"
+          )}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : saveSuccess ? (
+            <>
+              <Check className="mr-2 h-4 w-4" />
+              Saved!
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
+      </div>
+      
+      {/* Reset Settings Dialog */}
+      <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {resetType === "all" 
+                ? "Reset All Settings"
+                : resetType === "appearance" 
+                  ? "Reset Theme Settings" 
+                  : "Reset Display Settings"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will reset {resetType === "all" ? "all" : resetType} settings to their default values.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetSettings} className="bg-red-500 hover:bg-red-600">
+              Reset Settings
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
