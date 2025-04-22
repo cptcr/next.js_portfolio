@@ -59,35 +59,19 @@ const octokit = new Octokit({
 
 // Cache mechanism
 const cache = new Map<string, CacheItem<any>>();
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
-/**
- * Get cached data or fetch new data
- */
-async function getCachedData<T>(
-  cacheKey: string,
-  fetchFn: () => Promise<T>
-): Promise<T> {
+async function getCachedData<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
   const cachedItem = cache.get(cacheKey);
   
   if (cachedItem && Date.now() - cachedItem.timestamp < CACHE_DURATION) {
     return cachedItem.data as T;
   }
   
-  try {
-    const data = await fetchFn();
-    cache.set(cacheKey, {
-      data,
-      timestamp: Date.now(),
-    });
-    return data;
-  } catch (error) {
-    // If we have stale cache, return it rather than failing
-    if (cachedItem) {
-      return cachedItem.data as T;
-    }
-    throw error;
-  }
+  // Implement exponential backoff for rate limits
+  const data = await fetchWithRetry(fetchFn);
+  cache.set(cacheKey, { data, timestamp: Date.now() });
+  return data;
 }
 
 /**

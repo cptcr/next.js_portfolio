@@ -16,7 +16,7 @@ interface StatCardProps {
  * StatCard displays a metric with optional trend indicator
  * Used in dashboard to show key statistics
  */
-export default function StatCard({ 
+export function StatCard({ 
   title, 
   value, 
   icon, 

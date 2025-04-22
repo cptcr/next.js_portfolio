@@ -1,3 +1,4 @@
+// app/blog/page.tsx
 import { Metadata } from "next"
 import { getAllPosts } from "@/lib/utils/markdown"
 import BlogList from "@/components/blog/blog-list"
@@ -7,13 +8,9 @@ export const metadata: Metadata = {
   description: "Tony's blog about backend development, Next.js, TypeScript, and web technologies.",
 }
 
-export default function BlogPage() {
-  let posts;
-  posts = "Hello World" as any;
-
-  (async () => {
-    posts = await getAllPosts();
-  })();
+export default async function BlogPage() {
+  // Properly fetch posts using async/await
+  const posts = await getAllPosts();
   
   return (
     <div className="min-h-screen pt-24">

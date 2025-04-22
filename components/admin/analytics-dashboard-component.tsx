@@ -1,6 +1,7 @@
-"use client"
+// components/admin/analytics-dashboard-component.tsx
+// This is the actual implementation of the analytics dashboard
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { 
   BarChart3, LineChart as LineChartIcon, PieChartIcon, 
   Users, ArrowUp, ArrowDown, ArrowRight,
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useToast  } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { StatCard } from "@/components/admin/stat-card"
 import {
   LineChart,
@@ -709,77 +710,3 @@ export default function AnalyticsDashboard() {
                       }}
                       formatter={(value) => [`${value} posts`, 'Count']}
                     />
-                    <Bar 
-                      dataKey="count" 
-                      name="Posts" 
-                      fill="#3498db"
-                      radius={[4, 4, 0, 0]}
-                    >
-                      {overviewData.categories.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} 
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {/* Real-time Data Summary */}
-      <Card className="border-blue-500/20 bg-blue-500/5">
-        <CardHeader>
-          <CardTitle className="text-blue-500">Real-time Blog Insights</CardTitle>
-          <CardDescription>
-            Analytics based on your actual Vercel Blob Storage data
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="p-3 bg-background/50 rounded-md border border-border">
-              <h3 className="text-sm font-medium mb-1">Content Analysis</h3>
-              <p className="text-sm text-muted-foreground">
-                Your blog currently has {overviewData.totalPosts} posts across {overviewData.categories.length} categories, 
-                with an average post size of {formatBytes(overviewData.averagePostSize)}.
-              </p>
-            </div>
-            
-            {overviewData.categories.length > 0 && (
-              <div className="p-3 bg-background/50 rounded-md border border-border">
-                <h3 className="text-sm font-medium mb-1">Category Insights</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your most popular category is "{overviewData.categories[0].name}" with {overviewData.categories[0].count} posts 
-                  ({overviewData.categories[0].percentage}% of your content).
-                </p>
-              </div>
-            )}
-            
-            {featuredPosts && featuredPosts.length > 0 && (
-              <div className="p-3 bg-background/50 rounded-md border border-border">
-                <h3 className="text-sm font-medium mb-1">Featured Content</h3>
-                <p className="text-sm text-muted-foreground">
-                  You have {featuredPosts.length} featured posts ({Math.round((featuredPosts.length / overviewData.totalPosts) * 100)}% of your content).
-                  Your latest featured post is "{featuredPosts[0].title}".
-                </p>
-              </div>
-            )}
-            
-            {overviewData.newPosts > 0 && (
-              <div className="p-3 bg-background/50 rounded-md border border-border">
-                <h3 className="text-sm font-medium mb-1">Recent Activity</h3>
-                <p className="text-sm text-muted-foreground">
-                  You've published {overviewData.newPosts} new posts in the {periodDescription}.
-                  {overviewData.newPosts > 1 ? " Keep up the good work!" : " Great job!"}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
