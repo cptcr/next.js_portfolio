@@ -646,7 +646,7 @@ export default function SettingsPanel(): JSX.Element {
                       className="pl-8" 
                       placeholder="username" 
                       value={settings.socialLinks.twitter}
-                      onChange={(e) => handleInputChange('socialLinks', 'twitter', e.target.value)}
+                      onChange={(e) => handleInputChange('socialLinks.twitter', '', e.target.value)}
                     />
                   </div>
                 </div>
@@ -660,7 +660,7 @@ export default function SettingsPanel(): JSX.Element {
                       className="pl-24" 
                       placeholder="username" 
                       value={settings.socialLinks.github}
-                      onChange={(e) => handleInputChange('socialLinks', 'github', e.target.value)}
+                      onChange={(e) => handleInputChange('socialLinks.github', '', e.target.value)}
                     />
                   </div>
                 </div>
@@ -674,7 +674,7 @@ export default function SettingsPanel(): JSX.Element {
                       className="pl-28" 
                       placeholder="username" 
                       value={settings.socialLinks.linkedin}
-                      onChange={(e) => handleInputChange('socialLinks', 'linkedin', e.target.value)}
+                      onChange={(e) => handleInputChange('socialLinks.linkedin', '', e.target.value)}
                     />
                   </div>
                 </div>
@@ -688,7 +688,7 @@ export default function SettingsPanel(): JSX.Element {
                       className="pl-8" 
                       placeholder="username" 
                       value={settings.socialLinks.instagram}
-                      onChange={(e) => handleInputChange('socialLinks', 'instagram', e.target.value)}
+                      onChange={(e) => handleInputChange('socialLinks.instagram', '', e.target.value)}
                     />
                   </div>
                 </div>
@@ -866,3 +866,92 @@ export default function SettingsPanel(): JSX.Element {
                     <SelectTrigger id="posts-per-page">
                       <SelectValue placeholder="Select number" />
                     </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 posts</SelectItem>
+                      <SelectItem value="9">9 posts</SelectItem>
+                      <SelectItem value="12">12 posts</SelectItem>
+                      <SelectItem value="15">15 posts</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="default-sort">Default Post Sorting</Label>
+                  <Select 
+                    value={settings.display.defaultSort}
+                    onValueChange={(value) => handleInputChange('display', 'defaultSort', value)}
+                  >
+                    <SelectTrigger id="default-sort">
+                      <SelectValue placeholder="Select sort option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="popular">Most Popular</SelectItem>
+                      <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="featured-section">Featured Posts Section</Label>
+                  <p className="text-xs text-muted-foreground">Show featured posts section on the homepage</p>
+                </div>
+                <Switch 
+                  id="featured-section" 
+                  checked={settings.display.featuredSection}
+                  onCheckedChange={(checked) => handleInputChange('display', 'featuredSection', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-author">Show Author Information</Label>
+                  <p className="text-xs text-muted-foreground">Display author details on posts</p>
+                </div>
+                <Switch 
+                  id="show-author" 
+                  checked={settings.display.showAuthor}
+                  onCheckedChange={(checked) => handleInputChange('display', 'showAuthor', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-dates">Show Publish Dates</Label>
+                  <p className="text-xs text-muted-foreground">Display when posts were published or updated</p>
+                </div>
+                <Switch 
+                  id="show-dates" 
+                  checked={settings.display.showDates}
+                  onCheckedChange={(checked) => handleInputChange('display', 'showDates', checked)}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-related">Show Related Posts</Label>
+                  <p className="text-xs text-muted-foreground">Display related posts at the end of articles</p>
+                </div>
+                <Switch 
+                  id="show-related" 
+                  checked={settings.display.showRelated}
+                  onCheckedChange={(checked) => handleInputChange('display', 'showRelated', checked)}
+                />
+              </div>
+              
+              <Separator className="my-2" />
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setResetType("display");
+                    setResetDialogOpen(true);
+                  }}
+                >
+                  Reset Display Settings
+                </Button>
+              </div>
