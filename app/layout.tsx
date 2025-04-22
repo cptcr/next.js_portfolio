@@ -5,6 +5,7 @@ import Header from '@/components/layout/header'
 import Footer from '@/components/layout/footer'
 import { cn } from '@/lib/utils/helpers'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Analytics } from "@vercel/analytics/react"
 
 // Fonts configuration
 const fontSans = FontSans({
@@ -66,6 +67,7 @@ export default function RootLayout({
         fontHeading.variable,
         fontMono.variable
       )}>
+        <Analytics/>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

@@ -1,4 +1,3 @@
-// app/blog/page.tsx
 import { Metadata } from "next"
 import { getAllPosts } from "@/lib/utils/markdown"
 import BlogList from "@/components/blog/blog-list"
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
 }
 
 export default function BlogPage() {
-  // Fetch all blog posts for static generation
   let posts;
   posts = "Hello World" as any;
 

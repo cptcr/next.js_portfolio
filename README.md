@@ -89,6 +89,12 @@ A sleek, professional portfolio for **Tony (cptcr)**, a 17-year-old backend deve
    ADMIN_USERNAME=cptcr
    ADMIN_PASSWORD=<secure-password>
    JWT_SECRET=<generate-a-secure-random-string>
+
+   # Vercel
+   # Run "npm i -g -D vercel"
+   # After installation run "vercel init"
+   # After init run "vercel env pull" (vercel will now create the required token, vercel may affect the env file so double check if everything is still here or create a backup file)
+   VERCEL_OIDC_TOKEN=
    ```
 
 4. **Start development server**

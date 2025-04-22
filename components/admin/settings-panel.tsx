@@ -1,0 +1,475 @@
+"use client"
+
+import { useState } from "react"
+import { 
+  Save, RefreshCw, Camera, Image, Briefcase, 
+  Mail, Lock, User, Globe, ExternalLink, Loader2 
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Separator } from "@/components/ui/separator"
+
+export default function SettingsPanel() {
+  const [isSaving, setIsSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState("general")
+  
+  const handleSaveSettings = () => {
+    setIsSaving(true)
+    // Simulate API call
+    setTimeout(() => {
+      setIsSaving(false)
+    }, 1500)
+  }
+  
+  return (
+    <div className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-4 mb-6">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="account">Account</TabsTrigger>
+        </TabsList>
+        
+        {/* General Settings */}
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Blog Information</CardTitle>
+              <CardDescription>
+                Configure the basic information about your blog
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="blog-name">Blog Name</Label>
+                  <Input 
+                    id="blog-name" 
+                    placeholder="My Tech Blog" 
+                    defaultValue="Tony's Development Blog"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="blog-description">Tagline</Label>
+                  <Input 
+                    id="blog-description" 
+                    placeholder="A short description of your blog" 
+                    defaultValue="Backend development insights and tutorials"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="blog-about">About</Label>
+                <Textarea 
+                  id="blog-about" 
+                  placeholder="Tell readers about your blog" 
+                  className="min-h-[100px]"
+                  defaultValue="A blog about backend development, APIs, TypeScript, and modern web technologies by Tony, a 17-year-old developer from Stuttgart, Germany."
+                />
+                <p className="text-xs text-muted-foreground">This information may be displayed on your about page and in search engine results.</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO Settings</CardTitle>
+              <CardDescription>
+                Optimize your blog for search engines
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="meta-title">Default Meta Title</Label>
+                <Input 
+                  id="meta-title" 
+                  placeholder="Your blog name | Tagline" 
+                  defaultValue="Tony's Dev Blog | Backend Development Insights"
+                />
+                <p className="text-xs text-muted-foreground">Used as the title in search engine results when no specific title is available.</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="meta-description">Default Meta Description</Label>
+                <Textarea 
+                  id="meta-description" 
+                  placeholder="A brief description of your blog" 
+                  className="min-h-[80px]"
+                  defaultValue="Insights and tutorials on backend development, TypeScript, APIs, and modern web technologies from a young developer in Germany."
+                />
+                <p className="text-xs text-muted-foreground">Limit to 150-160 characters for best results in search engines.</p>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="robots-index">Allow Search Indexing</Label>
+                  <p className="text-xs text-muted-foreground">Let search engines discover and index your blog</p>
+                </div>
+                <Switch id="robots-index" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="canonical-links">Canonical Links</Label>
+                  <p className="text-xs text-muted-foreground">Generate canonical links to prevent duplicate content issues</p>
+                </div>
+                <Switch id="canonical-links" defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Social Media</CardTitle>
+              <CardDescription>
+                Configure your social media profiles
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="twitter">Twitter/X</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
+                    <Input id="twitter" className="pl-8" placeholder="username" defaultValue="cptcrr" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="github">GitHub</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">github.com/</span>
+                    <Input id="github" className="pl-24" placeholder="username" defaultValue="cptcr" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">linkedin.com/in/</span>
+                    <Input id="linkedin" className="pl-28" placeholder="username" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">@</span>
+                    <Input id="instagram" className="pl-8" placeholder="username" />
+                  </div>
+                </div>
+              </div>
+              
+              <Separator className="my-4" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="share-image">Default Share Image</Label>
+                <div className="border-2 border-dashed border-border rounded-md p-6 flex flex-col items-center justify-center">
+                  <div className="w-20 h-20 bg-muted rounded-md flex items-center justify-center mb-4">
+                    <Image className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <p className="text-sm font-medium">Drag and drop an image here or</p>
+                    <Button variant="secondary" size="sm">
+                      <Camera className="h-4 w-4 mr-2" />
+                      Choose Image
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-4">Recommended size: 1200 × 630 pixels (PNG, JPG, WebP)</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Appearance Settings */}
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Display Options</CardTitle>
+              <CardDescription>
+                Configure how your blog content is displayed
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="posts-per-page">Posts Per Page</Label>
+                  <select id="posts-per-page" className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="6">6 posts</option>
+                    <option value="9" selected>9 posts</option>
+                    <option value="12">12 posts</option>
+                    <option value="15">15 posts</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="default-sort">Default Post Sorting</Label>
+                  <select id="default-sort" className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="newest" selected>Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="popular">Most Popular</option>
+                    <option value="alphabetical">Alphabetical</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="featured-section">Featured Posts Section</Label>
+                  <p className="text-xs text-muted-foreground">Show featured posts section on the homepage</p>
+                </div>
+                <Switch id="featured-section" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-author">Show Author Information</Label>
+                  <p className="text-xs text-muted-foreground">Display author details on posts</p>
+                </div>
+                <Switch id="show-author" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-dates">Show Publish Dates</Label>
+                  <p className="text-xs text-muted-foreground">Display when posts were published or updated</p>
+                </div>
+                <Switch id="show-dates" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-related">Show Related Posts</Label>
+                  <p className="text-xs text-muted-foreground">Display related posts at the end of articles</p>
+                </div>
+                <Switch id="show-related" defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme Customization</CardTitle>
+              <CardDescription>
+                Customize the appearance of your blog
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="primary-color">Primary Color</Label>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-md bg-primary"></div>
+                  <Input 
+                    id="primary-color" 
+                    type="text" 
+                    value="#3498db" 
+                    className="w-32"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="fonts">Font Style</Label>
+                <select id="fonts" className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <option value="inter" selected>Inter (Modern Sans-Serif)</option>
+                  <option value="merriweather">Merriweather (Elegant Serif)</option>
+                  <option value="jetbrains">JetBrains Mono (Monospace)</option>
+                  <option value="system">System Default</option>
+                </select>
+                <p className="text-xs text-muted-foreground">The primary font used throughout your blog</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="heading-style">Heading Style</Label>
+                  <select id="heading-style" className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="large" selected>Large & Bold</option>
+                    <option value="medium">Medium & Regular</option>
+                    <option value="minimal">Minimal</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="spacing">Content Spacing</Label>
+                  <select id="spacing" className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="compact">Compact</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="relaxed">Relaxed</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="dark-mode">Default to Dark Mode</Label>
+                  <p className="text-xs text-muted-foreground">Use dark mode by default for all visitors</p>
+                </div>
+                <Switch id="dark-mode" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="theme-toggle">Show Theme Toggle</Label>
+                  <p className="text-xs text-muted-foreground">Allow visitors to switch between light and dark mode</p>
+                </div>
+                <Switch id="theme-toggle" defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Account Settings */}
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+              <CardDescription>
+                Update your administrator profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-8 w-8 text-primary" />
+                </div>
+                <Button variant="outline" size="sm">
+                  <Camera className="h-4 w-4 mr-2" />
+                  Change Avatar
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display-name">Display Name</Label>
+                  <Input 
+                    id="display-name" 
+                    defaultValue="Tony" 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input 
+                    id="username" 
+                    defaultValue="admin" 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email"
+                    defaultValue="contact@cptcr.dev" 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Input 
+                    id="role" 
+                    defaultValue="Administrator" 
+                    disabled
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea 
+                  id="bio" 
+                  className="min-h-[100px]"
+                  defaultValue="17-year-old backend developer from Stuttgart, Germany. Specializing in Next.js, TypeScript, and building robust APIs."
+                />
+                <p className="text-xs text-muted-foreground">Brief description about yourself that may appear with your articles</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Security</CardTitle>
+              <CardDescription>
+                Update your password and security settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input 
+                  id="current-password" 
+                  type="password"
+                  placeholder="••••••••••" 
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input 
+                    id="new-password" 
+                    type="password"
+                    placeholder="••••••••••" 
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm New Password</Label>
+                  <Input 
+                    id="confirm-password" 
+                    type="password"
+                    placeholder="••••••••••" 
+                  />
+                </div>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">Password should be at least 10 characters and include a mix of letters, numbers, and symbols</p>
+              
+              <div className="flex items-center justify-between mt-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="two-factor">Two-Factor Authentication</Label>
+                  <p className="text-xs text-muted-foreground">Add an extra layer of security to your account</p>
+                </div>
+                <Button variant="outline" size="sm">
+                  Enable 2FA
+                </Button>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t border-border pt-6">
+              <Button className="ml-auto">
+                Update Security Settings
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Fixed save button */}
+      <div className="sticky bottom-6 flex justify-end">
+        <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg border border-border shadow-lg">
+          <Button onClick={handleSaveSettings} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save All Settings
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

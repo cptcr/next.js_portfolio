@@ -1,5 +1,3 @@
-// app/blog/[slug]/page.tsx
-
 import { Metadata } from "next"
 import Link from "next/link"
 import { Calendar, Clock, ArrowLeft } from "lucide-react"
@@ -13,7 +11,6 @@ interface Props {
   }
 }
 
-// Generate metadata for the page
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug(params.slug)
   
