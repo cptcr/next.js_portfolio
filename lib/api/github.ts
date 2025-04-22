@@ -61,6 +61,53 @@ const octokit = new Octokit({
 const cache = new Map<string, CacheItem<any>>();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
+/**
+ * Fetch with retry and exponential backoff to handle rate limits
+ * @param fetchFn - The async function to retry
+ * @param maxRetries - Maximum number of retries (default: 3)
+ * @param initialDelay - Initial delay in ms before first retry (default: 1000)
+ * @returns The result of the fetch function
+ */
+async function fetchWithRetry<T>(
+  fetchFn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  let delay = initialDelay;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fetchFn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Check if it's a rate limit error (GitHub API returns 403 for rate limits)
+      const isRateLimit = error.status === 403 || 
+                         (error.message && error.message.includes('rate limit'));
+                         
+      // If it's the last attempt or not a rate limit issue, throw the error
+      if (attempt === maxRetries || !isRateLimit) {
+        throw error;
+      }
+      
+      // Calculate delay with exponential backoff: initialDelay * 2^attempt
+      delay = initialDelay * Math.pow(2, attempt);
+      
+      // Add some jitter to prevent all clients retrying at the same time
+      const jitter = Math.random() * 0.3 * delay;
+      
+      console.log(`GitHub API rate limited. Retrying in ${Math.round((delay + jitter) / 1000)}s...`);
+      
+      // Wait before the next attempt
+      await new Promise(resolve => setTimeout(resolve, delay + jitter));
+    }
+  }
+  
+  // This should never be reached due to the throw in the loop, but TypeScript wants it
+  throw lastError;
+}
+
 async function getCachedData<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
   const cachedItem = cache.get(cacheKey);
   
