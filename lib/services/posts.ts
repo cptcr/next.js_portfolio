@@ -186,7 +186,7 @@ export const postsService = {
     } = options;
     
     // Build the where clause
-    let whereClause = sql`1=1`;
+    let whereClause: any = sql`1=1`;
     
     if (category) {
       whereClause = and(whereClause, eq(posts.category, category));
@@ -268,7 +268,7 @@ export const postsService = {
     const { category, authorId, featured, searchTerm } = options;
     
     // Build the where clause
-    let whereClause = sql`1=1`;
+    let whereClause: any = sql`1=1`;
     
     if (category) {
       whereClause = and(whereClause, eq(posts.category, category));
