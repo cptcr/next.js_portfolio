@@ -21,7 +21,9 @@ export type SiteSettingsKey =
   | 'contact_email'
   | 'hero_background_image'
   | 'footer_text'
-  | 'allow_comments';
+  | 'allow_comments'
+  | 'discord_notifications_enabled'
+  | 'discord_webhook_url';
 
 // Default settings
 export const DEFAULT_SETTINGS: Record<SiteSettingsKey, any> = {
@@ -58,7 +60,9 @@ export const DEFAULT_SETTINGS: Record<SiteSettingsKey, any> = {
   contact_email: "contact@cptcr.dev",
   hero_background_image: "",
   footer_text: "© {year} Tony (cptcr). All rights reserved.",
-  allow_comments: false
+  allow_comments: false,
+  discord_notifications_enabled: true,
+  discord_webhook_url: ""
 };
 
 // Settings service

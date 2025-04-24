@@ -39,9 +39,15 @@ export const postsService = {
     // Notify Discord if enabled
     if (shouldNotify) {
       try {
-        const author = await usersService.getUserById(postData.authorId);
-        if (author) {
-          await discordService.notifyNewPost(newPost, author);
+        // Get site settings to check if Discord notifications are enabled
+        const discordNotificationsEnabled = await settingsService.getSetting('discord_notifications_enabled');
+        
+        // Only send notification if enabled in settings
+        if (discordNotificationsEnabled) {
+          const author = await usersService.getUserById(postData.authorId);
+          if (author) {
+            await discordService.notifyNewPost(newPost, author);
+          }
         }
       } catch (error) {
         console.error('Failed to send Discord notification:', error);
@@ -55,26 +61,6 @@ export const postsService = {
   // Get a post by slug
   async getPostBySlug(slug: string) {
     const [post] = await db.select().from(posts).where(eq(posts.slug, slug));
-    
-    if (!post) return null;
-    
-    // Get author information
-    const author = await usersService.getUserById(post.authorId);
-    
-    return {
-      ...post,
-      author: author ? {
-        id: author.id,
-        username: author.username,
-        realName: author.realName || null,
-        avatarUrl: author.avatarUrl || null,
-      } : null,
-    };
-  },
-  
-  // Get a post by ID
-  async getPostById(id: number) {
-    const [post] = await db.select().from(posts).where(eq(posts.id, id));
     
     if (!post) return null;
     
@@ -319,5 +305,25 @@ export const postsService = {
     const wordCount = content.trim().split(/\s+/).length;
     const readingTimeMinutes = Math.ceil(wordCount / 200);
     return `${readingTimeMinutes} min read`;
+  }
   },
-};
+  
+  // Get a post by ID
+async getPostById(id: number) {
+    const [post] = await db.select().from(posts).where(eq(posts.id, id));
+    
+    if (!post) return null;
+    
+    // Get author information
+    const author = await usersService.getUserById(post.authorId);
+    
+    return {
+      ...post,
+      author: author ? {
+        id: author.id,
+        username: author.username,
+        realName: author.realName || null,
+        avatarUrl: author.avatarUrl || null,
+      } : null,
+    };
+}
