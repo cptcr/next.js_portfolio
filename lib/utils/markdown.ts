@@ -104,7 +104,6 @@ export async function getAllPostSlugs() {
 /**
  * Get a specific post by slug - always fetch current version
  */
-// lib/utils/markdown.ts - getPostBySlug function update
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   try {
     // Find the specific post by listing with prefix
@@ -118,7 +117,34 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     const response = await fetch(blobs[0].url, { cache: 'no-store' });
     const fileContents = await response.text();
     
-    // Rest of the function...
+    // Parse metadata with gray-matter
+    const { data, content } = matter(fileContents);
+    
+    // Process markdown content to HTML
+    const processedContent = await remark()
+      .use(html)
+      .process(content);
+    
+    const contentHtml = processedContent.toString();
+    
+    // Calculate reading time
+    const wordCount = content.trim().split(/\s+/).length;
+    const readingTimeMinutes = Math.ceil(wordCount / 200);
+    
+    // Return formatted post
+    return {
+      slug,
+      title: data.title,
+      date: data.date,
+      excerpt: data.excerpt || '',
+      content: contentHtml,
+      readingTime: `${readingTimeMinutes} min read`,
+      category: data.category || 'Uncategorized',
+      featured: data.featured || false,
+      url: blobs[0].url,
+      // Add author field for TypeScript compatibility
+      author: data.author || null
+    };
   } catch (error) {
     console.error(`Error fetching post ${slug}:`, error);
     return null;

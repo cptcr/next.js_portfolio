@@ -358,7 +358,7 @@ export const postsService = {
   },
   
   // Get a post by ID
-async getPostById (id: number) {
+ async getPostById (id: number) {
     const [post] = await db.select().from(posts).where(eq(posts.id, id));
     
     if (!post) return null;

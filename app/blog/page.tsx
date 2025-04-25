@@ -1,17 +1,40 @@
 // app/blog/page.tsx
-import { Metadata } from "next"
-import { postsService } from "@/lib/services/posts"
-import { settingsService } from "@/lib/services/settings"
-import BlogList from "@/components/blog/blog-list"
+import { Metadata } from "next";
+import { postsService } from "@/lib/services/posts";
+import { settingsService } from "@/lib/services/settings";
+import BlogList from "@/components/blog/blog-list";
 
 export const metadata: Metadata = {
   title: "Blog | Tony (cptcr)",
   description: "Tony's blog about backend development, Next.js, TypeScript, and web technologies.",
-}
+};
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Define an interface to make TypeScript happy
+interface BlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  date: string; // We'll need to add this from publishedAt
+  excerpt: string | null;
+  content: string;
+  readingTime: string;
+  category: string | null;
+  featured: boolean | null;
+  publishedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  authorId: number;
+  author: {
+    id: number;
+    username: string;
+    realName: string | null;
+    avatarUrl: string | null;
+  };
+}
 
 export default async function BlogPage() {
   // Fetch settings
@@ -27,25 +50,28 @@ export default async function BlogPage() {
   });
   
   // If showing featured posts is enabled, get them separately
-  let featuredPosts = [];
+  let featuredPosts: BlogPost[] = [];
   if (showFeaturedPosts) {
-    featuredPosts = await postsService.listPosts({
+    const featuredPostsData = await postsService.listPosts({
       limit: siteSettings.featured_post_limit || 3,
       featured: true
     });
+    
+    // Transform to include date property
+    featuredPosts = featuredPostsData.map(post => ({
+      ...post,
+      date: post.publishedAt.toISOString(),
+      readingTime: postsService.calculateReadingTime(post.content)
+    }));
   }
   
   // Get all categories for filters
   const categories = await postsService.getAllCategories();
   
-  // Add reading time to each post
+  // Add reading time to each post and format date
   const postsWithReadingTime = posts.map(post => ({
     ...post,
-    readingTime: postsService.calculateReadingTime(post.content)
-  }));
-  
-  const featuredWithReadingTime = featuredPosts.map(post => ({
-    ...post,
+    date: post.publishedAt.toISOString(),
     readingTime: postsService.calculateReadingTime(post.content)
   }));
 
@@ -72,7 +98,7 @@ export default async function BlogPage() {
           <div className="max-w-5xl mx-auto">
             <BlogList 
               posts={postsWithReadingTime} 
-              featuredPosts={showFeaturedPosts ? featuredWithReadingTime : []}
+              featuredPosts={showFeaturedPosts ? featuredPosts : []}
               categories={categories}
               showAuthorInfo={siteSettings.show_author_info !== false}
             />
@@ -80,5 +106,5 @@ export default async function BlogPage() {
         </div>
       </section>
     </div>
-  )
+  );
 }

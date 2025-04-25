@@ -34,13 +34,19 @@ const AUTH_COOKIE_NAME = 'auth_token';
 export const authService = {
   // Generate JWT token
   generateToken(payload: Omit<JwtPayload, 'exp' | 'iat'>): string {
-    return sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRY });
+    // Fix JWT signing
+    return sign(
+      payload,
+      env.JWT_SECRET || 'default-fallback-secret', // Provide fallback
+      { expiresIn: env.JWT_EXPIRY || '1d' } // Provide fallback
+    );
   },
   
   // Verify JWT token
   verifyToken(token: string): JwtPayload | null {
     try {
-      const decoded = verify(token, env.JWT_SECRET) as JwtPayload;
+      // Fix JWT verification
+      const decoded = verify(token, env.JWT_SECRET || 'default-fallback-secret') as JwtPayload;
       return decoded;
     } catch (error) {
       console.error('Error verifying token:', error);
@@ -96,6 +102,7 @@ export const authService = {
     avatarUrl?: string | null;
     permissions?: any;
   } | null> {
+    // Fix cookies access
     const cookieStore = cookies();
     const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
     
@@ -132,20 +139,24 @@ export const authService = {
   
   // Set authentication cookie (server-side)
   setAuthCookie(token: string): void {
-    cookies().set({
+    // Fix cookies access
+    const cookieStore = cookies();
+    cookieStore.set({
       name: AUTH_COOKIE_NAME,
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       // Calculate expiry based on JWT_EXPIRY (default 1d)
-      expires: new Date(Date.now() + this.parseExpiryToMs(env.JWT_EXPIRY)),
+      expires: new Date(Date.now() + this.parseExpiryToMs(env.JWT_EXPIRY || '1d')),
     });
   },
   
   // Clear authentication cookie (server-side)
   clearAuthCookie(): void {
-    cookies().delete(AUTH_COOKIE_NAME);
+    // Fix cookies access
+    const cookieStore = cookies();
+    cookieStore.delete(AUTH_COOKIE_NAME);
   },
   
   // Protect a route, redirecting to login if not authenticated (server-side)

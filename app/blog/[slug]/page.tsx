@@ -1,15 +1,36 @@
 // app/blog/[slug]/page.tsx
-import { Metadata } from "next"
-import Link from "next/link"
-import { Calendar, Clock, ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { notFound } from "next/navigation"
-import { getPostBySlug, getAllPostSlugs } from "@/lib/utils/markdown"
+import { Metadata } from "next";
+import Link from "next/link";
+import { Calendar, Clock, ArrowLeft, User } from "lucide-react"; // Import User icon
+import { Button } from "@/components/ui/button";
+import { notFound } from "next/navigation";
+import { getPostBySlug, getAllPostSlugs } from "@/lib/utils/markdown";
+
+// We need to update the BlogPost interface to include author
+interface Author {
+  id: number;
+  username: string;
+  realName: string | null;
+  avatarUrl: string | null;
+}
+
+interface ExtendedBlogPost {
+  slug: string;
+  title: string;
+  date: string;
+  excerpt: string;
+  content: string;
+  readingTime: string;
+  category: string;
+  featured: boolean;
+  url?: string;
+  author?: Author;
+}
 
 interface Props {
   params: {
-    slug: string
-  }
+    slug: string;
+  };
 }
 
 // Force dynamic rendering for this page
@@ -17,32 +38,32 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = await getPostBySlug(params.slug)
+  const post = await getPostBySlug(params.slug);
   
   if (!post) {
     return {
       title: 'Post Not Found',
-    }
+    };
   }
   
   return {
     title: `${post.title} | Tony (cptcr)`,
     description: post.excerpt,
-  }
+  };
 }
 
 // Generate static paths for initial build
 // With dynamic rendering, these will be updated at runtime
 export async function generateStaticParams() {
-  const paths = getAllPostSlugs();
+  const paths = await getAllPostSlugs();
   return paths;
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const post = await getPostBySlug(params.slug)
+  const post = await getPostBySlug(params.slug) as ExtendedBlogPost | null;
   
   if (!post) {
-    notFound()
+    notFound();
   }
   
   return (
@@ -157,5 +178,5 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </article>
     </div>
-  )
+  );
 }

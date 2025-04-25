@@ -8,8 +8,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // app/api/admin/users/[id]/permissions/route.ts (continued)
-    try {
+  try {
     const userId = parseInt(params.id);
     
     if (isNaN(userId)) {
@@ -87,9 +86,10 @@ export async function PUT(
     }
     
     // Only admins and users with canManageUsers permission can update permissions
-    const canManageUsers = await usersService.hasPermission(currentUser.id, 'canManageUsers');
+    // Use a different variable name to avoid redeclaration
+    const hasManageUsersPermission = await usersService.hasPermission(currentUser.id, 'canManageUsers');
     
-    if (!canManageUsers && currentUser.role !== 'admin') {
+    if (!hasManageUsersPermission && currentUser.role !== 'admin') {
       return NextResponse.json(
         { message: 'Not authorized to update permissions' },
         { status: 403 }
