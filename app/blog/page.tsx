@@ -2,8 +2,7 @@
 import { Metadata } from "next";
 import { postsService } from "@/lib/services/posts";
 import { settingsService } from "@/lib/services/settings";
-import BlogList from "@/components/blog/blog-list";
-import { BlogPost as MarkdownBlogPost } from "@/lib/utils/markdown";
+import BlogList, { BlogPost } from "@/components/blog/blog-list";
 
 export const metadata: Metadata = {
   title: "Blog | Tony (cptcr)",
@@ -14,44 +13,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Create a new interface that matches the actual data structure
-interface PostWithAuthor {
-  id: number;
-  slug: string;
-  title: string;
-  date: string;
-  excerpt: string | null;
-  content: string;
-  readingTime: string;
-  category: string | null;
-  featured: boolean | null;
-  publishedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  authorId: number;
-  author: {
-    id: number;
-    username: string;
-    realName: string | null;
-    avatarUrl: string | null;
-  };
-}
-
-// Create a type conversion function to make TypeScript happy
-function convertToMarkdownBlogPost(post: PostWithAuthor): MarkdownBlogPost {
-  return {
-    slug: post.slug,
-    title: post.title,
-    date: post.date,
-    excerpt: post.excerpt || "",  // Convert null to empty string
-    content: post.content,
-    readingTime: post.readingTime,
-    category: post.category || "Uncategorized",  // Convert null to default
-    featured: post.featured || false,  // Convert null to false
-    author: post.author
-  };
-}
-
 export default async function BlogPage() {
   // Fetch settings
   const siteSettings = await settingsService.getAllSettings();
@@ -59,41 +20,58 @@ export default async function BlogPage() {
   const showFeaturedPosts = siteSettings.show_featured_posts !== false;
   
   // Fetch all posts server-side using our posts service
-  // Since we're using force-dynamic, this will fetch fresh data on each request
   const posts = await postsService.listPosts({ 
     limit: postsPerPage,
     offset: 0
   });
   
+  // Get all categories for filters
+  const categories = await postsService.getAllCategories();
+  
   // If showing featured posts is enabled, get them separately
-  let featuredPostsData: PostWithAuthor[] = [];
+  let featuredPosts: BlogPost[] = [];
   if (showFeaturedPosts) {
-    const featuredPosts = await postsService.listPosts({
+    const featuredData = await postsService.listPosts({
       limit: siteSettings.featured_post_limit || 3,
       featured: true
     });
     
-    // Transform to include date property
-    featuredPostsData = featuredPosts.map(post => ({
-      ...post,
+    // Transform the featured posts to match the expected BlogPost type
+    featuredPosts = featuredData.map(post => ({
+      slug: post.slug,
+      title: post.title,
       date: post.publishedAt.toISOString(),
-      readingTime: postsService.calculateReadingTime(post.content)
+      excerpt: post.excerpt || "",
+      content: post.content,
+      readingTime: postsService.calculateReadingTime(post.content),
+      category: post.category || "Uncategorized",
+      featured: post.featured || false,
+      author: post.author ? {
+        id: post.author.id,
+        username: post.author.username,
+        realName: post.author.realName,
+        avatarUrl: post.author.avatarUrl
+      } : undefined
     }));
   }
   
-  // Get all categories for filters
-  const categories = await postsService.getAllCategories();
-  
-  // Add reading time to each post and format date
-  const postsWithReadingTime = posts.map(post => ({
-    ...post,
+  // Add reading time to each post and format data to match the BlogPost type
+  const processedPosts: BlogPost[] = posts.map(post => ({
+    slug: post.slug,
+    title: post.title,
     date: post.publishedAt.toISOString(),
-    readingTime: postsService.calculateReadingTime(post.content)
+    excerpt: post.excerpt || "",
+    content: post.content,
+    readingTime: postsService.calculateReadingTime(post.content),
+    category: post.category || "Uncategorized",
+    featured: post.featured || false,
+    author: post.author ? {
+      id: post.author.id,
+      username: post.author.username,
+      realName: post.author.realName,
+      avatarUrl: post.author.avatarUrl
+    } : undefined
   }));
-
-  // Convert the posts to the correct type for the BlogList component
-  const convertedPosts = postsWithReadingTime.map(convertToMarkdownBlogPost);
-  const convertedFeaturedPosts = featuredPostsData.map(convertToMarkdownBlogPost);
 
   return (
     <div className="min-h-screen pt-24">
@@ -117,8 +95,8 @@ export default async function BlogPage() {
         <div className="container px-4">
           <div className="max-w-5xl mx-auto">
             <BlogList 
-              posts={convertedPosts} 
-              featuredPosts={showFeaturedPosts ? convertedFeaturedPosts : []}
+              posts={processedPosts} 
+              featuredPosts={featuredPosts}
               categories={categories}
               showAuthorInfo={siteSettings.show_author_info !== false}
             />
