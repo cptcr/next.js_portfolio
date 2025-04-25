@@ -7,6 +7,55 @@ import { discordService } from './discord';
 import { settingsService } from './settings';
 import { slugify } from '../utils/helpers';
 
+// Create a new post
+async createPost(postData: Omit<NewPost, 'slug' | 'createdAt' | 'updatedAt'>, shouldNotify = true) {
+  // Generate slug
+  let slug = slugify(postData.title);
+  
+  // Check if slug already exists
+  const existing = await db.select({ slug: posts.slug })
+    .from(posts)
+    .where(eq(posts.slug, slug));
+  
+  // If slug exists, add a unique suffix
+  if (existing.length > 0) {
+    slug = `${slug}-${Date.now().toString().slice(-6)}`;
+  }
+  
+  // Create the post
+  const [newPost] = await db.insert(posts)
+    .values({
+      ...postData,
+      slug,
+    })
+    .returning();
+  
+  if (!newPost) {
+    throw new Error('Failed to create post');
+  }
+  
+  // Notify Discord if enabled
+  if (shouldNotify) {
+    try {
+      // Get site settings to check if Discord notifications are enabled
+      const discordNotificationsEnabled = await settingsService.getSetting('discord_notifications_enabled');
+      
+      // Only send notification if enabled in settings
+      if (discordNotificationsEnabled) {
+        const author = await usersService.getUserById(postData.authorId);
+        if (author) {
+          await discordService.notifyNewPost(newPost, author);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send Discord notification:', error);
+      // Don't fail the post creation if notification fails
+    }
+  }
+  
+  return newPost;
+}
+
 // Posts services
 export const postsService = {
   // Create a new post
@@ -309,7 +358,7 @@ export const postsService = {
   },
   
   // Get a post by ID
-async getPostById(id: number) {
+async getPostById (id: number) {
     const [post] = await db.select().from(posts).where(eq(posts.id, id));
     
     if (!post) return null;

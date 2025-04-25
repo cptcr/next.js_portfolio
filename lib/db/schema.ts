@@ -32,7 +32,7 @@ export const users = pgTable('users', {
   };
 });
 
-// User Permissions
+// User Permissions table - checking if changes are needed
 export const permissions = pgTable('permissions', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

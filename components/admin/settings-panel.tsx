@@ -1,3 +1,4 @@
+// components/admin/settings-panel.tsx
 "use client"
 
 import { useState, useEffect, JSX } from "react"
@@ -86,6 +87,10 @@ interface SettingsState {
     newPassword: string;
     confirmPassword: string;
   };
+  discord: {
+    enabled: boolean;
+    webhookUrl: string;
+  };
   isDirty: boolean;
 }
 
@@ -96,6 +101,7 @@ export default function SettingsPanel(): JSX.Element {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isTestingWebhook, setIsTestingWebhook] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -143,6 +149,10 @@ export default function SettingsPanel(): JSX.Element {
       newPassword: "",
       confirmPassword: ""
     },
+    discord: {
+      enabled: false,
+      webhookUrl: ""
+    },
     isDirty: false
   });
   
@@ -155,8 +165,58 @@ export default function SettingsPanel(): JSX.Element {
         // For now, we'll use a timeout to simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // We're using the initial state as our "loaded" settings
-        // In a real app, you would update state with the API response
+        // Get token for API call
+        const token = localStorage.getItem("adminToken");
+        if (!token) {
+          throw new Error("Not authenticated");
+        }
+        
+        // Fetch settings from API
+        const response = await fetch("/api/admin/settings", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch settings: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update state with fetched settings
+        setSettings(prev => ({
+          ...prev,
+          blogName: data.settings.site_name || prev.blogName,
+          tagline: data.settings.site_description || prev.tagline,
+          about: data.settings.blog_description || prev.about,
+          metaTitle: data.settings.seo_settings?.titleTemplate || prev.metaTitle,
+          metaDescription: data.settings.seo_settings?.defaultDescription || prev.metaDescription,
+          allowIndexing: data.settings.seo_settings?.robotsIndex !== false,
+          canonicalLinks: data.settings.seo_settings?.generateCanonicalLinks !== false,
+          socialLinks: data.settings.social_links || prev.socialLinks,
+          display: {
+            postsPerPage: data.settings.posts_per_page || prev.display.postsPerPage,
+            defaultSort: data.settings.default_sort || prev.display.defaultSort,
+            featuredSection: data.settings.show_featured_posts !== false,
+            showAuthor: data.settings.show_author_info !== false,
+            showDates: data.settings.show_dates !== false,
+            showRelated: data.settings.show_related_posts !== false
+          },
+          theme: data.settings.site_theme || prev.theme,
+          account: {
+            ...prev.account,
+            displayName: data.settings.author_name || prev.account.displayName,
+            email: data.settings.contact_email || prev.account.email,
+            bio: data.settings.author_bio || prev.account.bio,
+            avatar: data.settings.author_avatar || prev.account.avatar
+          },
+          discord: {
+            enabled: data.settings.discord_notifications_enabled || false,
+            webhookUrl: data.settings.discord_webhook_url || ""
+          },
+          isDirty: false
+        }));
         
         setIsLoading(false);
       } catch (err) {
@@ -183,6 +243,11 @@ export default function SettingsPanel(): JSX.Element {
             ...prev.socialLinks,
             [subField]: value
           };
+        } else if (mainSection === 'discord') {
+          updatedSettings.discord = {
+            ...prev.discord,
+            [subField]: value
+          };
         }
         updatedSettings.isDirty = true;
         return updatedSettings;
@@ -206,6 +271,11 @@ export default function SettingsPanel(): JSX.Element {
           ...prev.account,
           [field]: value
         };
+      } else if (section === 'discord') {
+        updatedSettings.discord = {
+          ...prev.discord,
+          [field]: value
+        };
       }
       
       updatedSettings.isDirty = true;
@@ -214,7 +284,7 @@ export default function SettingsPanel(): JSX.Element {
   };
   
   // Handle simple field changes (like top level fields)
-  const handleSimpleChange = (field: keyof Omit<SettingsState, 'socialLinks' | 'display' | 'theme' | 'account' | 'security'>, value: any) => {
+  const handleSimpleChange = (field: keyof Omit<SettingsState, 'socialLinks' | 'display' | 'theme' | 'account' | 'security' | 'discord'>, value: any) => {
     setSettings(prev => ({
       ...prev,
       [field]: value,
@@ -240,32 +310,127 @@ export default function SettingsPanel(): JSX.Element {
       setIsSaving(true);
       setSaveSuccess(false);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get token for API call
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
       
-      // In a real app, you would send settings to API here
-      // const response = await fetch('/api/admin/settings', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-      //   },
-      //   body: JSON.stringify(settings)
-      // });
+      // Format settings for API
+      const apiSettings = {
+        site_name: settings.blogName,
+        site_description: settings.tagline,
+        blog_description: settings.about,
+        seo_settings: {
+          titleTemplate: settings.metaTitle,
+          defaultDescription: settings.metaDescription,
+          robotsIndex: settings.allowIndexing,
+          generateCanonicalLinks: settings.canonicalLinks
+        },
+        social_links: settings.socialLinks,
+        posts_per_page: settings.display.postsPerPage,
+        default_sort: settings.display.defaultSort,
+        show_featured_posts: settings.display.featuredSection,
+        show_author_info: settings.display.showAuthor,
+        show_dates: settings.display.showDates,
+        show_related_posts: settings.display.showRelated,
+        site_theme: settings.theme,
+        author_name: settings.account.displayName,
+        contact_email: settings.account.email,
+        author_bio: settings.account.bio,
+        author_avatar: settings.account.avatar,
+        discord_notifications_enabled: settings.discord.enabled,
+        discord_webhook_url: settings.discord.webhookUrl
+      };
       
-      // if (!response.ok) throw new Error('Failed to save settings');
+      // Send to API
+      const response = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(apiSettings)
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || `Failed to save settings: ${response.status}`);
+      }
       
       // Success
       setSaveSuccess(true);
       setSettings(prev => ({ ...prev, isDirty: false }));
+      
+      toast({
+        title: "Settings saved",
+        description: "Your settings have been saved successfully.",
+      });
       
       // Hide success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       console.error("Error saving settings:", err);
       setError("Failed to save settings. Please try again.");
+      
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to save settings",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
+    }
+  };
+  
+  // Handle test Discord webhook
+  const handleTestDiscordWebhook = async () => {
+    try {
+      setIsTestingWebhook(true);
+      
+      // Get token for API call
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+      
+      // Validate webhook URL
+      if (!settings.discord.webhookUrl) {
+        throw new Error("Discord webhook URL is required");
+      }
+      
+      // Send test notification
+      const response = await fetch("/api/admin/webhooks/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          url: settings.discord.webhookUrl,
+          name: "Test Notification",
+        })
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || `Failed to test webhook: ${response.status}`);
+      }
+      
+      toast({
+        title: "Test successful",
+        description: "Test notification sent to Discord webhook",
+      });
+    } catch (err) {
+      console.error("Error testing webhook:", err);
+      
+      toast({
+        title: "Test failed",
+        description: err instanceof Error ? err.message : "Failed to test Discord webhook",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingWebhook(false);
     }
   };
   
@@ -424,6 +589,10 @@ export default function SettingsPanel(): JSX.Element {
           newPassword: "",
           confirmPassword: ""
         },
+        discord: {
+          enabled: false,
+          webhookUrl: ""
+        },
         isDirty: true
       });
     } else if (resetType === "appearance") {
@@ -451,6 +620,16 @@ export default function SettingsPanel(): JSX.Element {
           showAuthor: true,
           showDates: true,
           showRelated: true
+        },
+        isDirty: true
+      }));
+    } else if (resetType === "discord") {
+      // Reset only Discord settings
+      setSettings(prev => ({
+        ...prev,
+        discord: {
+          enabled: false,
+          webhookUrl: ""
         },
         isDirty: true
       }));
@@ -507,7 +686,7 @@ export default function SettingsPanel(): JSX.Element {
       )}
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 mb-6">
+        <TabsList className="grid grid-cols-5 mb-6">
           <TabsTrigger value="general">
             <Globe className="w-4 h-4 mr-2" />
             General
@@ -519,6 +698,25 @@ export default function SettingsPanel(): JSX.Element {
           <TabsTrigger value="display">
             <LayoutGrid className="w-4 h-4 mr-2" />
             Display
+          </TabsTrigger>
+          <TabsTrigger value="integrations">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="w-4 h-4 mr-2"
+            >
+              <path d="M15 5v14" />
+              <path d="M5 19h14" />
+              <circle cx="9" cy="9" r="4" />
+              <circle cx="19" cy="5" r="2" />
+              <circle cx="5" cy="19" r="2" />
+            </svg>
+            Integrations
           </TabsTrigger>
           <TabsTrigger value="account">
             <User className="w-4 h-4 mr-2" />
@@ -955,7 +1153,114 @@ export default function SettingsPanel(): JSX.Element {
                   Reset Display Settings
                 </Button>
               </div>
-              </CardContent>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Integrations Settings */}
+        <TabsContent value="integrations" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Discord Integration</CardTitle>
+              <CardDescription>
+                Configure Discord webhook notifications for new blog posts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="discord-enabled">Enable Discord Notifications</Label>
+                  <p className="text-xs text-muted-foreground">Send notifications to Discord when new posts are published</p>
+                </div>
+                <Switch 
+                  id="discord-enabled" 
+                  checked={settings.discord.enabled}
+                  onCheckedChange={(checked) => handleInputChange('discord', 'enabled', checked)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="discord-webhook-url">Discord Webhook URL</Label>
+                <Input 
+                  id="discord-webhook-url" 
+                  type="url" 
+                  placeholder="https://discord.com/api/webhooks/..." 
+                  value={settings.discord.webhookUrl}
+                  onChange={(e) => handleInputChange('discord', 'webhookUrl', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">The webhook URL from Discord to send notifications to</p>
+              </div>
+              
+              <div className="mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleTestDiscordWebhook}
+                  disabled={!settings.discord.webhookUrl || !settings.discord.enabled}
+                >
+                  {isTestingWebhook ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Testing...
+                    </>
+                  ) : (
+                    <>
+                      Send Test Notification
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              <Separator className="my-4" />
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setResetType("discord");
+                    setResetDialogOpen(true);
+                  }}
+                >
+                  Reset Discord Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>API Access</CardTitle>
+              <CardDescription>
+                Configure API access for external services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="api-key">API Key</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="api-key"
+                    type="password" 
+                    value="sk_live_xxxxxxxxxxxxxxxxxxxx" 
+                    className="flex-1"
+                    disabled 
+                  />
+                  <Button variant="outline">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Regenerate
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Used for external services to access your blog content</p>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="api-enabled">Enable API Access</Label>
+                  <p className="text-xs text-muted-foreground">Allow external applications to access your blog via API</p>
+                </div>
+                <Switch id="api-enabled" defaultChecked />
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
         
@@ -1138,7 +1443,9 @@ export default function SettingsPanel(): JSX.Element {
                 ? "Reset All Settings"
                 : resetType === "appearance" 
                   ? "Reset Theme Settings" 
-                  : "Reset Display Settings"}
+                  : resetType === "display"
+                    ? "Reset Display Settings"
+                    : "Reset Discord Settings"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               This will reset {resetType === "all" ? "all" : resetType} settings to their default values.

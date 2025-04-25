@@ -8,7 +8,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
+  // app/api/admin/users/[id]/permissions/route.ts (continued)
+    try {
     const userId = parseInt(params.id);
     
     if (isNaN(userId)) {
