@@ -1,5 +1,4 @@
 // lib/utils/markdown.ts
-
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
@@ -16,6 +15,12 @@ export interface BlogPost {
   category: string;
   featured: boolean;
   url?: string; // URL to the blob
+  author?: { // Add author to the interface
+    id: number;
+    username: string;
+    realName: string | null;
+    avatarUrl: string | null;
+  } | null;
 }
 
 /**
@@ -58,7 +63,8 @@ export async function getAllPosts(): Promise<BlogPost[]> {
             readingTime: `${readingTimeMinutes} min read`,
             category: data.category || 'Uncategorized',
             featured: data.featured || false,
-            url: blob.url
+            url: blob.url,
+            author: data.author || null
           };
         } catch (error) {
           console.error(`Error processing post ${blob.url}:`, error);
@@ -142,7 +148,6 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
       category: data.category || 'Uncategorized',
       featured: data.featured || false,
       url: blobs[0].url,
-      // Add author field for TypeScript compatibility
       author: data.author || null
     };
   } catch (error) {

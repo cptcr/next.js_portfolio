@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { postsService } from "@/lib/services/posts";
 import { settingsService } from "@/lib/services/settings";
 import BlogList from "@/components/blog/blog-list";
+import { BlogPost as MarkdownBlogPost } from "@/lib/utils/markdown";
 
 export const metadata: Metadata = {
   title: "Blog | Tony (cptcr)",
@@ -13,12 +14,12 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Define an interface to make TypeScript happy
-interface BlogPost {
+// Create a new interface that matches the actual data structure
+interface PostWithAuthor {
   id: number;
   slug: string;
   title: string;
-  date: string; // We'll need to add this from publishedAt
+  date: string;
   excerpt: string | null;
   content: string;
   readingTime: string;
@@ -36,6 +37,21 @@ interface BlogPost {
   };
 }
 
+// Create a type conversion function to make TypeScript happy
+function convertToMarkdownBlogPost(post: PostWithAuthor): MarkdownBlogPost {
+  return {
+    slug: post.slug,
+    title: post.title,
+    date: post.date,
+    excerpt: post.excerpt || "",  // Convert null to empty string
+    content: post.content,
+    readingTime: post.readingTime,
+    category: post.category || "Uncategorized",  // Convert null to default
+    featured: post.featured || false,  // Convert null to false
+    author: post.author
+  };
+}
+
 export default async function BlogPage() {
   // Fetch settings
   const siteSettings = await settingsService.getAllSettings();
@@ -50,15 +66,15 @@ export default async function BlogPage() {
   });
   
   // If showing featured posts is enabled, get them separately
-  let featuredPosts: BlogPost[] = [];
+  let featuredPostsData: PostWithAuthor[] = [];
   if (showFeaturedPosts) {
-    const featuredPostsData = await postsService.listPosts({
+    const featuredPosts = await postsService.listPosts({
       limit: siteSettings.featured_post_limit || 3,
       featured: true
     });
     
     // Transform to include date property
-    featuredPosts = featuredPostsData.map(post => ({
+    featuredPostsData = featuredPosts.map(post => ({
       ...post,
       date: post.publishedAt.toISOString(),
       readingTime: postsService.calculateReadingTime(post.content)
@@ -74,6 +90,10 @@ export default async function BlogPage() {
     date: post.publishedAt.toISOString(),
     readingTime: postsService.calculateReadingTime(post.content)
   }));
+
+  // Convert the posts to the correct type for the BlogList component
+  const convertedPosts = postsWithReadingTime.map(convertToMarkdownBlogPost);
+  const convertedFeaturedPosts = featuredPostsData.map(convertToMarkdownBlogPost);
 
   return (
     <div className="min-h-screen pt-24">
@@ -97,8 +117,8 @@ export default async function BlogPage() {
         <div className="container px-4">
           <div className="max-w-5xl mx-auto">
             <BlogList 
-              posts={postsWithReadingTime} 
-              featuredPosts={showFeaturedPosts ? featuredPosts : []}
+              posts={convertedPosts} 
+              featuredPosts={showFeaturedPosts ? convertedFeaturedPosts : []}
               categories={categories}
               showAuthorInfo={siteSettings.show_author_info !== false}
             />
