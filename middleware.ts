@@ -1,48 +1,57 @@
 // middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { runMigrations } from './lib/db/postgres';
-import { usersService } from './lib/services/users';
-import { settingsService } from './lib/services/settings';
+import { databaseConfig } from './lib/db/config';
 
-// Initialize database once per app startup
+// Initialization flag
 let hasInitialized = false;
 
-async function initializeDatabase() {
-  if (hasInitialized) return;
-  
-  try {
-    // Run database migrations
-    await runMigrations();
-    
-    // Initialize root admin user if no users exist
-    await usersService.initializeRootUser();
-    
-    // Initialize default settings
-    await settingsService.initializeDefaultSettings();
-    
-    hasInitialized = true;
-    console.log('Database initialization complete');
-  } catch (error) {
-    console.error('Error initializing database:', error);
-  }
-}
-
 export async function middleware(request: NextRequest) {
-  // Skip initialization during static generation
-  if (process.env.NODE_ENV !== 'production' && !hasInitialized) {
-    await initializeDatabase();
+  // Skip database initialization if disabled
+  if (!databaseConfig.enableDatabase) {
+    return NextResponse.next();
   }
   
-  // Continue with the request
+  // Only initialize once per app instance
+  if (!hasInitialized) {
+    try {
+      // Dynamic imports to avoid loading database modules when not needed
+      const { runMigrations } = await import('./lib/db/postgres');
+      const { usersService } = await import('./lib/services/users');
+      const { settingsService } = await import('./lib/services/settings');
+      
+      // Run database setup asynchronously, but don't wait for it
+      Promise.resolve().then(async () => {
+        try {
+          // Run database migrations
+          await runMigrations();
+          
+          // Initialize root admin user if no users exist
+          await usersService.initializeRootUser();
+          
+          // Initialize default settings
+          await settingsService.initializeDefaultSettings();
+          
+          hasInitialized = true;
+          console.log('Database initialization complete');
+        } catch (error) {
+          console.error('Error during database initialization:', error);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to import database modules:', error);
+    }
+  }
+  
+  // Continue with the request immediately
   return NextResponse.next();
 }
 
-// This is a hack to ensure the middleware runs at least once during development
+// Match all request paths except for static files
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
+     * Match all request paths except for:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)

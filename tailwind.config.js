@@ -1,6 +1,3 @@
-import { fontFamily } from "tailwindcss/defaultTheme";
-import plugin from "tailwindcss/plugin";
-
 /** @type {import('tailwindcss').Config} */
 const config = {
   darkMode: ["class"],
@@ -75,9 +72,17 @@ const config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', ...fontFamily.sans],
-        heading: ['var(--font-heading)', ...fontFamily.sans],
-        mono: ['var(--font-mono)', ...fontFamily.mono],
+        sans: ['var(--font-sans)'],
+        heading: ['var(--font-heading)'],
+        mono: ['var(--font-mono)'],
+      },
+      letterSpacing: {
+        tighter: '-0.05em',
+        tight: '-0.025em',
+        normal: '0',
+        wide: '0.025em',
+        wider: '0.05em',
+        widest: '0.1em',
       },
       keyframes: {
         'accordion-down': {
@@ -97,10 +102,30 @@ const config = {
   },
   plugins: [
     require("tailwindcss-animate"),
-    plugin(({ addVariant }) => {
-      addVariant("hocus", ["&:hover", "&:focus"]);
-    }),
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.tracking-tighter': {
+          letterSpacing: '-0.05em',
+        },
+        '.tracking-tight': {
+          letterSpacing: '-0.025em',
+        },
+        '.tracking-normal': {
+          letterSpacing: '0',
+        },
+        '.tracking-wide': {
+          letterSpacing: '0.025em',
+        },
+        '.tracking-wider': {
+          letterSpacing: '0.05em',
+        },
+        '.tracking-widest': {
+          letterSpacing: '0.1em',
+        },
+      }
+      addUtilities(newUtilities)
+    },
   ],
 }
 
-export default config;
+module.exports = config;

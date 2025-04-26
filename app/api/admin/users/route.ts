@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const total = await usersService.countUsers();
     
     // Remove sensitive data
-    const sanitizedUsers = users.map(user => ({
+    const sanitizedUsers = users.map((user: { id: any; username: any; email: any; realName: any; avatarUrl: any; role: any; createdAt: any; updatedAt: any; }) => ({
       id: user.id,
       username: user.username,
       email: user.email,

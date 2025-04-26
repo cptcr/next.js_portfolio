@@ -25,14 +25,35 @@ const nextConfig = {
   ],
   webpack: (config, { isServer }) => {
     if (!isServer) {
+      // Fixes npm packages that depend on `fs` module and other Node.js specifics
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         crypto: false,
         path: false,
         os: false,
+        net: false,
+        tls: false,
+        pg: false,
+        'pg-native': false,
+        'cloudflare:sockets': false,
       };
     }
+    
+    // Ignore pg-native and other native modules with externals
+    config.externals = [...(config.externals || []), 'pg-native'];
+    
+    // Additional fixes for problematic modules
+    config.module = {
+      ...config.module,
+      rules: [
+        ...config.module.rules,
+        {
+          test: /node_modules\/pg\//,
+          use: 'null-loader'
+        }
+      ]
+    };
     
     return config;
   },
