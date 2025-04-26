@@ -42,6 +42,12 @@ const nextConfig = {
     
     // Ignore pg-native and other native modules with externals
     config.externals = [...(config.externals || []), 'pg-native'];
+
+    config.ignoreWarnings = [
+      {
+        message: /Critical dependency: the request of a dependency is an expression/,
+      }
+    ];
     
     // Additional fixes for problematic modules
     config.module = {
