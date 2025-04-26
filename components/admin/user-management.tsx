@@ -1,8 +1,7 @@
-// components/admin/user-management.tsx
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,8 +57,10 @@ interface UserPermissions {
 }
 
 export default function UserManagement() {
+  const router = useRouter()
   const { toast } = useToast()
   const [users, setUsers] = useState<UserData[]>([])
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
@@ -74,6 +75,7 @@ export default function UserManagement() {
     email: "",
     realName: "",
     password: "",
+    confirmPassword: "",
     role: "user"
   })
   
@@ -82,10 +84,46 @@ export default function UserManagement() {
     username: "",
     email: "",
     realName: "",
+    password: "",
+    confirmPassword: "",
     role: "user"
   })
   
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Fetch current user information
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem("adminToken")
+        if (!token) {
+          router.push("/admin")
+          return
+        }
+        
+        const response = await fetch("/api/admin/me", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setCurrentUser(data)
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error)
+      }
+    }
+    
+    fetchCurrentUser()
+  }, [router])
+  
   // Fetch all users
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+  
   const fetchUsers = async () => {
     setIsLoading(true)
     setError(null)
@@ -143,7 +181,16 @@ export default function UserManagement() {
       }
       
       const data = await response.json()
-      setSelectedUserPermissions(data.permissions || null)
+      setSelectedUserPermissions(data.permissions || {
+        userId,
+        canCreatePosts: false,
+        canEditOwnPosts: false,
+        canEditAllPosts: false,
+        canDeleteOwnPosts: false,
+        canDeleteAllPosts: false,
+        canManageUsers: false,
+        canManageSettings: false
+      })
     } catch (err) {
       console.error("Error fetching user permissions:", err)
       toast({
@@ -156,7 +203,26 @@ export default function UserManagement() {
   
   // Create new user
   const handleCreateUser = async () => {
+    if (newUser.password !== newUser.confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please ensure both passwords match",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    if (newUser.password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters",
+        variant: "destructive"
+      })
+      return
+    }
+    
     try {
+      setIsSubmitting(true)
       const token = localStorage.getItem("adminToken")
       
       if (!token) {
@@ -179,7 +245,13 @@ export default function UserManagement() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify({
+          username: newUser.username,
+          email: newUser.email,
+          realName: newUser.realName,
+          password: newUser.password,
+          role: newUser.role
+        }),
       })
       
       if (!response.ok) {
@@ -200,6 +272,7 @@ export default function UserManagement() {
         email: "",
         realName: "",
         password: "",
+        confirmPassword: "",
         role: "user"
       })
       setCreateDialogOpen(false)
@@ -213,12 +286,33 @@ export default function UserManagement() {
         description: err instanceof Error ? err.message : "Failed to create user",
         variant: "destructive",
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
   
   // Update user
   const handleUpdateUser = async () => {
+    if (editUser.password && editUser.password !== editUser.confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please ensure both passwords match",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    if (editUser.password && editUser.password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters",
+        variant: "destructive"
+      })
+      return
+    }
+    
     try {
+      setIsSubmitting(true)
       const token = localStorage.getItem("adminToken")
       
       if (!token) {
@@ -235,13 +329,25 @@ export default function UserManagement() {
         return
       }
       
+      const userData: any = {
+        username: editUser.username,
+        email: editUser.email,
+        realName: editUser.realName,
+        role: editUser.role
+      }
+      
+      // Only include password if it was changed
+      if (editUser.password) {
+        userData.password = editUser.password
+      }
+      
       const response = await fetch(`/api/admin/users/${editUser.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editUser),
+        body: JSON.stringify(userData),
       })
       
       if (!response.ok) {
@@ -259,6 +365,12 @@ export default function UserManagement() {
       
       // Refresh users list
       fetchUsers()
+      
+      // If selected user was updated, refresh the selection
+      if (selectedUser && selectedUser.id === editUser.id) {
+        const updatedUser = { ...selectedUser, ...userData }
+        setSelectedUser(updatedUser as UserData)
+      }
     } catch (err) {
       console.error("Error updating user:", err)
       toast({
@@ -266,6 +378,8 @@ export default function UserManagement() {
         description: err instanceof Error ? err.message : "Failed to update user",
         variant: "destructive",
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
   
@@ -274,6 +388,7 @@ export default function UserManagement() {
     try {
       if (!selectedUser || !selectedUserPermissions) return
       
+      setIsSubmitting(true)
       const token = localStorage.getItem("adminToken")
       
       if (!token) {
@@ -298,9 +413,6 @@ export default function UserManagement() {
         title: "Permissions Updated",
         description: `Permissions for ${selectedUser.username} have been updated successfully`,
       })
-      
-      // Refresh permissions
-      fetchUserPermissions(selectedUser.id)
     } catch (err) {
       console.error("Error updating permissions:", err)
       toast({
@@ -308,6 +420,8 @@ export default function UserManagement() {
         description: err instanceof Error ? err.message : "Failed to update permissions",
         variant: "destructive",
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
   
@@ -316,6 +430,7 @@ export default function UserManagement() {
     try {
       if (!selectedUser) return
       
+      setIsSubmitting(true)
       const token = localStorage.getItem("adminToken")
       
       if (!token) {
@@ -342,6 +457,7 @@ export default function UserManagement() {
       // Close dialog and deselect user
       setDeleteDialogOpen(false)
       setSelectedUser(null)
+      setSelectedUserPermissions(null)
       
       // Refresh users list
       fetchUsers()
@@ -352,6 +468,8 @@ export default function UserManagement() {
         description: err instanceof Error ? err.message : "Failed to delete user",
         variant: "destructive",
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
   
@@ -371,10 +489,19 @@ export default function UserManagement() {
     })
   }
   
-  // Init: Fetch users
-  useEffect(() => {
-    fetchUsers()
-  }, [])
+  // Check if user can be edited or deleted
+  const canModifyUser = (user: UserData) => {
+    if (!currentUser) return false
+    
+    // Root user can do anything
+    if (currentUser.role === "admin" && currentUser.username === "admin") return true
+    
+    // Admin cannot modify root user or other admins
+    if (user.role === "admin") return false
+    
+    // Admin can modify regular users
+    return currentUser.role === "admin"
+  }
   
   if (isLoading) {
     return (
@@ -459,7 +586,9 @@ export default function UserManagement() {
                         {user.email}
                       </div>
                     </div>
-                    <Badge>{user.role}</Badge>
+                    <Badge variant={user.role === "admin" ? "default" : "outline"}>
+                      {user.role}
+                    </Badge>
                   </div>
                 ))
               )}
@@ -485,32 +614,38 @@ export default function UserManagement() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditUser({
-                        id: selectedUser.id,
-                        username: selectedUser.username,
-                        email: selectedUser.email,
-                        realName: selectedUser.realName || '',
-                        role: selectedUser.role
-                      })
-                      setEditUserDialogOpen(true)
-                    }}
-                  >
-                    <Pencil className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
+                  {canModifyUser(selectedUser) && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditUser({
+                            id: selectedUser.id,
+                            username: selectedUser.username,
+                            email: selectedUser.email,
+                            realName: selectedUser.realName || '',
+                            password: '',
+                            confirmPassword: '',
+                            role: selectedUser.role
+                          })
+                          setEditUserDialogOpen(true)
+                        }}
+                      >
+                        <Pencil className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                      
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardHeader>
               
@@ -541,6 +676,7 @@ export default function UserManagement() {
                                   id="canCreatePosts"
                                   checked={selectedUserPermissions.canCreatePosts}
                                   onCheckedChange={(checked) => handlePermissionChange('canCreatePosts', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                               
@@ -550,6 +686,7 @@ export default function UserManagement() {
                                   id="canEditOwnPosts"
                                   checked={selectedUserPermissions.canEditOwnPosts}
                                   onCheckedChange={(checked) => handlePermissionChange('canEditOwnPosts', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                               
@@ -559,6 +696,7 @@ export default function UserManagement() {
                                   id="canEditAllPosts"
                                   checked={selectedUserPermissions.canEditAllPosts}
                                   onCheckedChange={(checked) => handlePermissionChange('canEditAllPosts', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                               
@@ -568,6 +706,7 @@ export default function UserManagement() {
                                   id="canDeleteOwnPosts"
                                   checked={selectedUserPermissions.canDeleteOwnPosts}
                                   onCheckedChange={(checked) => handlePermissionChange('canDeleteOwnPosts', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                               
@@ -577,6 +716,7 @@ export default function UserManagement() {
                                   id="canDeleteAllPosts"
                                   checked={selectedUserPermissions.canDeleteAllPosts}
                                   onCheckedChange={(checked) => handlePermissionChange('canDeleteAllPosts', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                             </div>
@@ -592,6 +732,7 @@ export default function UserManagement() {
                                   id="canManageUsers"
                                   checked={selectedUserPermissions.canManageUsers}
                                   onCheckedChange={(checked) => handlePermissionChange('canManageUsers', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                               
@@ -601,17 +742,30 @@ export default function UserManagement() {
                                   id="canManageSettings"
                                   checked={selectedUserPermissions.canManageSettings}
                                   onCheckedChange={(checked) => handlePermissionChange('canManageSettings', checked)}
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="flex justify-end">
-                          <Button onClick={handleUpdatePermissions}>
-                            Save Permissions
-                          </Button>
-                        </div>
+                        {canModifyUser(selectedUser) && (
+                          <div className="flex justify-end">
+                            <Button 
+                              onClick={handleUpdatePermissions}
+                              disabled={isSubmitting}
+                            >
+                              {isSubmitting ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                "Save Permissions"
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex items-center justify-center py-10">
@@ -723,6 +877,17 @@ export default function UserManagement() {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="new-confirm-password">Confirm Password*</Label>
+              <Input
+                id="new-confirm-password"
+                type="password"
+                value={newUser.confirmPassword}
+                onChange={(e) => setNewUser({ ...newUser, confirmPassword: e.target.value })}
+                placeholder="Confirm password"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="new-realname">Real Name</Label>
               <Input
                 id="new-realname"
@@ -748,8 +913,18 @@ export default function UserManagement() {
           
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateUser}>
-              Create User
+            <AlertDialogAction 
+              onClick={handleCreateUser}
+              disabled={isSubmitting || !newUser.username || !newUser.email || !newUser.password || !newUser.confirmPassword}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create User"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -788,6 +963,28 @@ export default function UserManagement() {
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="edit-password">Password (leave blank to keep current)</Label>
+              <Input
+                id="edit-password"
+                type="password"
+                value={editUser.password}
+                onChange={(e) => setEditUser({ ...editUser, password: e.target.value })}
+                placeholder="Enter new password"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-confirm-password">Confirm Password</Label>
+              <Input
+                id="edit-confirm-password"
+                type="password"
+                value={editUser.confirmPassword}
+                onChange={(e) => setEditUser({ ...editUser, confirmPassword: e.target.value })}
+                placeholder="Confirm new password"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="edit-realname">Real Name</Label>
               <Input
                 id="edit-realname"
@@ -813,8 +1010,18 @@ export default function UserManagement() {
           
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUpdateUser}>
-              Update User
+            <AlertDialogAction 
+              onClick={handleUpdateUser}
+              disabled={isSubmitting || !editUser.username || !editUser.email}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update User"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -834,8 +1041,16 @@ export default function UserManagement() {
             <AlertDialogAction
               onClick={handleDeleteUser}
               className="bg-red-500 hover:bg-red-600"
+              disabled={isSubmitting}
             >
-              Delete
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

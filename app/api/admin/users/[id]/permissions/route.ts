@@ -1,7 +1,34 @@
 // app/api/admin/users/[id]/permissions/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/lib/services/auth';
+import { verify } from "jsonwebtoken";
 import { usersService } from '@/lib/services/users';
+
+// Constants
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me";
+
+// Middleware to verify authentication
+async function verifyAuth(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authenticated: false, error: "Missing or invalid authorization header" };
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    const payload = verify(token, JWT_SECRET);
+    return { 
+      authenticated: true, 
+      username: (payload as any).username 
+    };
+  } catch (error) {
+    return { 
+      authenticated: false, 
+      error: "Invalid or expired token" 
+    };
+  }
+}
 
 // GET: Get user permissions
 export async function GET(
@@ -19,12 +46,22 @@ export async function GET(
     }
     
     // Authenticate
-    const currentUser = await authService.getCurrentUser();
+    const auth = await verifyAuth(request);
+    
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { message: auth.error },
+        { status: 401 }
+      );
+    }
+    
+    // Get current user details to check permissions
+    const currentUser = await usersService.getUserByUsername(auth.username);
     
     if (!currentUser) {
       return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
+        { message: 'User not found' },
+        { status: 404 }
       );
     }
     
@@ -76,17 +113,26 @@ export async function PUT(
     }
     
     // Authenticate
-    const currentUser = await authService.getCurrentUser();
+    const auth = await verifyAuth(request);
     
-    if (!currentUser) {
+    if (!auth.authenticated) {
       return NextResponse.json(
-        { message: 'Not authenticated' },
+        { message: auth.error },
         { status: 401 }
       );
     }
     
+    // Get current user details to check permissions
+    const currentUser = await usersService.getUserByUsername(auth.username);
+    
+    if (!currentUser) {
+      return NextResponse.json(
+        { message: 'User not found' },
+        { status: 404 }
+      );
+    }
+    
     // Only admins and users with canManageUsers permission can update permissions
-    // Use a different variable name to avoid redeclaration
     const hasManageUsersPermission = await usersService.hasPermission(currentUser.id, 'canManageUsers');
     
     if (!hasManageUsersPermission && currentUser.role !== 'admin') {
@@ -97,12 +143,20 @@ export async function PUT(
     }
     
     // Check if user exists
-    const user = await usersService.getUserById(userId);
+    const targetUser = await usersService.getUserById(userId);
     
-    if (!user) {
+    if (!targetUser) {
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }
+      );
+    }
+    
+    // Regular admins cannot modify other admins' permissions
+    if (targetUser.role === 'admin' && currentUser.username !== 'admin') {
+      return NextResponse.json(
+        { message: 'Not authorized to modify admin permissions' },
+        { status: 403 }
       );
     }
     
@@ -118,8 +172,8 @@ export async function PUT(
       canManageSettings 
     } = body;
     
-    // Don't allow non-admins to grant admin-level permissions
-    if (currentUser.role !== 'admin') {
+    // Don't allow non-root admins to grant admin-level permissions
+    if (currentUser.role === 'admin' && currentUser.username !== 'admin') {
       if (canEditAllPosts || canDeleteAllPosts || canManageUsers || canManageSettings) {
         return NextResponse.json(
           { message: 'Not authorized to grant admin-level permissions' },

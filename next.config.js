@@ -23,13 +23,17 @@ const nextConfig = {
     '@radix-ui/react-alert-dialog',
     '@radix-ui/react-select',
   ],
-  webpack(config, { isServer }) {
+  webpack: (config, { isServer }) => {
     if (!isServer) {
-      config.node = {
-        fs: 'empty',
-        crypto: 'empty'
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        crypto: false,
+        path: false,
+        os: false,
       };
     }
+    
     return config;
   },
 };
