@@ -4,8 +4,11 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    --background: 0 0% 100%; /* Define background variable */
+    --foreground: 224 71.4% 4.1%; /* Define foreground variable */
+    --primary: 220.9 39.3% 11%; /* Define primary variable */
+    --primary-foreground: 210 20% 98%; /* Define primary foreground */
+    --border: theme('colors.gray.300', #e5e7eb); /* Ensure fallback */
     
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
@@ -28,7 +31,7 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
     
-    --border: 220 13% 91%;
+    --border: theme('colors.gray.300', #e5e7eb); /* Same as above */
     --input: 220 13% 91%;
     --ring: 224 71.4% 4.1%;
     
@@ -61,7 +64,7 @@
     --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
+    --border: theme('colors.gray.500', #6b7280);
     --input: 215 27.9% 16.9%;
     --ring: 216 12.2% 83.9%;
     --chart-1: 220 70% 50%;
@@ -73,14 +76,15 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
+   * {
+    border-color: var(--border);
   }
-  
+
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-heading;
   }
@@ -88,19 +92,19 @@
   h1 {
     @apply text-4xl font-bold md:text-5xl lg:text-6xl;
   }
-  
+
   h2 {
     @apply text-3xl font-bold md:text-4xl;
   }
-  
+
   h3 {
     @apply text-2xl font-bold md:text-3xl;
   }
-  
+
   h4 {
     @apply text-xl font-bold md:text-2xl;
   }
-  
+
   pre, code {
     @apply font-mono;
   }

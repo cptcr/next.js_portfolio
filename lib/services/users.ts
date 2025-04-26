@@ -2,7 +2,7 @@
 import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../db/postgres';
 import { users, permissions, User, NewUser, Permission, NewPermission } from '../db/schema';
-import { hash, compare } from 'bcrypt';
+import { hash, compare } from 'bcryptjs';
 
 // User services
 export const usersService = {

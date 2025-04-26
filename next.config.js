@@ -1,26 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      'avatars.githubusercontent.com',
-      'cdn.discordapp.com',
-      'github.com',
-    ],
+    domains: ['avatars.githubusercontent.com', 'cdn.discordapp.com', 'github.com'],
   },
-  allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev'],
   reactStrictMode: true,
   typescript: {
-    ignoreBuildErrors: true
+    ignoreBuildErrors: true,
   },
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
   experimental: {
     reactCompiler: true,
-    concurrentFeatures: true,
-    appDir: true,
-    serverComponents: true,
-    optimizeCss: true
+    optimizeCss: true,
   },
   transpilePackages: [
     'framer-motion',
@@ -29,8 +21,17 @@ const nextConfig = {
     '@radix-ui/react-dialog',
     '@radix-ui/react-popover',
     '@radix-ui/react-alert-dialog',
-    '@radix-ui/react-select'
+    '@radix-ui/react-select',
   ],
-}
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      config.node = {
+        fs: 'empty',
+        crypto: 'empty'
+      };
+    }
+    return config;
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

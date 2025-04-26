@@ -3,6 +3,7 @@ import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
 import { list } from '@vercel/blob';
+import { RequestInfo } from 'undici-types';
 
 // Types for blog posts
 export interface BlogPost {
@@ -37,13 +38,13 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 
     // Process each blob to extract metadata
     const allPostsData = await Promise.all(
-      blobs.map(async (blob) => {
+      blobs.map(async (blob: { pathname: string; url: RequestInfo; }) => {
         try {
           // Extract slug from the pathname
           const slug = blob.pathname.replace(/^posts\/|\.md$/g, '');
           
           // Fetch the markdown content directly from source
-          const response = await fetch(blob.url, { cache: 'no-store' });
+          const response = await fetch(blob.url as string, { cache: 'no-store' });
           const fileContents = await response.text();
 
           // Parse metadata with gray-matter
@@ -93,7 +94,7 @@ export async function getAllPostSlugs() {
     // List all blobs with the posts/ prefix
     const { blobs } = await list({ prefix: 'posts/' });
     
-    return blobs.map(blob => {
+    return blobs.map((blob: { pathname: string; }) => {
       const slug = blob.pathname.replace(/^posts\/|\.md$/g, '');
       return {
         params: {
