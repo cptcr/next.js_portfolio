@@ -36,7 +36,7 @@ async function verifyAuth(request: NextRequest): Promise<{ authenticated: boolea
     }
   } catch (error: any) {
     // Log specific JWT errors
-     if (error.name === 'TokenExpiredError') {
+      if (error.name === 'TokenExpiredError') {
         console.error('[verifyAuth] Token verification failed: Token expired at', new Date(error.expiredAt * 1000));
     } else if (error.name === 'JsonWebTokenError') {
         console.error('[verifyAuth] Token verification failed: Invalid token -', error.message);
@@ -119,12 +119,12 @@ export async function PUT(
     // console.log(`[PUT] Accessed params.id: ${userIdString}`);
 
     const userId = parseInt(userIdString);
-     if (isNaN(userId)) {
-       console.log(`[PUT] Invalid user ID format after parsing: ${userIdString}`);
-      return NextResponse.json(
-        { message: 'Invalid user ID format' },
-        { status: 400 }
-      );
+      if (isNaN(userId)) {
+        console.log(`[PUT] Invalid user ID format after parsing: ${userIdString}`);
+       return NextResponse.json(
+         { message: 'Invalid user ID format' },
+         { status: 400 }
+       );
     }
     // console.log(`[PUT] Parsed userId: ${userId}`);
 
@@ -133,7 +133,7 @@ export async function PUT(
     if (!auth.authenticated || !auth.username) {
       return NextResponse.json({ message: auth.error || 'Not authenticated' }, { status: 401 });
     }
-     // Fetch current user
+      // Fetch current user
     const currentUser = await usersService.getUserByUsername(auth.username);
     if (!currentUser) {
       return NextResponse.json({ message: 'Authenticated user not found' }, { status: 404 });
@@ -154,13 +154,17 @@ export async function PUT(
     }
     // Parse body
     const body = await request.json();
-    const { canCreatePosts, canEditOwnPosts, canEditAllPosts, canDeleteOwnPosts, canDeleteAllPosts, canManageUsers, canManageSettings } = body;
+    // ** FIX APPLIED HERE ** Renamed 'canManageUsers' from body to 'inputCanManageUsers'
+    const { canCreatePosts, canEditOwnPosts, canEditAllPosts, canDeleteOwnPosts, canDeleteAllPosts, canManageUsers: inputCanManageUsers, canManageSettings } = body;
+
     // Authorization Check 3 (Allow all admins)
-    const isTryingToGrantAdminPermissions = canEditAllPosts || canDeleteAllPosts || canManageUsers || canManageSettings;
+    // ** FIX APPLIED HERE ** Use renamed variable 'inputCanManageUsers'
+    const isTryingToGrantAdminPermissions = canEditAllPosts || canDeleteAllPosts || inputCanManageUsers || canManageSettings;
     if (currentUser.role !== 'admin' && isTryingToGrantAdminPermissions) {
         console.log(`[PUT] Authorization failed: User ${currentUser.username} (Role: ${currentUser.role}) cannot grant admin-level permissions.`);
         return NextResponse.json({ message: 'Not authorized to grant admin-level permissions' }, { status: 403 });
     }
+
     // Prepare update data
     const updateData: { [key: string]: boolean } = {};
     if (canCreatePosts !== undefined) updateData.canCreatePosts = !!canCreatePosts;
@@ -168,11 +172,14 @@ export async function PUT(
     if (canEditAllPosts !== undefined) updateData.canEditAllPosts = !!canEditAllPosts;
     if (canDeleteOwnPosts !== undefined) updateData.canDeleteOwnPosts = !!canDeleteOwnPosts;
     if (canDeleteAllPosts !== undefined) updateData.canDeleteAllPosts = !!canDeleteAllPosts;
-    if (canManageUsers !== undefined) updateData.canManageUsers = !!canManageUsers;
+    // ** FIX APPLIED HERE ** Use renamed variable 'inputCanManageUsers' for the value, keep key as 'canManageUsers'
+    if (inputCanManageUsers !== undefined) updateData.canManageUsers = !!inputCanManageUsers;
     if (canManageSettings !== undefined) updateData.canManageSettings = !!canManageSettings;
+
     if (Object.keys(updateData).length === 0) {
         return NextResponse.json({ message: 'No permission data provided to update' }, { status: 400 });
     }
+
     // Update permissions
     const updatedPermissions = await usersService.updatePermissions(userId, updateData);
     if (!updatedPermissions) {
