@@ -1,8 +1,6 @@
 // components/admin/settings-panel.tsx
-"use client"
-
-import { useState, useEffect, JSX } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,24 +10,24 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
-import { cn } from "@/lib/utils/helpers"
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils/helpers";
 import {
   AlertCircle,
   Camera,
@@ -42,7 +40,7 @@ import {
   RefreshCw,
   Save,
   User
-} from "lucide-react"
+} from "lucide-react";
 
 // Types
 interface SettingsState {
@@ -94,7 +92,7 @@ interface SettingsState {
   isDirty: boolean;
 }
 
-export default function SettingsPanel(): JSX.Element {
+export default function SettingsPanel() {
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("general");
@@ -217,17 +215,20 @@ export default function SettingsPanel(): JSX.Element {
           },
           isDirty: false
         }));
-        
-        setIsLoading(false);
       } catch (err) {
         console.error("Error loading settings:", err);
-        setError("Failed to load settings. Please refresh the page.");
+        toast({
+          title: "Error loading settings",
+          description: err instanceof Error ? err.message : "Unknown error",
+          variant: "destructive"
+        });
+      } finally {
         setIsLoading(false);
       }
     };
     
     loadSettings();
-  }, []);
+  }, [toast]);
   
   // Handle form input changes
   const handleInputChange = (section: string, field: string, value: any) => {
@@ -284,7 +285,7 @@ export default function SettingsPanel(): JSX.Element {
   };
   
   // Handle simple field changes (like top level fields)
-  const handleSimpleChange = (field: keyof Omit<SettingsState, 'socialLinks' | 'display' | 'theme' | 'account' | 'security' | 'discord'>, value: any) => {
+  const handleSimpleChange = (field: keyof Omit<SettingsState, 'socialLinks' | 'display' | 'theme' | 'account' | 'security' | 'discord' | 'isDirty'>, value: any) => {
     setSettings(prev => ({
       ...prev,
       [field]: value,
@@ -1196,7 +1197,7 @@ export default function SettingsPanel(): JSX.Element {
                   variant="outline" 
                   size="sm" 
                   onClick={handleTestDiscordWebhook}
-                  disabled={!settings.discord.webhookUrl || !settings.discord.enabled}
+                  disabled={!settings.discord.webhookUrl || !settings.discord.enabled || isTestingWebhook}
                 >
                   {isTestingWebhook ? (
                     <>
@@ -1204,9 +1205,7 @@ export default function SettingsPanel(): JSX.Element {
                       Testing...
                     </>
                   ) : (
-                    <>
-                      Send Test Notification
-                    </>
+                    "Send Test Notification"
                   )}
                 </Button>
               </div>

@@ -1,85 +1,33 @@
 // lib/utils/markdown.ts
+
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
-import { list } from '@vercel/blob';
-import { RequestInfo } from 'undici-types';
-
-// Types for blog posts
-export interface BlogPost {
-  slug: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  content: string;
-  readingTime: string;
-  category: string;
-  featured: boolean;
-  url?: string; // URL to the blob
-  author?: { // Add author to the interface
-    id: number;
-    username: string;
-    realName: string | null;
-    avatarUrl: string | null;
-  } | null;
-}
+import { postsService } from '@/lib/services/posts';
 
 /**
- * Get all blog posts metadata - fully dynamic, no caching
+ * Get all blog posts metadata from the database
  */
-export async function getAllPosts(): Promise<BlogPost[]> {
+export async function getAllPosts() {
   try {
-    // List all blobs with the posts/ prefix - this will always fetch fresh data
-    const { blobs } = await list({ prefix: 'posts/' });
-    
-    if (blobs.length === 0) {
-      return [];
-    }
-
-    // Process each blob to extract metadata
-    const allPostsData = await Promise.all(
-      blobs.map(async (blob: { pathname: string; url: RequestInfo; }) => {
-        try {
-          // Extract slug from the pathname
-          const slug = blob.pathname.replace(/^posts\/|\.md$/g, '');
-          
-          // Fetch the markdown content directly from source
-          const response = await fetch(blob.url as string, { cache: 'no-store' });
-          const fileContents = await response.text();
-
-          // Parse metadata with gray-matter
-          const { data, content } = matter(fileContents);
-
-          // Calculate reading time (average reading speed: 200 words per minute)
-          const wordCount = content.trim().split(/\s+/).length;
-          const readingTimeMinutes = Math.ceil(wordCount / 200);
-          
-          // Format the post data
-          return {
-            slug,
-            title: data.title,
-            date: data.date,
-            excerpt: data.excerpt || '',
-            content: '', // We'll add content only when needed
-            readingTime: `${readingTimeMinutes} min read`,
-            category: data.category || 'Uncategorized',
-            featured: data.featured || false,
-            url: blob.url,
-            author: data.author || null
-          };
-        } catch (error) {
-          console.error(`Error processing post ${blob.url}:`, error);
-          return null;
-        }
-      })
-    );
-
-    // Filter out any posts that failed to process and sort by date
-    const validPosts = allPostsData.filter(Boolean) as BlogPost[];
-    
-    return validPosts.sort((a, b) => {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    // Get posts from database service
+    const posts = await postsService.listPosts({
+      limit: 100, // Adjust as needed
     });
+    
+    // Process posts for display
+    return posts.map((post: { id: any; slug: any; title: any; publishedAt: { toISOString: () => any; }; excerpt: any; content: string; category: any; featured: any; author: any; }) => ({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      date: post.publishedAt.toISOString(),
+      excerpt: post.excerpt,
+      content: post.content,
+      readingTime: postsService.calculateReadingTime(post.content),
+      category: post.category,
+      featured: post.featured,
+      author: post.author
+    }));
   } catch (error) {
     console.error("Error fetching all posts:", error);
     return [];
@@ -87,21 +35,21 @@ export async function getAllPosts(): Promise<BlogPost[]> {
 }
 
 /**
- * Get post slugs for static generation - but will be updated at runtime
+ * Get post slugs for static generation
  */
 export async function getAllPostSlugs() {
   try {
-    // List all blobs with the posts/ prefix
-    const { blobs } = await list({ prefix: 'posts/' });
-    
-    return blobs.map((blob: { pathname: string; }) => {
-      const slug = blob.pathname.replace(/^posts\/|\.md$/g, '');
-      return {
-        params: {
-          slug,
-        },
-      };
+    // Get posts from database service
+    const posts = await postsService.listPosts({
+      limit: 100, // Adjust as needed
     });
+    
+    // Map posts to slug params format
+    return posts.map((post: { slug: any; }) => ({
+      params: {
+        slug: post.slug,
+      },
+    }));
   } catch (error) {
     console.error("Error fetching post slugs:", error);
     return [];
@@ -109,47 +57,42 @@ export async function getAllPostSlugs() {
 }
 
 /**
- * Get a specific post by slug - always fetch current version
+ * Get a specific post by slug
  */
-export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+export async function getPostBySlug(slug: string) {
   try {
-    // Find the specific post by listing with prefix
-    const { blobs } = await list({ prefix: `posts/${slug}.md` });
+    // Get post from database service
+    const post = await postsService.getPostBySlug(slug);
     
-    if (blobs.length === 0) {
+    if (!post) {
       return null;
     }
     
-    // Fetch the markdown content with no caching
-    const response = await fetch(blobs[0].url, { cache: 'no-store' });
-    const fileContents = await response.text();
+    // Process post content if it's in markdown format
+    let contentHtml = post.content;
     
-    // Parse metadata with gray-matter
-    const { data, content } = matter(fileContents);
+    // Check if content might be markdown (not already HTML)
+    if (!post.content.trim().startsWith('<')) {
+      // Process markdown content to HTML
+      const processedContent = await remark()
+        .use(html)
+        .process(post.content);
+      
+      contentHtml = processedContent.toString();
+    }
     
-    // Process markdown content to HTML
-    const processedContent = await remark()
-      .use(html)
-      .process(content);
-    
-    const contentHtml = processedContent.toString();
-    
-    // Calculate reading time
-    const wordCount = content.trim().split(/\s+/).length;
-    const readingTimeMinutes = Math.ceil(wordCount / 200);
-    
-    // Return formatted post
+    // Return processed post
     return {
-      slug,
-      title: data.title,
-      date: data.date,
-      excerpt: data.excerpt || '',
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      date: post.publishedAt.toISOString(),
+      excerpt: post.excerpt,
       content: contentHtml,
-      readingTime: `${readingTimeMinutes} min read`,
-      category: data.category || 'Uncategorized',
-      featured: data.featured || false,
-      url: blobs[0].url,
-      author: data.author || null
+      readingTime: postsService.calculateReadingTime(post.content),
+      category: post.category,
+      featured: post.featured,
+      author: post.author
     };
   } catch (error) {
     console.error(`Error fetching post ${slug}:`, error);

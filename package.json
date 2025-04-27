@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "create_user": "tsx ./scripts/create-user.ts",
-    "delete_user": "tsx ./scripts/delete_user.ts"
+    "delete_user": "tsx ./scripts/delete-user.ts"
   },
   "dependencies": {
     "@mswjs/interceptors": "^0.38.6",
