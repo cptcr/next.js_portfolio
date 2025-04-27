@@ -209,19 +209,12 @@ Contributions are welcome! To contribute:
 This project is licensed under the MIT License. See the LICENSE file for more details.
 
 ## Built with
-![Next.js](https://img.shields.io/badge/Next.js-v15-blue)
-![Neon](https://img.shields.io/badge/Neon-Cloud-purple)
-![ShadCN](https://img.shields.io/badge/ShadCN-UI-blue)
-![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v3.0-blue)
-![Vercel](https://img.shields.io/badge/Vercel-Deploy-blue)
-![Lucide Icons](https://img.shields.io/badge/Lucide-Icons-orange)
-
-- [Next.js](https://nextjs.org/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [ShadCN UI](https://ui.shadcn.com/)
-- [Vercel](https://vercel.com)
-- [Neon](https://neon.tech)
-- [Lucide Icons](https://lucide.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-v15-000000?style=for-the-badge&logo=next.js&logoColor=ffffff)](https://nextjs.org/)
+[![Neon](https://img.shields.io/badge/Neon-Cloud-9c64c5?style=for-the-badge)](https://neon.tech/)
+[![ShadCN](https://img.shields.io/badge/ShadCN-UI-0088cc?style=for-the-badge)](https://shadcn.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v3.0-38b2ac?style=for-the-badge&logo=tailwindcss&logoColor=ffffff)](https://tailwindcss.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Lucide Icons](https://img.shields.io/badge/Lucide-Icons-ff8b00?style=for-the-badge)](https://lucide.dev/)
 
 ---
 
