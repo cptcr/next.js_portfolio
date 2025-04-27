@@ -1,6 +1,6 @@
 // app/blog/page.tsx
 import { Metadata } from "next";
-import { getAllPosts } from "@/lib/utils/markdown";
+import { postsService } from "@/lib/services/posts";
 import { settingsService } from "@/lib/services/settings";
 import BlogList, { BlogPost } from "@/components/blog/blog-list";
 import { headers } from "next/headers";
@@ -23,20 +23,39 @@ export default async function BlogPage() {
   const postsPerPage = siteSettings.posts_per_page || 9;
   const showFeaturedPosts = siteSettings.show_featured_posts !== false;
   
-  // Fetch all posts using the markdown utility
-  // This will fetch directly from the blob storage without caching
-  const allPosts = await getAllPosts();
+  // Fetch all posts using the posts service
+  const allPosts = await postsService.listPosts({
+    limit: 100 // Get a reasonable number of posts
+  });
+  
+  // Transform posts to the expected format for the BlogList component
+  const transformedPosts: BlogPost[] = allPosts.map((post: { slug: any; title: any; publishedAt: { toISOString: () => any; }; excerpt: any; content: string; category: any; featured: any; author: { id: any; username: any; realName: any; avatarUrl: any; }; }) => ({
+    slug: post.slug,
+    title: post.title,
+    date: post.publishedAt.toISOString(),
+    excerpt: post.excerpt || '',
+    content: post.content,
+    readingTime: postsService.calculateReadingTime(post.content),
+    category: post.category || 'Uncategorized',
+    featured: post.featured,
+    author: post.author ? {
+      id: post.author.id,
+      username: post.author.username,
+      realName: post.author.realName,
+      avatarUrl: post.author.avatarUrl
+    } : undefined
+  }));
   
   // Filter posts for pagination
-  const posts = allPosts.slice(0, postsPerPage);
+  const posts = transformedPosts.slice(0, postsPerPage);
   
   // Get all categories for filters
-  const categories = Array.from(new Set(allPosts.map(post => post.category)));
+  const categories = await postsService.getAllCategories();
   
   // If showing featured posts is enabled, get them separately
   let featuredPosts: BlogPost[] = [];
   if (showFeaturedPosts) {
-    featuredPosts = allPosts
+    featuredPosts = transformedPosts
       .filter(post => post.featured)
       .slice(0, siteSettings.featured_post_limit || 3);
   }

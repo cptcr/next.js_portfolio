@@ -1,146 +1,152 @@
+// app/api/admin/users/route.ts
 
-// app/api/admin/users/[id]/permissions/route.ts
-// API handler for user permissions
-import { NextResponse } from "next/server";
-import { verify } from "jsonwebtoken";
-import { usersService } from "@/lib/services/users";
+import { NextResponse } from "next/server"
+import { verify } from "jsonwebtoken"
+import { usersService } from "@/lib/services/users"
+import { hash } from "bcryptjs"
 
 // Constants
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me"
 
 // Middleware to verify authentication
 async function verifyAuth(request: Request) {
-  const authHeader = request.headers.get("authorization");
+  const authHeader = request.headers.get("authorization")
   
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { authenticated: false, error: "Missing or invalid authorization header" };
+    return { authenticated: false, error: "Missing or invalid authorization header" }
   }
   
-  const token = authHeader.substring(7);
+  const token = authHeader.substring(7)
   
   try {
-    const payload = verify(token, JWT_SECRET);
+    const payload = verify(token, JWT_SECRET)
     return { 
       authenticated: true, 
       username: (payload as any).username, 
       userId: (payload as any).userId, 
       role: (payload as any).role 
-    };
+    }
   } catch (error) {
-    return { authenticated: false, error: "Invalid or expired token" };
+    return { authenticated: false, error: "Invalid or expired token" }
   }
 }
 
-// Get user permissions
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+// GET: List all users
+export async function GET(request: Request) {
   try {
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const auth = await verifyAuth(request)
     
     if (!auth.authenticated) {
       return NextResponse.json(
         { message: auth.error },
         { status: 401 }
-      );
+      )
     }
     
-    // Check if user has permission to manage users
+    // Check if user is admin or has permission to manage users
     if (auth.role !== 'admin' && !(await usersService.hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
-        { message: "You do not have permission to view user permissions" },
+        { message: "You do not have permission to view users" },
         { status: 403 }
-      );
+      )
     }
     
-    const id = parseInt(params.id);
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { message: "Invalid user ID" },
-        { status: 400 }
-      );
-    }
+    // Get the limit from query params (if any)
+    const url = new URL(request.url)
+    const limit = parseInt(url.searchParams.get('limit') || '100')
+    const offset = parseInt(url.searchParams.get('offset') || '0')
     
-    // Get user with permissions
-    const userWithPermissions = await usersService.getUserWithPermissions(id);
+    // Get users from service
+    const users = await usersService.listUsers(limit, offset)
     
-    if (!userWithPermissions) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
-    }
+    // Remove passwords from response
+    const safeUsers = users.map((user: { [x: string]: any; password: any }) => {
+      const { password, ...safeUser } = user
+      return safeUser
+    })
     
-    return NextResponse.json({
-      permissions: userWithPermissions.permissions
-    });
+    return NextResponse.json({ users: safeUsers })
   } catch (error) {
-    console.error("Error getting user permissions:", error);
+    console.error("Error listing users:", error)
     return NextResponse.json(
-      { message: "Failed to get user permissions", error: String(error) },
+      { message: "Failed to list users", error: String(error) },
       { status: 500 }
-    );
+    )
   }
 }
 
-// Update user permissions
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+// POST: Create a new user
+export async function POST(request: Request) {
   try {
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const auth = await verifyAuth(request)
     
     if (!auth.authenticated) {
       return NextResponse.json(
         { message: auth.error },
         { status: 401 }
-      );
+      )
     }
     
-    // Check if user has permission to manage users
+    // Check if user is admin or has permission to manage users
     if (auth.role !== 'admin' && !(await usersService.hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
-        { message: "You do not have permission to update user permissions" },
+        { message: "You do not have permission to create users" },
         { status: 403 }
-      );
-    }
-    
-    const id = parseInt(params.id);
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { message: "Invalid user ID" },
-        { status: 400 }
-      );
+      )
     }
     
     // Parse request body
-    const body = await request.json();
+    const body = await request.json()
+    const { username, email, password, realName, role } = body
     
-    // Check if user exists
-    const user = await usersService.getUserById(id);
-    if (!user) {
+    // Validate required fields
+    if (!username || !email || !password) {
       return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
+        { message: "Username, email, and password are required" },
+        { status: 400 }
+      )
     }
     
-    // Update permissions
-    const updatedPermissions = await usersService.updatePermissions(id, body);
+    // Check if username already exists
+    const existingUser = await usersService.getUserByUsername(username)
+    if (existingUser) {
+      return NextResponse.json(
+        { message: "Username already exists" },
+        { status: 400 }
+      )
+    }
+    
+    // Prevent non-admins from creating admins
+    if (auth.role !== 'admin' && role === 'admin') {
+      return NextResponse.json(
+        { message: "Only admins can create admin users" },
+        { status: 403 }
+      )
+    }
+    
+    // Create the user
+    const user = await usersService.createUser({
+      username,
+      email,
+      password,
+      realName: realName || null,
+      role: role || 'user'
+    })
+    
+    // Remove password from response
+    const { password: _, ...safeUser } = user
     
     return NextResponse.json({
-      message: "Permissions updated successfully",
-      permissions: updatedPermissions
-    });
+      message: "User created successfully",
+      user: safeUser
+    })
   } catch (error) {
-    console.error("Error updating user permissions:", error);
+    console.error("Error creating user:", error)
     return NextResponse.json(
-      { message: "Failed to update user permissions", error: String(error) },
+      { message: "Failed to create user", error: String(error) },
       { status: 500 }
-    );
+    )
   }
 }

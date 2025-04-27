@@ -4,4 +4,6 @@
 4. Use less vercel npms so every platform delivers the same benefits
 5. Add 2FA (optional feature)
 6. Add passkey feature (optional)
-7. Add script to delete users
+7. Make Discord WebHooks Working
+8. Add external API Access
+9. Add more customization options by using the database

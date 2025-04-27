@@ -1,48 +1,30 @@
 // lib/auth/credentials.ts
 
-// Import bcrypt for password comparison
-import { compare } from 'bcrypt';
-// Import Drizzle and Neon driver components
+import { compare, hash } from 'bcryptjs';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-// Import Drizzle utility for querying (e.g., eq for equals)
 import { eq } from 'drizzle-orm';
-// Import schema definitions (adjust path as necessary)
-import { users } from '@/lib/db/schema'; // Assuming schema is in lib/db/schema.ts
+import { users } from '@/lib/db/schema';
 
-// --- Database Client Configuration ---
-// Use the DATABASE_URL environment variable
-// Ensure it's set in your .env.local or environment
+// Database connection setup
 const connectionString = process.env.DATABASE_URL;
-
 if (!connectionString) {
-  // In a real app, you might want more robust error handling or logging here
-  // Forcing an error during startup if DB URL is missing is often a good idea.
   console.error('FATAL ERROR: DATABASE_URL environment variable is not set.');
-  // Depending on where this module is imported, process.exit might be too harsh.
-  // Consider throwing an error that gets caught higher up during app initialization.
-  // throw new Error('DATABASE_URL environment variable is not set.');
 }
 
-// Initialize the Neon query function and the Drizzle client
-// Only initialize if connectionString is available
 const sql = connectionString ? neon(connectionString) : null;
-const db = sql ? drizzle(sql) : null; // Drizzle ORM instance
+const db = sql ? drizzle(sql) : null;
 
 /**
- * Verify user credentials against the database.
- * @param username - Username to verify.
- * @param password - Password to verify (plain text).
- * @returns {Promise<boolean>} - True if credentials are valid, false otherwise.
+ * Verify user credentials in the database
  */
 export async function verifyCredentials(username: string, password: string): Promise<boolean> {
-  // Check if the database client was initialized successfully
   if (!db) {
     console.error('Database client is not initialized. Check DATABASE_URL.');
     return false;
   }
 
-  console.log(`Attempting to verify credentials for username: ${username}`); // Added logging
+  console.log(`Attempting to verify credentials for username: ${username}`);
 
   try {
     // Find the user in the database by username
@@ -52,26 +34,78 @@ export async function verifyCredentials(username: string, password: string): Pro
         passwordHash: users.password // Select the stored password hash
       })
       .from(users)
-      .where(eq(users.username, username)) // Use eq() for type-safe comparison
-      .limit(1); // We only expect one user
+      .where(eq(users.username, username))
+      .limit(1);
 
     // Check if user was found
     if (!foundUsers || foundUsers.length === 0) {
-      console.log(`User not found: ${username}`); // Added logging
-      return false; // User does not exist
+      console.log(`User not found: ${username}`);
+      return false;
     }
 
     const user = foundUsers[0];
-    console.log(`User found: ${username}. Comparing password.`); // Added logging
+    console.log(`User found: ${username}. Comparing password.`);
 
     // Compare the provided password with the stored hash using bcrypt
     const isMatch = await compare(password, user.passwordHash);
 
-    console.log(`Password comparison result for ${username}: ${isMatch}`); // Added logging
-    return isMatch; // Return true if passwords match, false otherwise
+    console.log(`Password comparison result for ${username}: ${isMatch}`);
+    return isMatch;
 
   } catch (error) {
     console.error(`Error verifying credentials for ${username}:`, error);
-    return false; // Return false in case of any database or comparison error
+    return false;
+  }
+}
+
+/**
+ * Update user credentials in the database
+ */
+export async function updateCredentials(username: string, password: string): Promise<boolean> {
+  if (!db) {
+    console.error('Database client is not initialized. Check DATABASE_URL.');
+    return false;
+  }
+
+  try {
+    // Hash the new password
+    const passwordHash = await hash(password, 10);
+    
+    // Find the admin user
+    const adminUsers = await db.select()
+      .from(users)
+      .where(eq(users.username, 'admin'))
+      .limit(1);
+      
+    const adminExists = adminUsers.length > 0;
+    
+    if (adminExists) {
+      // Update existing admin user
+      await db.update(users)
+        .set({
+          username: username,
+          password: passwordHash,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, adminUsers[0].id));
+        
+      console.log(`Admin user updated to username: ${username}`);
+    } else {
+      // Create new admin user
+      await db.insert(users)
+        .values({
+          username: username,
+          password: passwordHash,
+          email: 'admin@example.com',
+          role: 'admin'
+        });
+        
+      console.log(`New admin user created with username: ${username}`);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Error updating credentials:`, error);
+    return false;
   }
 }

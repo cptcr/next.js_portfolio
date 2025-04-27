@@ -53,3 +53,12 @@ function getEnv() {
 
 // Export parsed environment variables
 export const env = getEnv();
+
+// Helper to check if we're in production
+export const isProd = env.NODE_ENV === 'production';
+
+// Helper to check if we're in development
+export const isDev = env.NODE_ENV === 'development';
+
+// Helper to check if we're in test mode
+export const isTest = env.NODE_ENV === 'test';
