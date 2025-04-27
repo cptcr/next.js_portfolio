@@ -12,6 +12,7 @@ Replace your existing blog page components with the server-side rendering versio
 - `app/blog/[slug]/page.tsx` - Individual blog post page
 
 Both files now include:
+
 ```typescript
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ These directives tell Next.js to always render these pages server-side on every 
 ### Step 2: Update Markdown Utilities
 
 Replace your `lib/utils/markdown.ts` file with the updated version that:
+
 - Uses `cache: 'no-store'` for fetch requests to ensure fresh content
 - Includes better error handling for real-time data fetching
 - Maintains proper typing for blog post data
@@ -40,6 +42,7 @@ yarn add bcrypt @types/bcrypt
 ### Step 2: Add Type Definitions
 
 Create the file `lib/types/auth.ts` with type definitions for:
+
 - `Credentials` - Admin username and password
 - `JwtPayload` - JSON Web Token payload structure
 - `AuthVerification` - Authentication verification result
@@ -49,6 +52,7 @@ Create the file `lib/types/auth.ts` with type definitions for:
 ### Step 3: Create Credentials Management System
 
 Add the file `lib/auth/credentials.ts` implementing:
+
 - `getCredentials()` - Gets current credentials from file or env vars
 - `updateCredentials()` - Updates credentials with password hashing
 - `verifyCredentials()` - Verifies username and password
@@ -67,12 +71,14 @@ Create a file `credentials.json` in your project root:
 ### Step 5: Update API Routes
 
 Replace your authentication API routes:
+
 - `app/api/admin/auth/route.ts` - Updated for credential system
 - `app/api/admin/change-password/route.ts` - New route for password changes
 
 ### Step 6: Update Settings Panel Component
 
 Fix the TypeScript errors in your `components/admin/settings-panel.tsx` component:
+
 - Add proper return type: `export default function SettingsPanel(): JSX.Element`
 - Fix nested state update functions
 - Improve type safety for form handling

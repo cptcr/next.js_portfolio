@@ -24,7 +24,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
-    
+
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -64,34 +64,39 @@
   * {
     border-color: hsl(var(--border));
   }
-  
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
   }
-  
+
   h1 {
     font-size: 2.25rem;
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   @media (min-width: 640px) {
     h1 {
       font-size: 3rem;
     }
   }
-  
+
   @media (min-width: 768px) {
     h1 {
       font-size: 3.75rem;
     }
   }
-  
+
   @media (min-width: 1024px) {
     h1 {
       font-size: 3.75rem;
@@ -103,7 +108,7 @@
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   @media (min-width: 768px) {
     h2 {
       font-size: 2.25rem;
@@ -115,7 +120,7 @@
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   @media (min-width: 768px) {
     h3 {
       font-size: 1.875rem;
@@ -127,35 +132,36 @@
     font-weight: 700;
     line-height: 1.2;
   }
-  
+
   @media (min-width: 768px) {
     h4 {
       font-size: 1.5rem;
     }
   }
 
-  pre, code {
+  pre,
+  code {
     font-family: var(--font-mono);
   }
-  
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 0.5rem;
   }
-  
+
   ::-webkit-scrollbar-track {
     background-color: hsl(var(--muted));
   }
-  
+
   ::-webkit-scrollbar-thumb {
     border-radius: 9999px;
     background-color: hsl(var(--primary) / 0.5);
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--primary));
   }
-  
+
   /* Selection styling */
   ::selection {
     background-color: hsl(var(--primary) / 0.3);
@@ -168,7 +174,7 @@
   .hover-underline {
     position: relative;
   }
-  
+
   .hover-underline::after {
     content: '';
     position: absolute;
@@ -181,7 +187,7 @@
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
   }
-  
+
   .hover-underline:hover::after {
     width: 100%;
   }
@@ -189,7 +195,7 @@
   .cursor-glow {
     position: relative;
   }
-  
+
   .cursor-glow::before {
     content: '';
     position: absolute;
@@ -206,7 +212,7 @@
     transition-duration: 500ms;
     background: radial-gradient(circle, var(--tw-colors-primary-500) 0%, transparent 70%);
   }
-  
+
   .cursor-glow:hover::before {
     opacity: 0.3;
   }
@@ -255,28 +261,28 @@
     margin-left: auto;
     margin-right: auto;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-container {
       padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .responsive-container {
       padding-left: 2rem;
       padding-right: 2rem;
     }
   }
-  
+
   .responsive-padding {
     padding-left: 1rem;
     padding-right: 1rem;
     padding-top: 2rem;
     padding-bottom: 2rem;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-padding {
       padding-left: 1.5rem;
@@ -285,91 +291,91 @@
       padding-bottom: 3rem;
     }
   }
-  
+
   .responsive-grid {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 1rem;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
-  
+
   @media (min-width: 1024px) {
     .responsive-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
-  
+
   @media (min-width: 768px) {
     .responsive-grid {
       gap: 1.5rem;
     }
   }
-  
+
   .responsive-grid-2 {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 1rem;
   }
-  
+
   @media (min-width: 768px) {
     .responsive-grid-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 1.5rem;
     }
   }
-  
+
   .prevent-overflow {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
+
   .responsive-text-base {
     font-size: 0.875rem;
     line-height: 1.25rem;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-text-base {
       font-size: 1rem;
       line-height: 1.5rem;
     }
   }
-  
+
   .responsive-text-lg {
     font-size: 1rem;
     line-height: 1.5rem;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-text-lg {
       font-size: 1.125rem;
       line-height: 1.75rem;
     }
   }
-  
+
   .responsive-text-xl {
     font-size: 1.125rem;
     line-height: 1.75rem;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-text-xl {
       font-size: 1.25rem;
       line-height: 1.75rem;
     }
   }
-  
+
   .responsive-text-2xl {
     font-size: 1.25rem;
     line-height: 1.75rem;
   }
-  
+
   @media (min-width: 640px) {
     .responsive-text-2xl {
       font-size: 1.5rem;
@@ -384,16 +390,16 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
 }
 
 .text-secondary {
-    color:rgb(0, 119, 255)
+  color: rgb(0, 119, 255);
 }
 
 .text-accent {
-    color:rgb(229, 255, 0)
+  color: rgb(229, 255, 0);
 }

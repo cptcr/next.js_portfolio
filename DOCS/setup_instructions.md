@@ -21,6 +21,7 @@ The new credentials management system allows you to:
 ### Setup Steps
 
 1. **Install the required dependencies**:
+
    ```bash
    npm install bcrypt @types/bcrypt
    # or
@@ -28,13 +29,16 @@ The new credentials management system allows you to:
    ```
 
 2. **Create the initial credentials file**:
+
    - Create a file named `credentials.json` in the root of your project with the following content:
+
    ```json
    {
      "username": "admin",
      "password": "password"
    }
    ```
+
    - This file will store your admin credentials
    - The first time you change your password, it will be hashed automatically
 
@@ -50,6 +54,7 @@ The new credentials management system allows you to:
 ### Usage
 
 1. **Changing Password**:
+
    - Log in to the admin dashboard
    - Go to the Settings tab
    - Select the Account tab
@@ -58,31 +63,35 @@ The new credentials management system allows you to:
    - The password will be securely hashed and stored in `credentials.json`
 
 2. **Uploading Blog Posts**:
+
    - Upload Markdown (.md) files to the `posts/` directory in your Vercel Blob storage
    - The blog will automatically display the latest posts without redeployment
    - Frontmatter format example:
+
    ```markdown
    ---
-   title: "My New Blog Post"
-   date: "2025-04-22"
-   excerpt: "A brief description of the post"
-   category: "Next.js"
+   title: 'My New Blog Post'
+   date: '2025-04-22'
+   excerpt: 'A brief description of the post'
+   category: 'Next.js'
    featured: true
    ---
 
    # My Blog Post Content
-   
+
    Content goes here...
    ```
 
 ### Security Considerations
 
 1. **Credentials File**:
+
    - The `credentials.json` file contains sensitive information
    - In production, ensure this file is not publicly accessible
    - Consider using environment variables exclusively in production
 
 2. **JWT Secret**:
+
    - Change the default JWT secret key in your environment variables
    - Use a strong random string for better security
 
@@ -95,11 +104,13 @@ The new credentials management system allows you to:
 If you encounter issues:
 
 1. **Server-Side Rendering Not Working**:
+
    - Ensure `dynamic = 'force-dynamic'` is set in your page components
    - Check that `revalidate = 0` is properly set
    - Verify your Next.js version supports these features
 
 2. **Password Change Fails**:
+
    - Check if `credentials.json` is writable by the application
    - Ensure bcrypt is properly installed
    - Verify that the current password you entered is correct
@@ -114,10 +125,12 @@ If you encounter issues:
 Consider these enhancements for future updates:
 
 1. **Admin UI for Uploading Posts**:
+
    - Create a file upload interface in the admin dashboard
    - Directly upload markdown files to Vercel Blob storage
 
 2. **Enhanced Password Policies**:
+
    - Implement stronger password requirements
    - Add password expiration functionality
 

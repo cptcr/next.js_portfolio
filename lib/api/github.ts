@@ -1,5 +1,5 @@
 // lib/api/github.ts
-import { Octokit } from "octokit";
+import { Octokit } from 'octokit';
 // Types
 export interface GithubStats {
   stars: number;
@@ -68,7 +68,7 @@ const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 async function fetchWithRetry<T>(
   fetchFn: () => Promise<T>,
   maxRetries: number = 3,
-  initialDelay: number = 1000
+  initialDelay: number = 1000,
 ): Promise<T> {
   let lastError: Error | null = null;
   let delay = initialDelay;
@@ -78,40 +78,42 @@ async function fetchWithRetry<T>(
       return await fetchFn();
     } catch (error: any) {
       lastError = error;
-      
+
       // Check if it's a rate limit error (GitHub API returns 403 for rate limits)
-      const isRateLimit = error.status === 403 || 
-                         (error.message && error.message.includes('rate limit'));
-                         
+      const isRateLimit =
+        error.status === 403 || (error.message && error.message.includes('rate limit'));
+
       // If it's the last attempt or not a rate limit issue, throw the error
       if (attempt === maxRetries || !isRateLimit) {
         throw error;
       }
-      
+
       // Calculate delay with exponential backoff: initialDelay * 2^attempt
       delay = initialDelay * Math.pow(2, attempt);
-      
+
       // Add some jitter to prevent all clients retrying at the same time
       const jitter = Math.random() * 0.3 * delay;
-      
-      console.log(`GitHub API rate limited. Retrying in ${Math.round((delay + jitter) / 1000)}s...`);
-      
+
+      console.log(
+        `GitHub API rate limited. Retrying in ${Math.round((delay + jitter) / 1000)}s...`,
+      );
+
       // Wait before the next attempt
-      await new Promise(resolve => setTimeout(resolve, delay + jitter));
+      await new Promise((resolve) => setTimeout(resolve, delay + jitter));
     }
   }
-  
+
   // This should never be reached due to the throw in the loop, but TypeScript wants it
   throw lastError;
 }
 
 async function getCachedData<T>(cacheKey: string, fetchFn: () => Promise<T>): Promise<T> {
   const cachedItem = cache.get(cacheKey);
-  
+
   if (cachedItem && Date.now() - cachedItem.timestamp < CACHE_DURATION) {
     return cachedItem.data as T;
   }
-  
+
   // Implement exponential backoff for rate limits
   const data = await fetchWithRetry(fetchFn);
   cache.set(cacheKey, { data, timestamp: Date.now() });
@@ -129,7 +131,7 @@ export async function getRepositoryStats(repoName: string): Promise<GithubStats>
         owner,
         repo,
       });
-      
+
       return {
         stars: data.stargazers_count || 0,
         forks: data.forks_count || 0,
@@ -162,48 +164,47 @@ export async function getUserActivity(username: string, limit = 10): Promise<Git
         username,
         per_page: 100, // Get maximum allowed to filter from
       });
-      
+
       // Filter for most interesting events
-      const relevantEvents = events.filter((event: any) => 
-        ['PushEvent', 'PullRequestEvent', 'CreateEvent', 'IssuesEvent'].includes(event.type || '')
+      const relevantEvents = events.filter((event: any) =>
+        ['PushEvent', 'PullRequestEvent', 'CreateEvent', 'IssuesEvent'].includes(event.type || ''),
       );
-      
+
       // Process and format events
-      const processedEvents = relevantEvents.slice(0, limit).map((event: any): GithubActivityItem => {
-        const processed: GithubActivityItem = {
-          id: event.id || '',
-          type: event.type || '',
-          repo: {
-            name: event.repo?.name || '',
-            url: `https://github.com/${event.repo?.name || ''}`,
-          },
-          createdAt: event.created_at || '',
-        };
-        
-        // Process based on event type
-        if (event.type === 'PushEvent' && event.payload) {
-          processed.commits = event.payload.commits || [];
-          processed.branch = event.payload.ref?.replace('refs/heads/', '') || '';
-          processed.head = event.payload.head || '';
-        } 
-        else if (event.type === 'PullRequestEvent' && event.payload) {
-          processed.action = event.payload.action || '';
-          processed.number = event.payload.pull_request?.number;
-          processed.title = event.payload.pull_request?.title || '';
-        }
-        else if (event.type === 'CreateEvent' && event.payload) {
-          processed.refType = event.payload.ref_type || '';
-          processed.ref = event.payload.ref || '';
-        }
-        else if (event.type === 'IssuesEvent' && event.payload) {
-          processed.action = event.payload.action || '';
-          processed.number = event.payload.issue?.number;
-          processed.title = event.payload.issue?.title || '';
-        }
-        
-        return processed;
-      });
-      
+      const processedEvents = relevantEvents
+        .slice(0, limit)
+        .map((event: any): GithubActivityItem => {
+          const processed: GithubActivityItem = {
+            id: event.id || '',
+            type: event.type || '',
+            repo: {
+              name: event.repo?.name || '',
+              url: `https://github.com/${event.repo?.name || ''}`,
+            },
+            createdAt: event.created_at || '',
+          };
+
+          // Process based on event type
+          if (event.type === 'PushEvent' && event.payload) {
+            processed.commits = event.payload.commits || [];
+            processed.branch = event.payload.ref?.replace('refs/heads/', '') || '';
+            processed.head = event.payload.head || '';
+          } else if (event.type === 'PullRequestEvent' && event.payload) {
+            processed.action = event.payload.action || '';
+            processed.number = event.payload.pull_request?.number;
+            processed.title = event.payload.pull_request?.title || '';
+          } else if (event.type === 'CreateEvent' && event.payload) {
+            processed.refType = event.payload.ref_type || '';
+            processed.ref = event.payload.ref || '';
+          } else if (event.type === 'IssuesEvent' && event.payload) {
+            processed.action = event.payload.action || '';
+            processed.number = event.payload.issue?.number;
+            processed.title = event.payload.issue?.title || '';
+          }
+
+          return processed;
+        });
+
       return processedEvents;
     } catch (error) {
       console.error(`Error fetching user activity for ${username}:`, error);
@@ -237,25 +238,25 @@ export async function getUserContributions(username: string): Promise<GithubCont
             }
           }
         `;
-        
+
         const response: any = await octokit.graphql(query);
         const calendar = response.user.contributionsCollection.contributionCalendar;
-        
+
         // Process the data
         const contributions: ContributionDay[] = calendar.weeks.flatMap((week: any) =>
           week.contributionDays.map((day: any) => ({
             date: day.date,
             count: day.contributionCount,
-          }))
+          })),
         );
-        
+
         // Calculate streak
         let streak = 0;
         let currentStreak = 0;
-        const sortedDays = [...contributions].sort((a, b) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
+        const sortedDays = [...contributions].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
         );
-        
+
         for (const day of sortedDays) {
           if (day.count > 0) {
             currentStreak++;
@@ -263,19 +264,35 @@ export async function getUserContributions(username: string): Promise<GithubCont
             break;
           }
         }
-        
+
         streak = currentStreak;
-        
+
         // Group by month
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const contributionsByMonth = monthNames.map(month => ({ month, count: 0 }));
-        
+        const monthNames = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        const contributionsByMonth = monthNames.map((month) => ({
+          month,
+          count: 0,
+        }));
+
         for (const contribution of contributions) {
           const date = new Date(contribution.date);
           const monthIndex = date.getMonth();
           contributionsByMonth[monthIndex].count += contribution.count;
         }
-        
+
         return {
           totalContributions: calendar.totalContributions,
           lastYear: calendar.totalContributions,
@@ -283,61 +300,77 @@ export async function getUserContributions(username: string): Promise<GithubCont
           contributionsByMonth,
         };
       }
-      
+
       // Fallback to REST API if no token or GraphQL fails
       throw new Error('No GitHub token or GraphQL failed, falling back to REST API');
     } catch (error) {
       console.log('Falling back to REST API for contributions');
-      
+
       // Fallback using REST API
       try {
         const { data: events } = await octokit.rest.activity.listPublicEventsForUser({
           username,
           per_page: 100,
         });
-        
+
         // Count push events as contributions
         const pushEvents = events.filter((event: any) => event.type === 'PushEvent');
-        
+
         // Count total commits
         const totalContributions = pushEvents.reduce((total: number, event: any) => {
-          return total + ((event.payload?.commits?.length) || 0);
+          return total + (event.payload?.commits?.length || 0);
         }, 0);
-        
+
         // Monthly contributions
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const contributionsByMonth = monthNames.map(month => ({ month, count: 0 }));
-        
+        const monthNames = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        const contributionsByMonth = monthNames.map((month) => ({
+          month,
+          count: 0,
+        }));
+
         // Calculate streak
         const contributionDates = new Set<string>();
         pushEvents.forEach((event: any) => {
           if (event.created_at) {
             const date = new Date(event.created_at);
             const monthIndex = date.getMonth();
-            contributionsByMonth[monthIndex].count += (event.payload?.commits?.length || 0);
-            
+            contributionsByMonth[monthIndex].count += event.payload?.commits?.length || 0;
+
             contributionDates.add(date.toISOString().split('T')[0]);
           }
         });
-        
+
         const sortedDates = Array.from(contributionDates).sort().reverse();
         let streak = 0;
-        
+
         if (sortedDates.length > 0) {
           const today = new Date().toISOString().split('T')[0];
           const latestContribution = sortedDates[0];
-          
+
           if (today === latestContribution) {
             streak = 1;
-            
+
             // Check consecutive days
             const oneDayMillis = 24 * 60 * 60 * 1000;
             let currentDate = new Date(today);
-            
+
             for (let i = 1; i < sortedDates.length; i++) {
               currentDate = new Date(currentDate.getTime() - oneDayMillis);
               const dateString = currentDate.toISOString().split('T')[0];
-              
+
               if (sortedDates.includes(dateString)) {
                 streak++;
               } else {
@@ -346,7 +379,7 @@ export async function getUserContributions(username: string): Promise<GithubCont
             }
           }
         }
-        
+
         return {
           totalContributions,
           lastYear: totalContributions,
@@ -355,16 +388,31 @@ export async function getUserContributions(username: string): Promise<GithubCont
         };
       } catch (secondError) {
         console.error('Error in fallback contributions:', secondError);
-        
+
         // Return empty data structure if everything fails
         return {
           totalContributions: 0,
           lastYear: 0,
           streak: 0,
-          contributionsByMonth: Array(12).fill(0).map((_, i) => ({
-            month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
-            count: 0,
-          })),
+          contributionsByMonth: Array(12)
+            .fill(0)
+            .map((_, i) => ({
+              month: [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
+              ][i],
+              count: 0,
+            })),
         };
       }
     }
@@ -382,7 +430,7 @@ export async function getUserRepositories(username: string, limit = 10): Promise
         sort: 'updated',
         per_page: limit,
       });
-      
+
       return data.map((repo: any) => ({
         id: repo.id,
         name: repo.name,

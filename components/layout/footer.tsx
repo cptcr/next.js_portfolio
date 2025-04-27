@@ -1,37 +1,32 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { 
-  Github, 
-  Linkedin, 
-  Twitter,
-  Heart
-} from "lucide-react"
+import Link from 'next/link';
+import { Github, Linkedin, Twitter, Heart } from 'lucide-react';
 
 const NAVIGATION_ITEMS = [
-  { name: "Home", href: "/" },
-  { name: "About", href: "/about" },
-  { name: "Projects", href: "/projects" },
-  { name: "Community", href: "/community" },
-  { name: "Blog", href: "/blog" },
-  { name: "Contact", href: "/contact" },
-]
+  { name: 'Home', href: '/' },
+  { name: 'About', href: '/about' },
+  { name: 'Projects', href: '/projects' },
+  { name: 'Community', href: '/community' },
+  { name: 'Blog', href: '/blog' },
+  { name: 'Contact', href: '/contact' },
+];
 
 const SOCIAL_LINKS = [
   {
-    name: "GitHub",
-    href: "https://github.com/cptcr",
+    name: 'GitHub',
+    href: 'https://github.com/cptcr',
     icon: Github,
   },
   {
-    name: "Twitter",
-    href: "https://twitter.com/cptcr",
+    name: 'Twitter',
+    href: 'https://twitter.com/cptcr',
     icon: Twitter,
   },
-]
+];
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-card text-card-foreground mt-24">
@@ -45,11 +40,12 @@ export default function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs">
-              17-year-old backend developer from Stuttgart, Germany. Specializing in Next.js, TypeScript, and TailwindCSS.
+              17-year-old backend developer from Stuttgart, Germany. Specializing in Next.js,
+              TypeScript, and TailwindCSS.
             </p>
             <div className="flex mt-6 space-x-4">
               {SOCIAL_LINKS.map((item) => (
-                <Link 
+                <Link
                   key={item.name}
                   href={item.href}
                   target="_blank"
@@ -65,9 +61,7 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">
-              Navigation
-            </h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">Navigation</h3>
             <ul className="mt-4 space-y-2">
               {NAVIGATION_ITEMS.map((item) => (
                 <li key={item.name}>
@@ -84,21 +78,19 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">
-              Contact
-            </h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">Contact</h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <Link 
-                  href="mailto:contact@cptcr.dev" 
+                <Link
+                  href="mailto:contact@cptcr.dev"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   contact@cptcr.dev
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/contact" 
+                <Link
+                  href="/contact"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Contact Form
@@ -115,11 +107,12 @@ export default function Footer() {
               © {currentYear} Tony (cptcr). All rights reserved.
             </p>
             <p className="text-sm text-muted-foreground flex items-center order-1 md:order-2">
-              Built with <Heart className="h-4 w-4 mx-1 text-red-500" /> using Next.js, TypeScript & TailwindCSS
+              Built with <Heart className="h-4 w-4 mx-1 text-red-500" /> using Next.js, TypeScript &
+              TailwindCSS
             </p>
           </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }

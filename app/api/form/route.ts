@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 
 interface FormData {
   name: string;
@@ -20,24 +20,13 @@ interface EmailMessage {
 export async function POST(request: NextRequest) {
   try {
     const formData: FormData = await request.json();
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.subject ||
-      !formData.message
-    ) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 },
-      );
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     const emailAddress = process.env.EMAIL_ADDRESS;
@@ -47,7 +36,7 @@ export async function POST(request: NextRequest) {
     const emailPass = process.env.EMAIL_AUTH_PASSWORD;
 
     if (!emailAddress || !emailHost || !emailPort || !emailUser || !emailPass) {
-      console.error("Missing email configuration:", {
+      console.error('Missing email configuration:', {
         hasAddress: !!emailAddress,
         hasHost: !!emailHost,
         hasPort: !!emailPort,
@@ -55,18 +44,12 @@ export async function POST(request: NextRequest) {
         hasPass: !!emailPass,
       });
 
-      return NextResponse.json(
-        { error: "Email server not configured properly" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Email server not configured properly' }, { status: 500 });
     }
 
     const port = parseInt(emailPort);
     if (isNaN(port)) {
-      return NextResponse.json(
-        { error: "Invalid email port" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Invalid email port' }, { status: 500 });
     }
 
     const message: EmailMessage = {
@@ -83,25 +66,25 @@ export async function POST(request: NextRequest) {
           <p><strong>Subject:</strong> ${formData.subject}</p>
           <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
             <p><strong>Message:</strong></p>
-            <p>${formData.message.replace(/\n/g, "<br>")}</p>
+            <p>${formData.message.replace(/\n/g, '<br>')}</p>
           </div>
         </div>
       `,
     };
 
-    const secureConnection = process.env.EMAIL_SECURE === "true";
+    const secureConnection = process.env.EMAIL_SECURE === 'true';
 
     const transporter = nodemailer.createTransport({
       // host: emailHost,
-      host: "mail.cptcr.cc",
+      host: 'mail.cptcr.cc',
       // port: port,
       port: 587,
       secure: secureConnection,
       auth: {
         // user: emailUser,
-        user: "helloworld@cptcr.cc",
+        user: 'helloworld@cptcr.cc',
         // pass: emailPass,
-        pass: "9qUeLGeLVDuM"
+        pass: '9qUeLGeLVDuM',
       },
       // ...(secureConnection
       //   ? {}
@@ -122,15 +105,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Message delivered successfully to ${info.accepted.join(", ")}`,
+      message: `Message delivered successfully to ${info.accepted.join(', ')}`,
     });
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('Error sending email:', error);
 
     return NextResponse.json(
       {
-        error: "Failed to send message",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: 'Failed to send message',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 },
     );

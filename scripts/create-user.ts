@@ -23,7 +23,8 @@ const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-const question = (query: string): Promise<string> => new Promise((resolve) => rl.question(query, resolve));
+const question = (query: string): Promise<string> =>
+  new Promise((resolve) => rl.question(query, resolve));
 
 // --- Database Client Configuration ---
 // Use the DATABASE_URL environment variable
@@ -48,13 +49,19 @@ console.log('🔌 Drizzle client initialized.');
  * @param {string} password - The plain text password to be hashed.
  * @param {string} [role='user'] - The role for the new user (defaults to 'user').
  */
-async function createUser(username: string, email: string, password: string, role: 'admin' | 'user' = 'user') {
+async function createUser(
+  username: string,
+  email: string,
+  password: string,
+  role: 'admin' | 'user' = 'user',
+) {
   try {
     // Hash the password using bcrypt (salt rounds = 10)
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert the new user using Drizzle ORM
-    const insertedUsers = await db.insert(users)
+    const insertedUsers = await db
+      .insert(users)
       .values({
         username: username,
         email: email,
@@ -66,7 +73,7 @@ async function createUser(username: string, email: string, password: string, rol
       .returning({ insertedId: users.id }); // Get the ID of the inserted user
 
     if (!insertedUsers || insertedUsers.length === 0) {
-        throw new Error('User insertion failed, no ID returned.');
+      throw new Error('User insertion failed, no ID returned.');
     }
     const userId = insertedUsers[0].insertedId;
 
@@ -74,28 +81,29 @@ async function createUser(username: string, email: string, password: string, rol
 
     // Insert default permissions for the new user using Drizzle ORM
     // Adjust these defaults based on your application's needs
-    await db.insert(permissions)
-      .values({
-        userId: userId,
-        canCreatePosts: false,
-        canEditOwnPosts: true,
-        canEditAllPosts: false,
-        canDeleteOwnPosts: true,
-        canDeleteAllPosts: false,
-        canManageUsers: role === 'admin', // Grant admin rights based on role
-        canManageSettings: role === 'admin', // Grant admin rights based on role
-        // createdAt and updatedAt should be handled by database defaults
-      });
+    await db.insert(permissions).values({
+      userId: userId,
+      canCreatePosts: false,
+      canEditOwnPosts: true,
+      canEditAllPosts: false,
+      canDeleteOwnPosts: true,
+      canDeleteAllPosts: false,
+      canManageUsers: role === 'admin', // Grant admin rights based on role
+      canManageSettings: role === 'admin', // Grant admin rights based on role
+      // createdAt and updatedAt should be handled by database defaults
+    });
 
     console.log(`✅ Default permissions assigned to user ID: ${userId} (Role: ${role})`);
-
   } catch (err: any) {
     // Log specific errors if possible (e.g., unique constraint violation)
     // Drizzle might wrap the original error, check err.message or specific error types if needed
-    if (err.message?.includes('duplicate key value violates unique constraint')) { // Check common unique constraint error text
-        console.error(`❌ Error: Failed to create user. Username or email '${username}'/'${email}' likely already exists.`);
+    if (err.message?.includes('duplicate key value violates unique constraint')) {
+      // Check common unique constraint error text
+      console.error(
+        `❌ Error: Failed to create user. Username or email '${username}'/'${email}' likely already exists.`,
+      );
     } else {
-        console.error('❌ Error during user creation process:', err);
+      console.error('❌ Error during user creation process:', err);
     }
   }
 }
@@ -113,20 +121,19 @@ async function promptAndCreateUser() {
 
     // Validate inputs (basic example)
     if (!username || !email || !password) {
-        console.error('❌ Error: Username, email, and password cannot be empty.');
-        return; // Stop execution if inputs are invalid
+      console.error('❌ Error: Username, email, and password cannot be empty.');
+      return; // Stop execution if inputs are invalid
     }
 
     let role: 'admin' | 'user' = 'user'; // Default role
     if (roleInput && ['admin', 'user'].includes(roleInput.toLowerCase())) {
-        role = roleInput.toLowerCase() as 'admin' | 'user';
+      role = roleInput.toLowerCase() as 'admin' | 'user';
     } else if (roleInput) {
-        console.log(`🟡 Invalid role entered. Defaulting to 'user'.`);
+      console.log(`🟡 Invalid role entered. Defaulting to 'user'.`);
     }
 
     // Call the function to create the user in the database
     await createUser(username, email, password, role);
-
   } catch (err) {
     console.error('❌ An error occurred during the prompting process:', err);
   } finally {
@@ -145,7 +152,6 @@ async function promptAndCreateUser() {
 
     // Start the user creation prompt process
     await promptAndCreateUser();
-
   } catch (err) {
     console.error('❌ An unexpected error occurred:', err);
     rl.close(); // Ensure readline is closed on error too

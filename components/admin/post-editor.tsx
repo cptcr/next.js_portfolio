@@ -1,336 +1,369 @@
-"use client"
+'use client';
 
 import {
-    AlertDialog, AlertDialogAction,
-    AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-    AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-    Button,
-    Calendar,
-    Card, CardContent,
-    CardDescription, CardFooter, CardHeader, CardTitle,
-    Input,
-    Label,
-    Popover, PopoverContent, PopoverTrigger,
-    Select, SelectContent, SelectItem,
-    SelectTrigger, SelectValue,
-    Switch,
-    Tabs, TabsContent,
-    Textarea,
-    useToast
-} from "@/components/ui"
-import { cn, slugify } from "@/lib/utils/helpers"
-import { format, isValid, parseISO } from "date-fns"
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  Calendar,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+  Tabs,
+  TabsContent,
+  Textarea,
+  useToast,
+} from '@/components/ui';
+import { cn, slugify } from '@/lib/utils/helpers';
+import { format, isValid, parseISO } from 'date-fns';
 import {
-    AlertCircle, ArrowLeft,
-    Calendar as CalendarIcon, CheckCircle,
-    Eye, EyeOff,
-    Loader2, Save,
-    Tag
-} from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { FormEvent, useEffect, useState } from "react"
-import ReactMarkdown from 'react-markdown'
+  AlertCircle,
+  ArrowLeft,
+  Calendar as CalendarIcon,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Loader2,
+  Save,
+  Tag,
+} from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface PostFormData {
-  title: string
-  excerpt: string
-  category: string
-  content: string
-  featured: boolean
-  date: string
-  slug?: string
-  isEdit?: boolean
+  title: string;
+  excerpt: string;
+  category: string;
+  content: string;
+  featured: boolean;
+  date: string;
+  slug?: string;
+  isEdit?: boolean;
 }
 
 const CATEGORIES = [
-  "Next.js", "TypeScript", "React", "Backend", "Frontend",
-  "API", "Database", "DevOps", "Tutorial", "Career", "Other"
-]
+  'Next.js',
+  'TypeScript',
+  'React',
+  'Backend',
+  'Frontend',
+  'API',
+  'Database',
+  'DevOps',
+  'Tutorial',
+  'Career',
+  'Other',
+];
 
 export default function PostEditor() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { toast } = useToast()
-  
-  const [previewMode, setPreviewMode] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-  const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<{ success?: boolean; message?: string }>({})
-  const [customCategory, setCustomCategory] = useState("")
-  const [showCustomCategory, setShowCustomCategory] = useState(false)
-  const [autoSlug, setAutoSlug] = useState(true)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  const [previewMode, setPreviewMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    success?: boolean;
+    message?: string;
+  }>({});
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [autoSlug, setAutoSlug] = useState(true);
 
   const [formData, setFormData] = useState<PostFormData>({
-    title: "",
-    excerpt: "",
-    category: "",
-    content: "# Write your post here\n\nStart writing your blog post using markdown syntax.",
+    title: '',
+    excerpt: '',
+    category: '',
+    content: '# Write your post here\n\nStart writing your blog post using markdown syntax.',
     featured: false,
     date: new Date().toISOString(),
-    isEdit: false
-  })
+    isEdit: false,
+  });
 
   // Check if we're in edit mode
   useEffect(() => {
-    const slug = searchParams.get('slug')
-    
+    const slug = searchParams.get('slug');
+
     if (slug) {
-      fetchPostForEditing(slug)
+      fetchPostForEditing(slug);
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   // Fetch post data if in edit mode
   const fetchPostForEditing = async (slug: string) => {
     try {
-      const token = localStorage.getItem("adminToken")
+      const token = localStorage.getItem('adminToken');
       if (!token) {
-        throw new Error("Not authenticated")
+        throw new Error('Not authenticated');
       }
 
       const response = await fetch(`/api/admin/posts/${slug}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch post")
+        throw new Error('Failed to fetch post');
       }
 
-      const post = await response.json()
-      
+      const post = await response.json();
+
       // Disable auto-slug in edit mode
-      setAutoSlug(false)
+      setAutoSlug(false);
 
       setFormData({
-        title: post.title ?? "",
-        excerpt: post.excerpt ?? "",
-        category: post.category ?? "",
-        content: post.content ?? "",
+        title: post.title ?? '',
+        excerpt: post.excerpt ?? '',
+        category: post.category ?? '',
+        content: post.content ?? '',
         featured: post.featured ?? false,
         date: post.date ?? new Date().toISOString(),
         slug,
         isEdit: true,
-      })
+      });
 
       if (!CATEGORIES.includes(post.category)) {
-        setCustomCategory(post.category)
-        setShowCustomCategory(true)
+        setCustomCategory(post.category);
+        setShowCustomCategory(true);
       }
-      
+
       toast({
-        title: "Post loaded",
-        description: "The post has been loaded for editing.",
-      })
+        title: 'Post loaded',
+        description: 'The post has been loaded for editing.',
+      });
     } catch (error) {
-      console.error("Error fetching post:", error)
-      setSubmitStatus({ success: false, message: "Failed to load post for editing." })
-      
+      console.error('Error fetching post:', error);
+      setSubmitStatus({
+        success: false,
+        message: 'Failed to load post for editing.',
+      });
+
       toast({
-        title: "Error loading post",
-        description: "Failed to load the post for editing. Please try again.",
-        variant: "destructive",
-      })
+        title: 'Error loading post',
+        description: 'Failed to load the post for editing. Please try again.',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   // Update slug when title changes if auto-slug is enabled
   useEffect(() => {
     if (autoSlug && formData.title) {
-      const generatedSlug = slugify(formData.title)
-      setFormData(prev => ({ ...prev, slug: generatedSlug }))
+      const generatedSlug = slugify(formData.title);
+      setFormData((prev) => ({ ...prev, slug: generatedSlug }));
     }
-  }, [formData.title, autoSlug])
+  }, [formData.title, autoSlug]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleFeaturedChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, featured: checked }))
-  }
+    setFormData((prev) => ({ ...prev, featured: checked }));
+  };
 
   const handleCategoryChange = (value: string) => {
-    if (value === "custom") {
-      setShowCustomCategory(true)
-      setFormData((prev) => ({ ...prev, category: customCategory }))
+    if (value === 'custom') {
+      setShowCustomCategory(true);
+      setFormData((prev) => ({ ...prev, category: customCategory }));
     } else {
-      setShowCustomCategory(false)
-      setCustomCategory("")
-      setFormData((prev) => ({ ...prev, category: value }))
+      setShowCustomCategory(false);
+      setCustomCategory('');
+      setFormData((prev) => ({ ...prev, category: value }));
     }
-  }
+  };
 
   const handleCustomCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setCustomCategory(value)
-    setFormData((prev) => ({ ...prev, category: value }))
-  }
+    const value = e.target.value;
+    setCustomCategory(value);
+    setFormData((prev) => ({ ...prev, category: value }));
+  };
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date && isValid(date)) {
-      setFormData((prev) => ({ ...prev, date: date.toISOString() }))
+      setFormData((prev) => ({ ...prev, date: date.toISOString() }));
     }
-  }
+  };
 
   const toggleAutoSlug = (checked: boolean) => {
-    setAutoSlug(checked)
+    setAutoSlug(checked);
     if (checked && formData.title) {
       // Regenerate slug from title
-      const generatedSlug = slugify(formData.title)
-      setFormData(prev => ({ ...prev, slug: generatedSlug }))
+      const generatedSlug = slugify(formData.title);
+      setFormData((prev) => ({ ...prev, slug: generatedSlug }));
     }
-  }
+  };
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setFormData(prev => ({ ...prev, slug: value }))
-  }
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, slug: value }));
+  };
 
   const validateForm = (): boolean => {
-    if (!formData.title.trim()) return showError("Title is required")
-    if (!formData.excerpt.trim()) return showError("Short description is required")
-    if (!formData.category.trim()) return showError("Category is required")
-    if (!formData.content.trim()) return showError("Content is required")
-    if (!formData.slug) return showError("URL slug is required")
-    return true
-  }
+    if (!formData.title.trim()) return showError('Title is required');
+    if (!formData.excerpt.trim()) return showError('Short description is required');
+    if (!formData.category.trim()) return showError('Category is required');
+    if (!formData.content.trim()) return showError('Content is required');
+    if (!formData.slug) return showError('URL slug is required');
+    return true;
+  };
 
   const showError = (message: string) => {
-    setSubmitStatus({ success: false, message })
+    setSubmitStatus({ success: false, message });
     toast({
-      title: "Validation Error",
+      title: 'Validation Error',
       description: message,
-      variant: "destructive",
-    })
-    return false
-  }
+      variant: 'destructive',
+    });
+    return false;
+  };
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setConfirmDialogOpen(true)
-  }
+    e.preventDefault();
+    setConfirmDialogOpen(true);
+  };
 
   const submitPost = async () => {
-    setConfirmDialogOpen(false)
-    setIsSubmitting(true)
-    setSubmitStatus({})
+    setConfirmDialogOpen(false);
+    setIsSubmitting(true);
+    setSubmitStatus({});
 
     if (!validateForm()) {
-      setIsSubmitting(false)
-      return
+      setIsSubmitting(false);
+      return;
     }
 
     try {
-      const token = localStorage.getItem("adminToken")
-      if (!token) throw new Error("Authentication required")
+      const token = localStorage.getItem('adminToken');
+      if (!token) throw new Error('Authentication required');
 
-      const method = formData.isEdit ? "PUT" : "POST"
-      const endpoint = formData.isEdit 
-        ? `/api/admin/posts/${formData.slug}` 
-        : "/api/admin/posts"
-      
+      const method = formData.isEdit ? 'PUT' : 'POST';
+      const endpoint = formData.isEdit ? `/api/admin/posts/${formData.slug}` : '/api/admin/posts';
+
       const postData = {
         ...formData,
-        slug: formData.isEdit ? undefined : formData.slug // Don't send slug in edit mode
-      }
+        slug: formData.isEdit ? undefined : formData.slug, // Don't send slug in edit mode
+      };
 
       const response = await fetch(endpoint, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(postData),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
-      if (!response.ok) throw new Error(data.message || `Failed to ${formData.isEdit ? "update" : "create"} post`)
+      if (!response.ok)
+        throw new Error(data.message || `Failed to ${formData.isEdit ? 'update' : 'create'} post`);
 
       setSubmitStatus({
         success: true,
-        message: `Post "${formData.title}" ${formData.isEdit ? "updated" : "created"} successfully!`,
-      })
-      
+        message: `Post "${formData.title}" ${formData.isEdit ? 'updated' : 'created'} successfully!`,
+      });
+
       toast({
-        title: formData.isEdit ? "Post updated" : "Post created",
-        description: `"${formData.title}" has been ${formData.isEdit ? "updated" : "created"} successfully!`,
-      })
+        title: formData.isEdit ? 'Post updated' : 'Post created',
+        description: `"${formData.title}" has been ${formData.isEdit ? 'updated' : 'created'} successfully!`,
+      });
 
       if (!formData.isEdit) {
         setFormData({
-          title: "",
-          excerpt: "",
-          category: "",
-          content: "# Write your post here\n\nStart writing your blog post using markdown syntax.",
+          title: '',
+          excerpt: '',
+          category: '',
+          content: '# Write your post here\n\nStart writing your blog post using markdown syntax.',
           featured: false,
           date: new Date().toISOString(),
           isEdit: false,
-        })
-        setCustomCategory("")
-        setShowCustomCategory(false)
-        setAutoSlug(true)
+        });
+        setCustomCategory('');
+        setShowCustomCategory(false);
+        setAutoSlug(true);
       }
 
       // Refresh to show updated data
       if (formData.isEdit) {
         setTimeout(() => {
-          router.refresh()
-          router.push('/admin/dashboard?tab=posts')
-        }, 1500)
+          router.refresh();
+          router.push('/admin/dashboard?tab=posts');
+        }, 1500);
       }
     } catch (err) {
       setSubmitStatus({
         success: false,
-        message: err instanceof Error ? err.message : "An unexpected error occurred",
-      })
-      
+        message: err instanceof Error ? err.message : 'An unexpected error occurred',
+      });
+
       toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      })
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleDiscardChanges = () => {
-    setDiscardDialogOpen(false)
-    
+    setDiscardDialogOpen(false);
+
     if (formData.isEdit) {
-      router.push("/admin/dashboard?tab=posts")
+      router.push('/admin/dashboard?tab=posts');
     } else {
       setFormData({
-        title: "",
-        excerpt: "",
-        category: "",
-        content: "# Write your post here\n\nStart writing your blog post using markdown syntax.",
+        title: '',
+        excerpt: '',
+        category: '',
+        content: '# Write your post here\n\nStart writing your blog post using markdown syntax.',
         featured: false,
         date: new Date().toISOString(),
         isEdit: false,
-      })
-      setCustomCategory("")
-      setShowCustomCategory(false)
-      setAutoSlug(true)
-      setSubmitStatus({})
-      
+      });
+      setCustomCategory('');
+      setShowCustomCategory(false);
+      setAutoSlug(true);
+      setSubmitStatus({});
+
       toast({
-        title: "Form reset",
-        description: "The form has been reset to its default state.",
-      })
+        title: 'Form reset',
+        description: 'The form has been reset to its default state.',
+      });
     }
-  }
+  };
 
   return (
     <div>
       {/* Back button for edit mode */}
       {formData.isEdit && (
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => router.push('/admin/dashboard?tab=posts')}
           className="mb-6"
         >
@@ -338,26 +371,26 @@ export default function PostEditor() {
           Back to Posts
         </Button>
       )}
-      
+
       {/* Title with edit/create mode indicator */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold">
-          {formData.isEdit ? "Edit Post" : "Create New Post"}
-        </h2>
+        <h2 className="text-2xl font-bold">{formData.isEdit ? 'Edit Post' : 'Create New Post'}</h2>
         <p className="text-muted-foreground">
-          {formData.isEdit 
-            ? "Update your existing blog post" 
-            : "Create a new blog post to share with your audience"}
+          {formData.isEdit
+            ? 'Update your existing blog post'
+            : 'Create a new blog post to share with your audience'}
         </p>
       </div>
 
       {submitStatus.message && (
-        <div className={cn(
-          "mb-6 p-4 rounded-md flex items-center",
-          submitStatus.success 
-            ? "bg-green-500/10 text-green-500 border border-green-500/20" 
-            : "bg-red-500/10 text-red-500 border border-red-500/20"
-        )}>
+        <div
+          className={cn(
+            'mb-6 p-4 rounded-md flex items-center',
+            submitStatus.success
+              ? 'bg-green-500/10 text-green-500 border border-green-500/20'
+              : 'bg-red-500/10 text-red-500 border border-red-500/20',
+          )}
+        >
           {submitStatus.success ? (
             <CheckCircle className="w-5 h-5 mr-2" />
           ) : (
@@ -371,9 +404,7 @@ export default function PostEditor() {
         <Card>
           <CardHeader>
             <CardTitle>Post Details</CardTitle>
-            <CardDescription>
-              Basic information about the post
-            </CardDescription>
+            <CardDescription>Basic information about the post</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
@@ -392,7 +423,10 @@ export default function PostEditor() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="slug" className="flex items-center justify-between text-sm font-medium">
+                <Label
+                  htmlFor="slug"
+                  className="flex items-center justify-between text-sm font-medium"
+                >
                   <span>URL Slug *</span>
                   <div className="flex items-center">
                     <Switch
@@ -443,7 +477,7 @@ export default function PostEditor() {
                   <Tag className="w-4 h-4 mr-1 text-muted-foreground" />
                   Category *
                 </Label>
-                
+
                 <Select
                   value={CATEGORIES.includes(formData.category) ? formData.category : 'custom'}
                   onValueChange={handleCategoryChange}
@@ -460,7 +494,7 @@ export default function PostEditor() {
                     <SelectItem value="custom">+ Add Custom Category</SelectItem>
                   </SelectContent>
                 </Select>
-                
+
                 {showCustomCategory && (
                   <div className="mt-2">
                     <Input
@@ -478,7 +512,7 @@ export default function PostEditor() {
                   <CalendarIcon className="w-4 h-4 mr-1 text-muted-foreground" />
                   Publication Date
                 </Label>
-                
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -486,9 +520,7 @@ export default function PostEditor() {
                       className="justify-start w-full font-normal text-left"
                     >
                       <CalendarIcon className="w-4 h-4 mr-2" />
-                      {formData.date ? 
-                        format(new Date(formData.date), 'PPP') : 
-                        "Select date"}
+                      {formData.date ? format(new Date(formData.date), 'PPP') : 'Select date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -508,15 +540,12 @@ export default function PostEditor() {
                   checked={formData.featured}
                   onCheckedChange={handleFeaturedChange}
                 />
-                <Label htmlFor="featured">
-                  Featured Post
-                </Label>
+                <Label htmlFor="featured">Featured Post</Label>
                 <span className="ml-auto text-xs text-muted-foreground">
                   Featured posts appear in highlighted sections
                 </span>
               </div>
             </div>
-
           </CardContent>
         </Card>
 
@@ -548,7 +577,7 @@ export default function PostEditor() {
             </CardHeader>
 
             <CardContent className="p-0">
-              <Tabs defaultValue="edit" value={previewMode ? "preview" : "edit"}>
+              <Tabs defaultValue="edit" value={previewMode ? 'preview' : 'edit'}>
                 <TabsContent value="edit" className="p-4 mt-0">
                   <Textarea
                     id="content"
@@ -559,7 +588,7 @@ export default function PostEditor() {
                     className="min-h-[400px] font-mono"
                     required
                   />
-                  
+
                   <div className="mt-2 text-xs text-muted-foreground">
                     <p>
                       This editor supports Markdown formatting:
@@ -571,9 +600,7 @@ export default function PostEditor() {
                 </TabsContent>
                 <TabsContent value="preview" className="mt-0">
                   <div className="border rounded-md p-6 min-h-[400px] prose prose-invert max-w-none">
-                    <ReactMarkdown>
-                      {formData.content}
-                    </ReactMarkdown>
+                    <ReactMarkdown>{formData.content}</ReactMarkdown>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -586,14 +613,10 @@ export default function PostEditor() {
                 onClick={() => setDiscardDialogOpen(true)}
                 disabled={isSubmitting}
               >
-                {formData.isEdit ? "Cancel" : "Reset Form"}
+                {formData.isEdit ? 'Cancel' : 'Reset Form'}
               </Button>
-              
-              <Button
-                type="submit"
-                className="min-w-[150px]"
-                disabled={isSubmitting}
-              >
+
+              <Button type="submit" className="min-w-[150px]" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -602,7 +625,7 @@ export default function PostEditor() {
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    {formData.isEdit ? "Update Post" : "Save Post"}
+                    {formData.isEdit ? 'Update Post' : 'Save Post'}
                   </>
                 )}
               </Button>
@@ -612,53 +635,38 @@ export default function PostEditor() {
       </form>
 
       {/* Save Confirmation Dialog */}
-      <AlertDialog 
-        open={confirmDialogOpen} 
-        onOpenChange={setConfirmDialogOpen}
-      >
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {formData.isEdit 
-                ? "Update this post?" 
-                : "Publish this post?"}
+              {formData.isEdit ? 'Update this post?' : 'Publish this post?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {formData.isEdit 
-                ? "Your changes will be published immediately."
-                : "This post will be published and available on your blog."}
+              {formData.isEdit
+                ? 'Your changes will be published immediately.'
+                : 'This post will be published and available on your blog.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={submitPost}
-              disabled={isSubmitting}
-            >
-              {formData.isEdit 
-                ? "Update Post" 
-                : "Publish Post"}
+            <AlertDialogAction onClick={submitPost} disabled={isSubmitting}>
+              {formData.isEdit ? 'Update Post' : 'Publish Post'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Discard Changes Dialog */}
-      <AlertDialog 
-        open={discardDialogOpen} 
-        onOpenChange={setDiscardDialogOpen}
-      >
+      <AlertDialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {formData.isEdit 
-                ? "Discard all changes?" 
-                : "Reset the form?"}
+              {formData.isEdit ? 'Discard all changes?' : 'Reset the form?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {formData.isEdit 
-                ? "All changes will be lost. This cannot be undone."
-                : "This will clear all fields and reset the form to its initial state."}
+              {formData.isEdit
+                ? 'All changes will be lost. This cannot be undone.'
+                : 'This will clear all fields and reset the form to its initial state.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -667,13 +675,11 @@ export default function PostEditor() {
               onClick={handleDiscardChanges}
               className="bg-red-500 hover:bg-red-600"
             >
-              {formData.isEdit 
-                ? "Discard Changes" 
-                : "Reset Form"}
+              {formData.isEdit ? 'Discard Changes' : 'Reset Form'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

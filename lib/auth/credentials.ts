@@ -28,10 +28,11 @@ export async function verifyCredentials(username: string, password: string): Pro
 
   try {
     // Find the user in the database by username
-    const foundUsers = await db.select({
+    const foundUsers = await db
+      .select({
         id: users.id,
         username: users.username,
-        passwordHash: users.password // Select the stored password hash
+        passwordHash: users.password, // Select the stored password hash
       })
       .from(users)
       .where(eq(users.username, username))
@@ -51,7 +52,6 @@ export async function verifyCredentials(username: string, password: string): Pro
 
     console.log(`Password comparison result for ${username}: ${isMatch}`);
     return isMatch;
-
   } catch (error) {
     console.error(`Error verifying credentials for ${username}:`, error);
     return false;
@@ -70,39 +70,36 @@ export async function updateCredentials(username: string, password: string): Pro
   try {
     // Hash the new password
     const passwordHash = await hash(password, 10);
-    
+
     // Find the admin user
-    const adminUsers = await db.select()
-      .from(users)
-      .where(eq(users.username, 'admin'))
-      .limit(1);
-      
+    const adminUsers = await db.select().from(users).where(eq(users.username, 'admin')).limit(1);
+
     const adminExists = adminUsers.length > 0;
-    
+
     if (adminExists) {
       // Update existing admin user
-      await db.update(users)
+      await db
+        .update(users)
         .set({
           username: username,
           password: passwordHash,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(users.id, adminUsers[0].id));
-        
+
       console.log(`Admin user updated to username: ${username}`);
     } else {
       // Create new admin user
-      await db.insert(users)
-        .values({
-          username: username,
-          password: passwordHash,
-          email: 'admin@example.com',
-          role: 'admin'
-        });
-        
+      await db.insert(users).values({
+        username: username,
+        password: passwordHash,
+        email: 'admin@example.com',
+        role: 'admin',
+      });
+
       console.log(`New admin user created with username: ${username}`);
     }
-    
+
     return true;
   } catch (error) {
     console.error(`Error updating credentials:`, error);

@@ -8,50 +8,52 @@ import { env } from '../env';
 export const discordService = {
   // Create a new webhook configuration
   async createWebhook(webhookData: Omit<NewDiscordWebhook, 'id' | 'createdAt' | 'updatedAt'>) {
-    const [newWebhook] = await db.insert(discordWebhooks)
-      .values(webhookData)
-      .returning();
-    
+    const [newWebhook] = await db.insert(discordWebhooks).values(webhookData).returning();
+
     return newWebhook || null;
   },
-  
+
   // Get a webhook by ID
   async getWebhookById(id: number) {
     const [webhook] = await db.select().from(discordWebhooks).where(eq(discordWebhooks.id, id));
     return webhook || null;
   },
-  
+
   // Update a webhook
-  async updateWebhook(id: number, webhookData: Partial<Omit<NewDiscordWebhook, 'id' | 'createdAt' | 'updatedAt'>>) {
-    const [updated] = await db.update(discordWebhooks)
+  async updateWebhook(
+    id: number,
+    webhookData: Partial<Omit<NewDiscordWebhook, 'id' | 'createdAt' | 'updatedAt'>>,
+  ) {
+    const [updated] = await db
+      .update(discordWebhooks)
       .set({
         ...webhookData,
         updatedAt: new Date(),
       })
       .where(eq(discordWebhooks.id, id))
       .returning();
-    
+
     return updated || null;
   },
-  
+
   // Delete a webhook
   async deleteWebhook(id: number) {
     await db.delete(discordWebhooks).where(eq(discordWebhooks.id, id));
     return true;
   },
-  
+
   // List all webhooks
   async listWebhooks() {
     return await db.select().from(discordWebhooks);
   },
-  
+
   // Send a notification to a webhook
   async sendWebhookNotification(
     webhookUrl: string,
     content: string,
     embeds: any[] = [],
     username?: string,
-    avatarUrl?: string
+    avatarUrl?: string,
   ) {
     try {
       const response = await fetch(webhookUrl, {
@@ -66,18 +68,18 @@ export const discordService = {
           avatar_url: avatarUrl,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Discord webhook error: ${response.status} ${response.statusText}`);
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error sending Discord webhook:', error);
       throw error;
     }
   },
-  
+
   // Notify about a new post via all enabled webhooks
   async notifyNewPost(post: Post, author: User) {
     // Get all enabled webhooks
@@ -85,24 +87,20 @@ export const discordService = {
       .select()
       .from(discordWebhooks)
       .where(eq(discordWebhooks.enabled, true));
-    
+
     if (webhooks.length === 0) {
       // Check if we have a default webhook from environment variable
       if (!env.DISCORD_WEBHOOK_URL) {
         return false;
       }
-      
+
       // Use default webhook
-      return this.sendNewPostNotification(
-        env.DISCORD_WEBHOOK_URL,
-        post,
-        author
-      );
+      return this.sendNewPostNotification(env.DISCORD_WEBHOOK_URL, post, author);
     }
-    
+
     // Send to all matching webhooks
     const results = await Promise.allSettled(
-      webhooks.map(async webhook => {
+      webhooks.map(async (webhook) => {
         // Check if webhook should be used for this category
         const categories = webhook.categories as string[] | null;
         if (
@@ -115,28 +113,28 @@ export const discordService = {
           // Skip this webhook, category doesn't match
           return false;
         }
-        
+
         return this.sendNewPostNotification(
           webhook.url,
           post,
           author,
           webhook.name || undefined,
-          webhook.avatar || undefined
+          webhook.avatar || undefined,
         );
-      })
+      }),
     );
-    
+
     // Return true if at least one webhook succeeded
-    return results.some(r => r.status === 'fulfilled' && r.value);
+    return results.some((r) => r.status === 'fulfilled' && r.value);
   },
-  
+
   // Send a notification about a new post to a specific webhook
   async sendNewPostNotification(
     webhookUrl: string,
     post: Post,
     author: User,
     username?: string,
-    avatarUrl?: string
+    avatarUrl?: string,
   ) {
     // Format date
     const publishDate = post.publishedAt
@@ -146,11 +144,11 @@ export const discordService = {
           day: 'numeric',
         })
       : 'Just now';
-    
+
     // Create site URL for the post
     const siteUrl = env.NEXT_PUBLIC_SITE_URL || 'https://cptcr.dev';
     const postUrl = `${siteUrl}/blog/${post.slug}`;
-    
+
     // Create embed
     const embed = {
       title: post.title,
@@ -178,17 +176,17 @@ export const discordService = {
       },
       timestamp: post.publishedAt || new Date().toISOString(),
     };
-    
+
     // Create content message
     const content = `📝 **New Blog Post Published!** 📝\n${author.realName || author.username} just published a new post: "${post.title}"\n${postUrl}`;
-    
+
     // Send notification
     return this.sendWebhookNotification(
       webhookUrl,
       content,
       [embed],
       username || 'Blog Notification',
-      avatarUrl
+      avatarUrl,
     );
   },
 };
