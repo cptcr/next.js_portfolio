@@ -22,47 +22,42 @@ const nextConfig = {
     '@radix-ui/react-popover',
     '@radix-ui/react-alert-dialog',
     '@radix-ui/react-select',
-  ],
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Fixes npm packages that depend on `fs` module and other Node.js specifics
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        crypto: false,
-        path: false,
-        os: false,
-        net: false,
-        tls: false,
-        pg: false,
-        'pg-native': false,
-        'cloudflare:sockets': false,
-      };
-    }
-    
-    // Ignore pg-native and other native modules with externals
-    config.externals = [...(config.externals || []), 'pg-native'];
-
-    config.ignoreWarnings = [
-      {
-        message: /Critical dependency: the request of a dependency is an expression/,
-      }
-    ];
-    
-    // Additional fixes for problematic modules
-    config.module = {
-      ...config.module,
-      rules: [
-        ...config.module.rules,
-        {
-          test: /node_modules\/pg\//,
-          use: 'null-loader'
-        }
-      ]
+  ],webpack: (config, { isServer }) => {
+  if (!isServer) {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      crypto: false,
+      path: false,
+      os: false,
+      net: false,
+      tls: false,
+      'pg-native': false,
     };
-    
-    return config;
-  },
+  }
+
+  config.externals = [...(config.externals || []), 'pg-native'];
+
+  config.ignoreWarnings = [
+    {
+      message: /Critical dependency: the request of a dependency is an expression/,
+    }
+  ];
+
+  config.module = {
+    ...config.module,
+    rules: [
+      ...config.module.rules,
+      {
+        test: /node_modules\/pg\//,
+        use: 'null-loader'
+      }
+    ]
+  };
+
+  return config;
+},
+
 };
 
 module.exports = nextConfig;
