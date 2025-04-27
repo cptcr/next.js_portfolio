@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, SetStateAction } from "react"
 import { Loader2, GitBranch, Star, GitFork, Calendar, History } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -90,15 +90,15 @@ export default function GithubContributions({ username }: GithubContributionsPro
   }, [activeTab, username])
   
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
+    <div className="overflow-hidden border rounded-lg bg-card border-border">
       <Tabs 
         defaultValue="contributions" 
         value={activeTab}
-        onValueChange={(value) => setActiveTab(value)}
+        onValueChange={(value: SetStateAction<string>) => setActiveTab(value)}
         className="w-full"
       >
         <div className="border-b border-border">
-          <TabsList className="w-full justify-start rounded-none bg-card p-0">
+          <TabsList className="justify-start w-full p-0 rounded-none bg-card">
             <TabsTrigger 
               value="contributions" 
               className="rounded-none data-[state=active]:bg-background data-[state=active]:shadow-none py-3 px-4"
@@ -123,7 +123,7 @@ export default function GithubContributions({ username }: GithubContributionsPro
         <div className="p-6">
           {loading ? (
             <div className="flex items-center justify-center min-h-[300px]">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : error ? (
             <div className="flex items-center justify-center min-h-[300px]">
@@ -154,7 +154,7 @@ function ContributionsTab({ data }: { data: ContributionsData }) {
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="bg-background">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base">Total Contributions</CardTitle>
@@ -187,8 +187,8 @@ function ContributionsTab({ data }: { data: ContributionsData }) {
       </div>
       
       {/* Contributions Chart */}
-      <div className="bg-background rounded-lg p-4 border border-border">
-        <h3 className="text-lg font-medium mb-4">Contributions by Month</h3>
+      <div className="p-4 border rounded-lg bg-background border-border">
+        <h3 className="mb-4 text-lg font-medium">Contributions by Month</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.contributionsByMonth}>
@@ -228,7 +228,7 @@ function ContributionsTab({ data }: { data: ContributionsData }) {
 function RepositoriesTab({ data }: { data: RepoData[] }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium mb-2">Latest Repositories</h3>
+      <h3 className="mb-2 text-lg font-medium">Latest Repositories</h3>
       <div className="divide-y divide-border">
         {data.length > 0 ? (
           data.map((repo) => (
@@ -237,13 +237,13 @@ function RepositoriesTab({ data }: { data: RepoData[] }) {
                 href={repo.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-lg font-medium text-primary hover:underline flex items-center"
+                className="flex items-center text-lg font-medium text-primary hover:underline"
               >
                 {repo.name}
               </a>
               
               {repo.description && (
-                <p className="text-muted-foreground mt-1">{repo.description}</p>
+                <p className="mt-1 text-muted-foreground">{repo.description}</p>
               )}
               
               <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
@@ -282,11 +282,11 @@ function RepositoriesTab({ data }: { data: RepoData[] }) {
 function ActivityTab({ data }: { data: ActivityData[] }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium mb-2">Recent Activity</h3>
+      <h3 className="mb-2 text-lg font-medium">Recent Activity</h3>
       <div className="space-y-4">
         {data.length > 0 ? (
           data.map((event) => (
-            <div key={event.id} className="bg-background rounded-lg p-4 border border-border">
+            <div key={event.id} className="p-4 border rounded-lg bg-background border-border">
               <ActivityEvent event={event} />
             </div>
           ))
@@ -305,30 +305,30 @@ function ActivityEvent({ event }: { event: ActivityData }) {
   
   switch (event.type) {
     case 'PushEvent':
-      icon = <GitBranch className="h-5 w-5 text-green-500" />
+      icon = <GitBranch className="w-5 h-5 text-green-500" />
       title = `Pushed ${event.commits} commits to ${event.repo.name}`
       details = <p className="text-sm text-muted-foreground">Branch: {event.branch}</p>
       break
       
     case 'PullRequestEvent':
-      icon = <GitBranch className="h-5 w-5 text-purple-500" />
+      icon = <GitBranch className="w-5 h-5 text-purple-500" />
       title = `${event.action === 'opened' ? 'Opened' : 'Updated'} pull request #${event.number} in ${event.repo.name}`
       details = <p className="text-sm text-muted-foreground">{event.title}</p>
       break
       
     case 'IssuesEvent':
-      icon = <GitBranch className="h-5 w-5 text-yellow-500" />
+      icon = <GitBranch className="w-5 h-5 text-yellow-500" />
       title = `${event.action === 'opened' ? 'Opened' : event.action} issue #${event.number} in ${event.repo.name}`
       details = <p className="text-sm text-muted-foreground">{event.title}</p>
       break
       
     case 'CreateEvent':
-      icon = <GitBranch className="h-5 w-5 text-blue-500" />
+      icon = <GitBranch className="w-5 h-5 text-blue-500" />
       title = `Created ${event.refType} ${event.ref || ''} in ${event.repo.name}`
       break
       
     default:
-      icon = <GitBranch className="h-5 w-5" />
+      icon = <GitBranch className="w-5 h-5" />
       title = `Activity in ${event.repo.name}`
   }
   
@@ -343,15 +343,15 @@ function ActivityEvent({ event }: { event: ActivityData }) {
             href={event.repo.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium hover:text-primary transition-colors"
+            className="font-medium transition-colors hover:text-primary"
           >
             {title}
           </a>
           
           {details}
           
-          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
+          <p className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+            <Calendar className="w-3 h-3" />
             {timeAgo(event.createdAt)}
           </p>
         </div>

@@ -1,8 +1,5 @@
 // lib/api/github.ts
-
 import { Octokit } from "octokit";
-import type { components } from "@octokit/openapi-types";
-
 // Types
 export interface GithubStats {
   stars: number;

@@ -1,26 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      'avatars.githubusercontent.com',
-      'cdn.discordapp.com',
-      'github.com',
-    ],
+    domains: ['avatars.githubusercontent.com', 'cdn.discordapp.com', 'github.com'],
   },
-  allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev'],
   reactStrictMode: true,
   typescript: {
-    ignoreBuildErrors: true
+    ignoreBuildErrors: true,
   },
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
   experimental: {
     reactCompiler: true,
-    concurrentFeatures: true,
-    appDir: true,
-    serverComponents: true,
-    optimizeCss: true
+    optimizeCss: true,
   },
   transpilePackages: [
     'framer-motion',
@@ -29,8 +21,43 @@ const nextConfig = {
     '@radix-ui/react-dialog',
     '@radix-ui/react-popover',
     '@radix-ui/react-alert-dialog',
-    '@radix-ui/react-select'
-  ],
-}
+    '@radix-ui/react-select',
+  ],webpack: (config, { isServer }) => {
+  if (!isServer) {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      crypto: false,
+      path: false,
+      os: false,
+      net: false,
+      tls: false,
+      'pg-native': false,
+    };
+  }
 
-module.exports = nextConfig
+  config.externals = [...(config.externals || []), 'pg-native'];
+
+  config.ignoreWarnings = [
+    {
+      message: /Critical dependency: the request of a dependency is an expression/,
+    }
+  ];
+
+  config.module = {
+    ...config.module,
+    rules: [
+      ...config.module.rules,
+      {
+        test: /node_modules\/pg\//,
+        use: 'null-loader'
+      }
+    ]
+  };
+
+  return config;
+},
+
+};
+
+module.exports = nextConfig;

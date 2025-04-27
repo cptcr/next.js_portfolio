@@ -1,5 +1,3 @@
-// app/api/admin/auth/route.ts
-
 import { NextResponse } from "next/server"
 import { sign } from "jsonwebtoken"
 import { verifyCredentials } from "@/lib/auth/credentials"
@@ -15,10 +13,19 @@ export async function POST(request: Request) {
   try {
     // Parse request body
     const body = await request.json()
+    if (!body) {
+      console.error("No body received in the request")
+      return NextResponse.json(
+        { message: "Request body is missing" },
+        { status: 400 }
+      )
+    }
+
     const { username, password } = body
 
     // Check if credentials are provided
     if (!username || !password) {
+      console.error("Missing username or password in the request body")
       return NextResponse.json(
         { message: "Username and password are required" },
         { status: 400 }
@@ -29,6 +36,7 @@ export async function POST(request: Request) {
     const isValid = await verifyCredentials(username, password)
     
     if (!isValid) {
+      console.error("Invalid credentials for username:", username)
       return NextResponse.json(
         { message: "Invalid credentials" },
         { status: 401 }
@@ -48,7 +56,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Authentication error:", error)
     return NextResponse.json(
-      { message: "Authentication failed" },
+      { message: "Authentication failed", error: `${error}` },
       { status: 500 }
     )
   }

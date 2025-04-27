@@ -39,9 +39,15 @@ export const postsService = {
     // Notify Discord if enabled
     if (shouldNotify) {
       try {
-        const author = await usersService.getUserById(postData.authorId);
-        if (author) {
-          await discordService.notifyNewPost(newPost, author);
+        // Get site settings to check if Discord notifications are enabled
+        const discordNotificationsEnabled = await settingsService.getSetting('discord_notifications_enabled');
+        
+        // Only send notification if enabled in settings
+        if (discordNotificationsEnabled) {
+          const author = await usersService.getUserById(postData.authorId);
+          if (author) {
+            await discordService.notifyNewPost(newPost, author);
+          }
         }
       } catch (error) {
         console.error('Failed to send Discord notification:', error);
@@ -319,5 +325,5 @@ export const postsService = {
     const wordCount = content.trim().split(/\s+/).length;
     const readingTimeMinutes = Math.ceil(wordCount / 200);
     return `${readingTimeMinutes} min read`;
-  },
+  }
 };

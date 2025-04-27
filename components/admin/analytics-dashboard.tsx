@@ -1,12 +1,14 @@
 "use client"
 
-import { StatCard } from "@/components/admin/stat-card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
+import React from "react";
+
+import { StatCard } from "../admin/stat-card"
+import { Badge } from "../ui/badge"
+import { Button } from "../ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
+import { useToast } from "../ui/use-toast"
 import {
     AlertCircle,
     ArrowRight,

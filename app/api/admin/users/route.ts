@@ -1,18 +1,55 @@
 // app/api/admin/users/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/lib/services/auth';
+import { verify } from "jsonwebtoken";
 import { usersService } from '@/lib/services/users';
+
+// Constants
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me";
+
+// Middleware to verify authentication
+async function verifyAuth(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authenticated: false, error: "Missing or invalid authorization header" };
+  }
+  
+  const token = authHeader.substring(7);
+  
+  try {
+    const payload = verify(token, JWT_SECRET);
+    return { 
+      authenticated: true, 
+      username: (payload as any).username 
+    };
+  } catch (error) {
+    return { 
+      authenticated: false, 
+      error: "Invalid or expired token" 
+    };
+  }
+}
 
 // GET: List all users
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate and authorize
-    const currentUser = await authService.getCurrentUser();
+    // Authenticate
+    const auth = await verifyAuth(request);
+    
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { message: auth.error },
+        { status: 401 }
+      );
+    }
+    
+    // Get current user details to check permissions
+    const currentUser = await usersService.getUserByUsername(auth.username);
     
     if (!currentUser) {
       return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
+        { message: 'User not found' },
+        { status: 404 }
       );
     }
     
@@ -21,14 +58,14 @@ export async function GET(request: NextRequest) {
     
     if (!canManageUsers && currentUser.role !== 'admin') {
       return NextResponse.json(
-        { message: 'Not authorized to manage users' },
+        { message: 'Not authorized to view users' },
         { status: 403 }
       );
     }
     
-    // Parse query parameters
+    // Get search params for pagination
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
     
     // Get users
@@ -36,7 +73,7 @@ export async function GET(request: NextRequest) {
     const total = await usersService.countUsers();
     
     // Remove sensitive data
-    const sanitizedUsers = users.map(user => ({
+    const sanitizedUsers = users.map((user: { id: any; username: any; email: any; realName: any; avatarUrl: any; role: any; createdAt: any; updatedAt: any; }) => ({
       id: user.id,
       username: user.username,
       email: user.email,
@@ -67,13 +104,23 @@ export async function GET(request: NextRequest) {
 // POST: Create a new user
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate and authorize
-    const currentUser = await authService.getCurrentUser();
+    // Authenticate
+    const auth = await verifyAuth(request);
+    
+    if (!auth.authenticated) {
+      return NextResponse.json(
+        { message: auth.error },
+        { status: 401 }
+      );
+    }
+    
+    // Get current user details to check permissions
+    const currentUser = await usersService.getUserByUsername(auth.username);
     
     if (!currentUser) {
       return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
+        { message: 'User not found' },
+        { status: 404 }
       );
     }
     
@@ -89,7 +136,7 @@ export async function POST(request: NextRequest) {
     
     // Parse request body
     const body = await request.json();
-    const { username, email, password, realName, role = 'user', avatarUrl, bio } = body;
+    const { username, email, password, realName, role = 'user', avatarUrl } = body;
     
     // Validate required fields
     if (!username || !email || !password) {
@@ -109,11 +156,22 @@ export async function POST(request: NextRequest) {
     }
     
     // Only admin can create admin users
-    if (role === 'admin' && currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Not authorized to create admin users' },
-        { status: 403 }
-      );
+    // Only root admin can create other admins
+    if (role === 'admin') {
+      if (currentUser.role !== 'admin') {
+        return NextResponse.json(
+          { message: 'Not authorized to create admin users' },
+          { status: 403 }
+        );
+      }
+      
+      // Check if this is the root admin
+      if (currentUser.username !== 'admin') {
+        return NextResponse.json(
+          { message: 'Only the root admin can create other admin users' },
+          { status: 403 }
+        );
+      }
     }
     
     // Create user
@@ -124,7 +182,6 @@ export async function POST(request: NextRequest) {
       realName,
       role,
       avatarUrl,
-      bio,
     });
     
     // Return sanitized user data
@@ -142,7 +199,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating user:', error);
     return NextResponse.json(
-      { message: 'Failed to create user' },
+      { message: 'Failed to create user', error: String(error) },
       { status: 500 }
     );
   }

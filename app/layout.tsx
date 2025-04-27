@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter as FontSans, Space_Grotesk as FontHeading, JetBrains_Mono as FontMono } from 'next/font/google'
 import './globals.css'
@@ -12,16 +13,19 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
 })
 
 const fontHeading = FontHeading({
   subsets: ['latin'],
   variable: '--font-heading',
+  display: 'swap',
 })
 
 const fontMono = FontMono({
   subsets: ['latin'],
   variable: '--font-mono',
+  display: 'swap',
 })
 
 // SEO metadata
@@ -68,8 +72,6 @@ export default function RootLayout({
         fontHeading.variable,
         fontMono.variable
       )}>
-        <Analytics/>
-        <SpeedInsights/>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -78,10 +80,14 @@ export default function RootLayout({
         >
           <div className="relative flex flex-col min-h-screen">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+              {children}
+            </main>
             <Footer />
           </div>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
