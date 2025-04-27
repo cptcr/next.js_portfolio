@@ -1,63 +1,72 @@
-import { NextResponse } from "next/server"
-import { sign } from "jsonwebtoken"
-import { verifyCredentials } from "@/lib/auth/credentials"
-import { JwtPayload } from "@/lib/types/auth"
+// app/api/admin/auth/route.ts
+// Handler for admin login
+import { NextResponse } from "next/server";
+import { sign } from "jsonwebtoken";
+import { usersService } from "@/lib/services/users";
+import { compare } from "bcryptjs";
 
-// Constants and types
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me"
-
-// JWT token expiration (1 day)
-const TOKEN_EXPIRATION = "1d"
+// Constants
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me";
+const JWT_EXPIRES_IN = "24h";
 
 export async function POST(request: Request) {
   try {
-    // Parse request body
-    const body = await request.json()
-    if (!body) {
-      console.error("No body received in the request")
-      return NextResponse.json(
-        { message: "Request body is missing" },
-        { status: 400 }
-      )
-    }
-
-    const { username, password } = body
-
-    // Check if credentials are provided
+    const body = await request.json();
+    const { username, password } = body;
+    
+    // Validate required fields
     if (!username || !password) {
-      console.error("Missing username or password in the request body")
       return NextResponse.json(
         { message: "Username and password are required" },
         { status: 400 }
-      )
+      );
     }
-
-    // Validate credentials using our credential management system
-    const isValid = await verifyCredentials(username, password)
     
-    if (!isValid) {
-      console.error("Invalid credentials for username:", username)
+    // Get user by username
+    const user = await usersService.getUserByUsername(username);
+    
+    if (!user) {
       return NextResponse.json(
-        { message: "Invalid credentials" },
+        { message: "Invalid username or password" },
         { status: 401 }
-      )
+      );
     }
-
-    // Create JWT token with proper payload type
-    const payload: JwtPayload = { username }
+    
+    // Verify password
+    const passwordMatch = await compare(password, user.password);
+    
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { message: "Invalid username or password" },
+        { status: 401 }
+      );
+    }
+    
+    // Generate JWT token
     const token = sign(
-      payload,
+      { 
+        userId: user.id, 
+        username: user.username, 
+        role: user.role 
+      },
       JWT_SECRET,
-      { expiresIn: TOKEN_EXPIRATION }
-    )
-
-    // Return success with token
-    return NextResponse.json({ token })
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+    
+    return NextResponse.json({
+      message: "Authentication successful",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }
+    });
   } catch (error) {
-    console.error("Authentication error:", error)
+    console.error("Authentication error:", error);
     return NextResponse.json(
-      { message: "Authentication failed", error: `${error}` },
+      { message: "Authentication failed", error: String(error) },
       { status: 500 }
-    )
+    );
   }
 }

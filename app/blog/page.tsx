@@ -1,77 +1,45 @@
 // app/blog/page.tsx
 import { Metadata } from "next";
-import { postsService } from "@/lib/services/posts";
+import { getAllPosts } from "@/lib/utils/markdown";
 import { settingsService } from "@/lib/services/settings";
 import BlogList, { BlogPost } from "@/components/blog/blog-list";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Blog | Tony (cptcr)",
   description: "Tony's blog about backend development, Next.js, TypeScript, and web technologies.",
 };
 
-// Force dynamic rendering for this page
+// Force dynamic rendering for all blog pages to ensure new posts are always visible
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 0; // Disable caching to always show the latest posts
 
 export default async function BlogPage() {
+  // Set no-cache headers to ensure fresh content
+  const headersList = headers();
+  
   // Fetch settings
   const siteSettings = await settingsService.getAllSettings();
   const postsPerPage = siteSettings.posts_per_page || 9;
   const showFeaturedPosts = siteSettings.show_featured_posts !== false;
   
-  // Fetch all posts server-side using our posts service
-  const posts = await postsService.listPosts({ 
-    limit: postsPerPage,
-    offset: 0
-  });
+  // Fetch all posts using the markdown utility
+  // This will fetch directly from the blob storage without caching
+  const allPosts = await getAllPosts();
+  
+  // Filter posts for pagination
+  const posts = allPosts.slice(0, postsPerPage);
   
   // Get all categories for filters
-  const categories = await postsService.getAllCategories();
+  const categories = Array.from(new Set(allPosts.map(post => post.category)));
   
   // If showing featured posts is enabled, get them separately
   let featuredPosts: BlogPost[] = [];
   if (showFeaturedPosts) {
-    const featuredData = await postsService.listPosts({
-      limit: siteSettings.featured_post_limit || 3,
-      featured: true
-    });
-    
-    // Transform the featured posts to match the expected BlogPost type
-    featuredPosts = featuredData.map(post => ({
-      slug: post.slug,
-      title: post.title,
-      date: post.publishedAt.toISOString(),
-      excerpt: post.excerpt || "",
-      content: post.content,
-      readingTime: postsService.calculateReadingTime(post.content),
-      category: post.category || "Uncategorized",
-      featured: post.featured || false,
-      author: post.author ? {
-        id: post.author.id,
-        username: post.author.username,
-        realName: post.author.realName,
-        avatarUrl: post.author.avatarUrl
-      } : undefined
-    }));
+    featuredPosts = allPosts
+      .filter(post => post.featured)
+      .slice(0, siteSettings.featured_post_limit || 3);
   }
-  
-  // Add reading time to each post and format data to match the BlogPost type
-  const processedPosts: BlogPost[] = posts.map(post => ({
-    slug: post.slug,
-    title: post.title,
-    date: post.publishedAt.toISOString(),
-    excerpt: post.excerpt || "",
-    content: post.content,
-    readingTime: postsService.calculateReadingTime(post.content),
-    category: post.category || "Uncategorized",
-    featured: post.featured || false,
-    author: post.author ? {
-      id: post.author.id,
-      username: post.author.username,
-      realName: post.author.realName,
-      avatarUrl: post.author.avatarUrl
-    } : undefined
-  }));
 
   return (
     <div className="min-h-screen pt-24">
@@ -95,7 +63,7 @@ export default async function BlogPage() {
         <div className="container px-4">
           <div className="max-w-5xl mx-auto">
             <BlogList 
-              posts={processedPosts} 
+              posts={posts} 
               featuredPosts={featuredPosts}
               categories={categories}
               showAuthorInfo={siteSettings.show_author_info !== false}

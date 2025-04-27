@@ -1,20 +1,13 @@
 // app/blog/[slug]/page.tsx
 import { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, Clock, ArrowLeft, User } from "lucide-react"; // Import User icon
+import { Calendar, Clock, ArrowLeft, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getAllPostSlugs } from "@/lib/utils/markdown";
+import { headers } from "next/headers";
 
-// We need to update the BlogPost interface to include author
-interface Author {
-  id: number;
-  username: string;
-  realName: string | null;
-  avatarUrl: string | null;
-}
-
-interface ExtendedBlogPost {
+interface BlogPost {
   slug: string;
   title: string;
   date: string;
@@ -24,7 +17,12 @@ interface ExtendedBlogPost {
   category: string;
   featured: boolean;
   url?: string;
-  author?: Author;
+  author?: {
+    id: number;
+    username: string;
+    realName: string | null;
+    avatarUrl: string | null;
+  } | null;
 }
 
 interface Props {
@@ -35,9 +33,10 @@ interface Props {
 
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 0; // Disable caching
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const headersList = headers();
   const post = await getPostBySlug(params.slug);
   
   if (!post) {
@@ -60,7 +59,8 @@ export async function generateStaticParams() {
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const post = await getPostBySlug(params.slug) as ExtendedBlogPost | null;
+  const headersList = headers();
+  const post = await getPostBySlug(params.slug);
   
   if (!post) {
     notFound();
