@@ -1,168 +1,228 @@
+# Next.js Portfolio & Blog
 
-# Portfolio Website
+A modern, responsive portfolio and blog application built with Next.js, TypeScript, TailwindCSS, and ShadCN UI components.
 
-Built with Next 15, React 19 and much much love.
+![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 
----
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcptcr%2Fnext.js_portfolio&env=DISCORD_USER_ID,DISCORD_BOT_TOKEN,USE_LANYARD,EMAIL_HOST,EMAIL_AUTH_USERNAME,EMAIL_AUTH_PASSWORD,EMAIL_SECURE,ADMIN_USERNAME,ADMIN_PASSWORD,JWT_SECRET&envDescription=Discord%20Bot%20Token%20(required)%2C%20GitHub%20API%20Key%20(optional)&project-name=nextjs-portfolio&repository-name=Next.js-Portfolio&redirect-url=https%3A%2F%2Fcptcr.dev&demo-title=Next.js%20Portfolio%20with%20Blog%20management&demo-description=This%20is%20a%20Next.js%20Portfolio%20with%20a%20dedicated%20portal%20to%20create%20and%20manage%20blog%20posts.&demo-url=https%3A%2F%2Fcptcr.dev) 
+## Features
 
-## 🚀 Features
+- Modern, responsive design with dark mode support
+- Mobile-friendly interface for seamless user experience
+- Fully featured blog with Markdown support
+- Admin dashboard with authentication
+- Analytics dashboard for blog post insights
+- Editorial calendar for content scheduling
+- User management system for account handling
+- Customizable site settings for personalization
+- Discord webhook integration for notifications
+- GitHub activity integration for showcasing contributions
+- Contact form with email functionality
+- SEO optimized for better search engine visibility
 
-- **Modern UI**: Dark mode with clean typography and accent colors
-- **Responsive Design**: Optimized for mobile, tablet, and desktop
-- **Real-time Integrations**:
-  - GitHub activity, repositories, and contributions via API
-  - Availability status (based on Germany timezone)
-  - “Quote of the Day” from external API
-- **Interactive Experience**:
-  - Smooth page transitions with Framer Motion
-  - Expandable project cards
-  - Real-time form validation
-- **Performance Optimizations**:
-  - Server-side rendering with caching
-  - Optimized image loading
-- **Admin Dashboard**
-  - Edit and manage posts
-  - Create posts
-  - Get post analytics
+## Tech Stack
 
----
+- **Framework**: [Next.js 15](https://nextjs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [TailwindCSS](https://tailwindcss.com/)
+- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
+- **Database**: [Neon PostgreSQL](https://neon.tech)
+- **Authentication**: JWT with bcrypt
+- **CMS**: Built-in admin dashboard
+- **Storage**: Vercel Blob for blog posts
+- **Hosting**: [Vercel](https://vercel.com)
+- **Analytics**: Vercel Analytics
 
-## 🧱 Tech Stack
+## Getting Started
 
-### Frontend
-- [Next.js 15](https://nextjs.org/blog/next-15)
-- [React 19](https://react.dev/blog/2024/12/05/react-19)
-- [TypeScript 5](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-8.html)
-- [TailwindCSS 4.1](https://tailwindcss.com/)
-- [ShadCN UI 2](https://ui.shadcn.com/)
-- [Framer Motion](https://motion.dev/)
+### Prerequisites
 
-### Backend
-- Next.js API Routes
-- GitHub API integration
-- Real-time data fetching
+Ensure the following are installed:
 
----
+- **Node.js 18+** (Latest LTS version recommended)
+- **PostgreSQL database** (Neon recommended)
+- **SMTP server** for email functionality (optional)
 
-## 📄 Pages
+### Installation
 
-1. **Home** – Animated hero + featured projects  
-2. **About** – Skills and GitHub dashboard  
-3. **Projects** – Filterable showcase + activity feed  
-4. **Community** – OSS contributions + mentorships  
-5. **Blog** – Searchable, filterable articles  
-6. **Contact** – Live validation + availability indicator  
-7. **Admin** - Stats and post management
+1. Clone the repository:
 
----
-
-## 🛠️ Setup & Installation
-
-1. **Clone the repo**
    ```bash
    git clone https://github.com/cptcr/next.js_portfolio.git
    cd next.js_portfolio
    ```
 
-2. **Install dependencies**
+2. Install the dependencies:
+
    ```bash
-   npm install # or yarn or pnpm
+   npm install
    ```
 
-3. **Environment config**
+3. Copy the `.env.example` file to create your `.env` file:
 
-   Create a `.env.local` file:
-
-   ```env
-   GITHUB_TOKEN=
-
-   # Discord Integration
-   DISCORD_USER_ID=
-   DISCORD_BOT_TOKEN=
-   USE_LANYARD=false
-
-   # Email
-   EMAIL_HOST=smtp.mailgun.org
-   EMAIL_ADDRESS=
-   EMAIL_SMTP_PORT=587
-   EMAIL_AUTH_USERNAME=
-   EMAIL_AUTH_PASSWORD=
-   EMAIL_SECURE=
-
-   # Auth
-   ADMIN_USERNAME=cptcr
-   ADMIN_PASSWORD=<secure-password>
-   JWT_SECRET=<generate-a-secure-random-string>
-
-   # Vercel
-   # Run "npm i -g -D vercel"
-   # After installation run "vercel init"
-   # After init run "vercel env pull" (vercel will now create the required token, vercel may affect the env file so double check if everything is still here or create a backup file)
-   VERCEL_OIDC_TOKEN=
-   # In your deployed site on vercel,
-   # go to storage and search if vercel already created one, if not,
-   # click on add new, then enter /posts as directory and deploy it
-   # after that go into the blob settings and obtain the key
-   BLOB_READ_WRITE_TOKEN=
-
-   # Used for the blogs api
-   NEXT_PUBLIC_SITE_UTL=http://localhost:3000 # (Change if you use a domain)
+   ```bash
+   cp .env.example .env
    ```
 
-4. **Start development server**
+4. Configure the environment variables in the `.env` file:
+
+   - Database URL (from [Neon](https://neon.tech))
+   - JWT Secret
+   - Admin credentials
+   - Email settings
+   - Discord integration (optional)
+   - GitHub token (optional)
+   - Vercel Blob credentials (for blog storage)
+
+5. Start the development server:
+
    ```bash
    npm run dev
    ```
 
-5. **Open** `http://localhost:3000` in your browser
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
----
+### Initial Setup
 
-## 🌐 Deployment (Vercel)
+Upon first run, you'll be prompted to create an admin account through the admin setup page:
 
-1. Connect your GitHub repo to [Vercel](https://vercel.com)
-2. Add environment variables in the Vercel dashboard
-3. Deploy instantly
+1. Navigate to `/admin` in your browser.
+2. Complete the setup form to create your admin account.
+3. Once created, log in to access the dashboard.
 
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-cptcr-website/
-├── app/            # App Router pages
-│   ├── api/        # API routes
-│   ├── blog/       # Blog system
-│   ├── contact/    # Contact page
-│   └── ...         # Other routes
-│
-├── components/     # Reusable components
-│   ├── ui/         # UI primitives
-│   ├── layout/     # Layout components
-│   └── [feature]/  # Page-specific components
-│
-├── lib/            # Utilities & types
-│   ├── api/        
-│   ├── utils/
-│   └── types/
-│
-├── public/         # Static assets
-├── tailwind.config.js
-└── next.config.js
+├── app/                     # Next.js App Router
+│   ├── admin/               # Admin dashboard pages
+│   ├── api/                 # API routes
+│   ├── blog/                # Blog pages
+│   ├── about/               # About page
+│   ├── contact/             # Contact page
+│   ├── projects/            # Projects page
+│   └── ...
+├── components/              # React components
+│   ├── admin/               # Admin dashboard components
+│   ├── blog/                # Blog components
+│   ├── ui/                  # UI components (ShadCN)
+│   └── ...
+├── lib/                     # Utility functions, services, and API
+│   ├── api/                 # API integrations
+│   ├── auth/                # Authentication utilities
+│   ├── db/                  # Database models and schema
+│   ├── services/            # Business logic services
+│   └── utils/               # Helper utilities
+├── public/                  # Static assets
+├── scripts/                 # Utility scripts
+└── ...
 ```
 
+## Database Setup
+
+This project uses Neon Postgres with Drizzle ORM. Follow these steps to set up the database:
+
+1. Create a free account at [Neon](https://neon.tech).
+2. Create a new project and database.
+3. Copy the connection string and add it to the `.env` file as `DATABASE_URL`.
+
+### User Management
+
+Manage users using the provided scripts:
+
+```bash
+# Create a new user
+npm run create_user
+
+# Delete a user
+npm run delete_user
+```
+
+## Blog Storage
+
+Blog posts are stored using Vercel Blob. To set up this feature:
+
+1. Configure Vercel Blob in your Vercel project settings.
+2. Add your Blob read/write token to your `.env` file as `BLOB_READ_WRITE_TOKEN`.
+
+## Discord Integration
+
+For integrating Discord status and webhooks:
+
+1. Create a Discord bot at [Discord Developer Portal](https://discord.com/developers/applications).
+2. Add the bot token and your user ID to `.env` as `DISCORD_BOT_TOKEN` and `DISCORD_USER_ID`.
+3. Set up a webhook URL for notifications and add it to `.env` as `DISCORD_WEBHOOK_URL`.
+
+## Customization
+
+### Styling
+
+Customize the design by adjusting the following:
+
+1. Update `tailwind.config.js` to modify colors, fonts, and other design elements.
+2. Modify global styles in `app/globals.css`.
+3. Customize individual components within the `components` directory.
+
+### Content
+
+Update your personal content in these locations:
+
+- `app/page.tsx` - Landing page content
+- `app/about/page.tsx` - About page information
+- `components/layout/footer.tsx` - Footer links and details
+- `app/projects/page.tsx` - Showcase projects
+
+## Deployment
+
+To deploy this project, Vercel is the recommended platform. Follow these steps:
+
+1. Push your repository to GitHub.
+2. Import the project into Vercel.
+3. Configure environment variables within Vercel project settings.
+4. Deploy your project!
+
+For other hosting platforms, ensure you:
+
+- Set up environment variables.
+- Configure the build command (`npm run build`).
+- Specify the output directory (`/.next`).
+
+## Scripts
+
+- `npm run dev` - Start the development server.
+- `npm run build` - Build the application for production.
+- `npm run start` - Start the production server.
+- `npm run lint` - Run ESLint.
+- `npm run create_user` - Create a new user.
+- `npm run delete_user` - Delete a user.
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a new feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'Add an amazing feature'`).
+4. Push your branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for more details.
+
+## Built with
+![Next.js](https://img.shields.io/badge/Next.js-v15-blue)
+![Neon](https://img.shields.io/badge/Neon-Cloud-purple)
+![ShadCN](https://img.shields.io/badge/ShadCN-UI-blue)
+![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v3.0-blue)
+![Vercel](https://img.shields.io/badge/Vercel-Deploy-blue)
+![Lucide Icons](https://img.shields.io/badge/Lucide-Icons-orange)
+
+- [Next.js](https://nextjs.org/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [ShadCN UI](https://ui.shadcn.com/)
+- [Vercel](https://vercel.com)
+- [Neon](https://neon.tech)
+- [Lucide Icons](https://lucide.dev/)
+
 ---
 
-## 📝 License
-
-Licensed under the [MIT License](LICENSE).
-
----
-
-## 👨‍💻 About the Developer
-
-Built by **Tony (cptcr)**, a 17-year-old backend developer based in Stuttgart, Germany, specializing in modern web stacks.
-
-- GitHub: [@cptcr](https://github.com/cptcr)  
-- Twitter: [@cptcr](https://twitter.com/cptcrr) 
+Created by [CPTCR](https://github.com/cptcr)
