@@ -1,63 +1,54 @@
 // app/api/admin/webhooks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/lib/services/auth';
+import { verify } from 'jsonwebtoken';
 import { discordService } from '@/lib/services/discord';
 import { usersService } from '@/lib/services/users';
 
-// GET: List all webhook configurations
-export async function GET(request: NextRequest) {
+// Constants
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-me";
+
+// Middleware to verify authentication
+async function verifyAuth(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authenticated: false, error: "Missing or invalid authorization header" };
+  }
+  
+  const token = authHeader.substring(7);
+  
   try {
-    // Authenticate
-    const currentUser = await authService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
-    
-    // Check if user has permission to manage settings
-    const canManageSettings = await usersService.hasPermission(currentUser.id, 'canManageSettings');
-    
-    if (!canManageSettings && currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Not authorized to view webhooks' },
-        { status: 403 }
-      );
-    }
-    
-    const webhooks = await discordService.listWebhooks();
-    
-    return NextResponse.json({ webhooks });
+    const payload = verify(token, JWT_SECRET);
+    return { 
+      authenticated: true, 
+      username: (payload as any).username, 
+      userId: (payload as any).userId, 
+      role: (payload as any).role 
+    };
   } catch (error) {
-    console.error('Error listing webhooks:', error);
-    return NextResponse.json(
-      { message: 'Failed to list webhooks' },
-      { status: 500 }
-    );
+    return { authenticated: false, error: "Invalid or expired token" };
   }
 }
 
-// POST: Create a new webhook configuration
-export async function POST(request: NextRequest) {
+// GET: List all webhooks
+export async function GET(request: NextRequest) {
   try {
-    // Authenticate
-    const currentUser = await authService.getCurrentUser();
+    // Verify authentication
+    const auth = await verifyAuth(request);
     
-    if (!currentUser) {
+    if (!auth.authenticated) {
       return NextResponse.json(
-        { message: 'Not authenticated' },
+        { message: auth.error },
         { status: 401 }
       );
     }
     
     // Check if user has permission to manage settings
-    const canManageSettings = await usersService.hasPermission(currentUser.id, 'canManageSettings');
+    const canManageSettings = auth.role === 'admin' || await usersService.hasPermission(auth.userId, 'canManageSettings');
     
-    if (!canManageSettings && currentUser.role !== 'admin') {
+    if (!canManageSettings) {
       return NextResponse.json(
-        { message: 'Not authorized to create webhooks' },
+        { message: "You do not have permission to manage webhooks" },
         { status: 403 }
       );
     }
@@ -69,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!name || !url) {
       return NextResponse.json(
-        { message: 'Name and URL are required' },
+        { message: "Name and URL are required" },
         { status: 400 }
       );
     }
@@ -79,7 +70,7 @@ export async function POST(request: NextRequest) {
       new URL(url);
     } catch (e) {
       return NextResponse.json(
-        { message: 'Invalid URL format' },
+        { message: "Invalid URL format" },
         { status: 400 }
       );
     }
@@ -95,12 +86,12 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       webhook,
-      message: 'Webhook created successfully',
+      message: "Webhook created successfully",
     });
   } catch (error) {
-    console.error('Error creating webhook:', error);
+    console.error("Error creating webhook:", error);
     return NextResponse.json(
-      { message: 'Failed to create webhook' },
+      { message: "Failed to create webhook", error: String(error) },
       { status: 500 }
     );
   }
