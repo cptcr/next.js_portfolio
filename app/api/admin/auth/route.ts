@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { sign } from 'jsonwebtoken';
 import { usersService } from '@/lib/services/users';
-import { compare } from 'bcryptjs';
+import { compare } from 'bcrypt';
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';

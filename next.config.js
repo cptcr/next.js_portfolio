@@ -26,6 +26,7 @@ const nextConfig = {
     "@radix-ui/react-popover",
     "@radix-ui/react-alert-dialog",
     "@radix-ui/react-select",
+    "@mapbox/node-pre-gyp", // Added for transpilation
   ],
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -43,23 +44,28 @@ const nextConfig = {
 
     config.externals = [...(config.externals || []), "pg-native"];
 
-    config.ignoreWarnings = [
-      {
-        message:
-          /Critical dependency: the request of a dependency is an expression/,
-      },
-    ];
+    // Exclude non-JS files from `node-pre-gyp`
+    config.module.rules.push({
+      test: /node_modules\/@mapbox\/node-pre-gyp\/lib\/util\/nw-pre-gyp\/index\.html$/,
+      use: 'null-loader', // Exclude HTML files
+    });
 
-    config.module = {
-      ...config.module,
-      rules: [
-        ...config.module.rules,
-        {
-          test: /node_modules\/pg\//,
-          use: "null-loader",
-        },
-      ],
-    };
+    // Exclude `bluebird` and `underscore` from client-side bundling
+    config.module.rules.push({
+      test: /node_modules\/bluebird\/js\/browser\/bluebird\.js$/,
+      use: "null-loader", // Exclude bluebird
+    });
+
+    config.module.rules.push({
+      test: /node_modules\/underscore\/modules\/_setup\.js$/,
+      use: "null-loader", // Exclude underscore
+    });
+
+    // Optional: Add HTML loader for other HTML files if needed
+    config.module.rules.push({
+      test: /\.html$/,
+      use: 'html-loader',
+    });
 
     return config;
   },

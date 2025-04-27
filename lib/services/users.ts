@@ -4,7 +4,7 @@ import { databaseConfig } from '../db/config';
 import { memoryStore } from '../db/memory-store';
 import { getDb } from '../db/postgres';
 import { users, permissions, User, NewUser, Permission, NewPermission } from '../db/schema';
-import { hash, compare } from 'bcryptjs';
+import { hash, compare } from 'bcrypt';
 
 // User services
 export const usersService = {
