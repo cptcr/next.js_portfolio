@@ -10,7 +10,7 @@ import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 
 // Import bcrypt for password hashing
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // Import readline for user input
 import readline from 'readline';

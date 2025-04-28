@@ -1,7 +1,8 @@
 // app/api/admin/webhooks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/utils/admin-service';
-import { discordWebhooks, db } from '@/lib/db/postgres';
+import { db } from '@/lib/db/postgres';
+import { discordWebhooks } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 type WebhookBodyData = {

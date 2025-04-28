@@ -1,7 +1,8 @@
 // app/api/admin/webhooks/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuthToken } from '@/lib/utils/admin-service';
-import { discordWebhooks, db } from '@/lib/db/postgres';
+import { verifyAuthToken } from '@/lib/utils/admin-service'; // Assuming this path is correct
+import { db } from '@/lib/db/postgres'; // Assuming this path is correct
+import { discordWebhooks } from '@/lib/db/schema'; // Assuming this path is correct
 import { eq } from 'drizzle-orm';
 
 type WebhookUpdateData = {
@@ -10,12 +11,16 @@ type WebhookUpdateData = {
   avatar?: string | null;
   enabled?: boolean;
   categories?: string[] | null;
+  updatedAt?: Date;
 };
 
 // GET: Get a single webhook by ID
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id);
+    // --- Correctly await params before accessing properties ---
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
+    // --- End of fix ---
 
     if (isNaN(id)) {
       return NextResponse.json({ message: 'Invalid webhook ID' }, { status: 400 });
@@ -38,7 +43,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({ webhook });
   } catch (error) {
-    console.error(`Error getting webhook ${params.id}:`, error);
+    // Log with resolved ID if possible, otherwise use original params
+    const errorId = typeof params === 'object' && params !== null && 'id' in params ? params.id : 'unknown ID';
+    console.error(`Error getting webhook ${errorId}:`, error);
     return NextResponse.json(
       { message: 'Failed to get webhook', error: String(error) },
       { status: 500 },
@@ -49,7 +56,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 // PUT: Update a webhook
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id);
+    // --- Correctly await params before accessing properties ---
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
+    // --- End of fix ---
 
     if (isNaN(id)) {
       return NextResponse.json({ message: 'Invalid webhook ID' }, { status: 400 });
@@ -105,7 +115,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       message: 'Webhook updated successfully',
     });
   } catch (error) {
-    console.error(`Error updating webhook ${params.id}:`, error);
+    // Log with resolved ID if possible, otherwise use original params
+    const errorId = typeof params === 'object' && params !== null && 'id' in params ? params.id : 'unknown ID';
+    console.error(`Error updating webhook ${errorId}:`, error);
     return NextResponse.json(
       { message: 'Failed to update webhook', error: String(error) },
       { status: 500 },
@@ -116,7 +128,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 // DELETE: Delete a webhook
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id);
+    // --- Correctly await params before accessing properties ---
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
+    // --- End of fix ---
 
     if (isNaN(id)) {
       return NextResponse.json({ message: 'Invalid webhook ID' }, { status: 400 });
@@ -130,11 +145,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Check if webhook exists
-    const [existingWebhook] = await db.select().from(discordWebhooks).where(eq(discordWebhooks.id, id));
+    // Check if webhook exists (optional, but good practice before delete)
+    const [existingWebhook] = await db.select({ id: discordWebhooks.id }).from(discordWebhooks).where(eq(discordWebhooks.id, id));
 
     if (!existingWebhook) {
+      // You might choose to return success even if not found, or a 404
       return NextResponse.json({ message: 'Webhook not found' }, { status: 404 });
+      // return NextResponse.json({ message: 'Webhook already deleted or never existed' });
     }
 
     // Delete webhook from database
@@ -144,7 +161,9 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       message: 'Webhook deleted successfully',
     });
   } catch (error) {
-    console.error(`Error deleting webhook ${params.id}:`, error);
+     // Log with resolved ID if possible, otherwise use original params
+    const errorId = typeof params === 'object' && params !== null && 'id' in params ? params.id : 'unknown ID';
+    console.error(`Error deleting webhook ${errorId}:`, error);
     return NextResponse.json(
       { message: 'Failed to delete webhook', error: String(error) },
       { status: 500 },

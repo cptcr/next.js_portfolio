@@ -2,7 +2,7 @@
 import { sign, verify, Secret, SignOptions } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { usersService } from './users';
+import { authenticateUser, getUserWithPermissions } from './users';
 import { env } from '../env'; // Assuming env loads process.env correctly
 
 // Types
@@ -93,7 +93,7 @@ export const authService = {
   async authenticateUser(username: string, password: string): Promise<AuthResult> {
     try {
       // Note: usersService.authenticateUser should internally use verifyCredentials
-      const user = await usersService.authenticateUser(username, password);
+      const user = await authenticateUser(username, password);
 
       if (!user) {
         console.log(`[authenticateUser] Authentication failed for user: ${username}`);
@@ -169,7 +169,7 @@ export const authService = {
     // Get user with permissions
     try {
       console.log(`[getCurrentUser] Fetching user with ID: ${payload.userId}`); // Log user ID being fetched
-      const user = await usersService.getUserWithPermissions(payload.userId);
+      const user = await getUserWithPermissions(payload.userId);
       if (!user) {
         console.log(`[getCurrentUser] User not found in DB for ID: ${payload.userId}`); // Log user not found
         // Attempt to clear the invalid cookie if user doesn't exist for the token ID

@@ -2,7 +2,7 @@
 // Handler to get current user info for the admin panel
 import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
-import { usersService } from '@/lib/services/users';
+import { getUserWithPermissions } from '@/lib/services/users';
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     }
 
     // Get user with permissions
-    const user = await usersService.getUserWithPermissions(auth.userId);
+    const user = await getUserWithPermissions(auth.userId);
 
     if (!user) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });

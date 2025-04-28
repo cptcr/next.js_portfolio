@@ -17,6 +17,7 @@ const nextConfig = {
   experimental: {
     reactCompiler: true,
     optimizeCss: true,
+    serverExternalPackages: ["bcrypt"], // Add bcrypt as external package
   },
   transpilePackages: [
     "framer-motion",
@@ -26,7 +27,7 @@ const nextConfig = {
     "@radix-ui/react-popover",
     "@radix-ui/react-alert-dialog",
     "@radix-ui/react-select",
-    "@mapbox/node-pre-gyp", // Added for transpilation
+    "@mapbox/node-pre-gyp",
   ],
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -38,11 +39,22 @@ const nextConfig = {
         os: false,
         net: false,
         tls: false,
+        dns: false,
+        child_process: false,
         "pg-native": false,
+        "bcrypt": false, // Add bcrypt to fallback
+        "node-gyp": false, // Add node-gyp to fallback
+        "npm": false, // Add npm to fallback
+        "@mswjs/interceptors/presets/node": false, // Add mswjs to fallback
       };
     }
 
-    config.externals = [...(config.externals || []), "pg-native"];
+    // Exclude specific modules from client bundle
+    config.externals = [
+      ...(config.externals || []),
+      "pg-native",
+      isServer ? {} : { "bcrypt": "bcrypt" } // Exclude bcrypt from client
+    ];
 
     // Exclude non-JS files from `node-pre-gyp`
     config.module.rules.push({
@@ -50,7 +62,7 @@ const nextConfig = {
       use: 'null-loader', // Exclude HTML files
     });
 
-    // Exclude `bluebird` and `underscore` from client-side bundling
+    // Handle problematic modules
     config.module.rules.push({
       test: /node_modules\/bluebird\/js\/browser\/bluebird\.js$/,
       use: "null-loader", // Exclude bluebird
@@ -59,6 +71,18 @@ const nextConfig = {
     config.module.rules.push({
       test: /node_modules\/underscore\/modules\/_setup\.js$/,
       use: "null-loader", // Exclude underscore
+    });
+
+    // Exclude nock and its dependencies in client-side bundling
+    config.module.rules.push({
+      test: /node_modules\/nock\/.*$/,
+      use: "null-loader",
+    });
+
+    // Exclude mapbox node-pre-gyp util files that try to import node-gyp or npm
+    config.module.rules.push({
+      test: /node_modules\/@mapbox\/node-pre-gyp\/lib\/util\/compile\.js$/,
+      use: "null-loader",
     });
 
     // Optional: Add HTML loader for other HTML files if needed

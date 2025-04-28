@@ -1,6 +1,6 @@
 // lib/auth/credentials.ts
-
-import { compare, hash } from 'bcrypt';
+'use server';
+import { compare, hash } from 'bcryptjs';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
 import { eq } from 'drizzle-orm';

@@ -2,7 +2,7 @@
 import { eq, like, desc, sql, and, or, inArray } from 'drizzle-orm';
 import { db } from '../db/postgres';
 import { posts, users, Post, NewPost } from '../db/schema';
-import { usersService } from './users';
+import { getUserById, hasPermission } from './users';
 import { discordService } from './discord';
 import { settingsService } from './settings';
 import { slugify } from '../utils/helpers';
@@ -48,7 +48,7 @@ export const postsService = {
 
         // Only send notification if enabled in settings
         if (discordNotificationsEnabled) {
-          const author = await usersService.getUserById(postData.authorId);
+          const author = await getUserById(postData.authorId);
           if (author) {
             await discordService.notifyNewPost(newPost, author);
           }
@@ -69,7 +69,7 @@ export const postsService = {
     if (!post) return null;
 
     // Get author information
-    const author = await usersService.getUserById(post.authorId);
+    const author = await getUserById(post.authorId);
 
     return {
       ...post,
@@ -91,7 +91,7 @@ export const postsService = {
     if (!post) return null;
 
     // Get author information
-    const author = await usersService.getUserById(post.authorId);
+    const author = await getUserById(post.authorId);
 
     return {
       ...post,
@@ -119,8 +119,8 @@ export const postsService = {
     }
 
     // Check permissions - user can edit if they're the author or have edit all permission
-    const canEditOwn = await usersService.hasPermission(userId, 'canEditOwnPosts');
-    const canEditAll = await usersService.hasPermission(userId, 'canEditAllPosts');
+    const canEditOwn = await hasPermission(userId, 'canEditOwnPosts');
+    const canEditAll = await hasPermission(userId, 'canEditAllPosts');
     const isAuthor = existingPost.authorId === userId;
 
     if ((!isAuthor || !canEditOwn) && !canEditAll) {
@@ -168,8 +168,8 @@ export const postsService = {
     }
 
     // Check permissions - user can delete if they're the author or have delete all permission
-    const canDeleteOwn = await usersService.hasPermission(userId, 'canDeleteOwnPosts');
-    const canDeleteAll = await usersService.hasPermission(userId, 'canDeleteAllPosts');
+    const canDeleteOwn = await hasPermission(userId, 'canDeleteOwnPosts');
+    const canDeleteAll = await hasPermission(userId, 'canDeleteAllPosts');
     const isAuthor = existingPost.authorId === userId;
 
     if ((!isAuthor || !canDeleteOwn) && !canDeleteAll) {
@@ -245,7 +245,7 @@ export const postsService = {
       .offset(offset);
 
     // Transform results to include author info
-    return results.map((post) => ({
+    return results.map((post: { id: any; slug: any; title: any; excerpt: any; content: any; category: any; featured: any; publishedAt: any; createdAt: any; updatedAt: any; authorId: any; authorUsername: any; authorRealName: any; authorAvatarUrl: any; }) => ({
       id: post.id,
       slug: post.slug,
       title: post.title,
@@ -318,7 +318,7 @@ export const postsService = {
       .from(posts)
       .groupBy(posts.category);
 
-    return results.map((row) => row.category).filter(Boolean) as string[];
+    return results.map((row: { category: any; }) => row.category).filter(Boolean) as string[];
   },
 
   // Calculate reading time for a post
