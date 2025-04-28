@@ -325,7 +325,7 @@ export default function DiscordWebhooks() {
       const token = localStorage.getItem('adminToken');
       if (!token) throw new Error('Not authenticated');
 
-      const content = testMessage.trim() || 
+      const content = testMessage.trim() ||
         "🔔 This is a test message from your blog's admin panel. If you're seeing this, your webhook is working properly!";
 
       const response = await fetch(`/api/admin/webhooks/${selectedWebhook.id}/test`, {
@@ -391,6 +391,7 @@ export default function DiscordWebhooks() {
         description: err instanceof Error ? err.message : 'Failed to update webhook',
         variant: 'destructive',
       });
+      // Revert optimistic update on error
       setWebhooks((prev) =>
         prev.map((w) => (w.id === webhook.id ? { ...w, enabled: !enabled } : w)),
       );
@@ -561,7 +562,7 @@ export default function DiscordWebhooks() {
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All categories</SelectItem>
+                  {/* Removed the item with value="" */}
                   {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -645,7 +646,7 @@ export default function DiscordWebhooks() {
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All categories</SelectItem>
+                    {/* Removed the item with value="" */}
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}

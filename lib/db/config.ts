@@ -9,5 +9,5 @@ export const databaseConfig = {
   // Set this to false to disable database connections during development
   enableDatabase: true,
   // Use an in-memory data store for development
-  useInMemoryStore: true,
+  useInMemoryStore: false,
 };

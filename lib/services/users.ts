@@ -1,76 +1,37 @@
-// lib/services/users.ts
+'use server';
+
 import { eq, and, sql } from 'drizzle-orm';
 import { databaseConfig } from '../db/config';
 import { memoryStore } from '../db/memory-store';
 import { getDb } from '../db/postgres';
 import { users, permissions, User, NewUser, Permission, NewPermission } from '../db/schema';
-import { hash, compare } from 'bcrypt';
+import { hash, compare } from 'bcryptjs';
 
-// User services
-export const usersService = {
-  // Create a new user
-  async createUser(userData: Omit<NewUser, 'password'> & { password: string }) {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      // Hash the password
-      const hashedPassword = await hash(userData.password, 10);
-
-      // Create a new user ID
-      const id = Date.now();
-
-      // Create the user in memory
-      const newUser = await memoryStore.create('users', id, {
-        ...userData,
-        id,
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      // Add default permissions
-      const isAdmin = userData.role === 'admin';
-
-      await memoryStore.create('permissions', id, {
-        id,
-        userId: id,
-        canCreatePosts: true,
-        canEditOwnPosts: true,
-        canDeleteOwnPosts: true,
-        canEditAllPosts: isAdmin,
-        canDeleteAllPosts: isAdmin,
-        canManageUsers: isAdmin,
-        canManageSettings: isAdmin,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      return newUser;
-    }
-
-    // Real database mode
+// Create a new user
+export async function createUser(userData: Omit<NewUser, 'password'> & { password: string }) {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
     // Hash the password
     const hashedPassword = await hash(userData.password, 10);
 
-    const db = await getDb();
+    // Create a new user ID
+    const id = Date.now();
 
-    // Create the user
-    const newUser = await db
-      .insert(users)
-      .values({
-        ...userData,
-        password: hashedPassword,
-      })
-      .returning();
-
-    if (!newUser || newUser.length === 0) {
-      throw new Error('Failed to create user');
-    }
+    // Create the user in memory
+    const newUser = await memoryStore.create('users', id, {
+      ...userData,
+      id,
+      password: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     // Add default permissions
     const isAdmin = userData.role === 'admin';
 
-    await db.insert(permissions).values({
-      userId: newUser[0].id,
+    await memoryStore.create('permissions', id, {
+      id,
+      userId: id,
       canCreatePosts: true,
       canEditOwnPosts: true,
       canDeleteOwnPosts: true,
@@ -78,253 +39,290 @@ export const usersService = {
       canDeleteAllPosts: isAdmin,
       canManageUsers: isAdmin,
       canManageSettings: isAdmin,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
-    return newUser[0];
-  },
+    return newUser;
+  }
 
-  // Get a user by ID
-  async getUserById(id: number) {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      return memoryStore.get('users', id);
-    }
+  // Real database mode
+  // Hash the password
+  const hashedPassword = await hash(userData.password, 10);
 
-    // Real database mode
-    const db = await getDb();
-    const result = await db.select().from(users).where(eq(users.id, id));
-    return result[0] || null;
-  },
+  const db = await getDb();
 
-  // Get a user by username
-  async getUserByUsername(username: string) {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      const allUsers = await memoryStore.list('users');
-      return allUsers.find((user) => user.username === username) || null;
-    }
+  // Create the user
+  const newUser = await db
+    .insert(users)
+    .values({
+      ...userData,
+      password: hashedPassword,
+    })
+    .returning();
 
-    // Real database mode
-    const db = await getDb();
-    const result = await db.select().from(users).where(eq(users.username, username));
-    return result[0] || null;
-  },
+  if (!newUser || newUser.length === 0) {
+    throw new Error('Failed to create user');
+  }
 
-  // Get a user with permissions
-  async getUserWithPermissions(id: number) {
-    // Get the user first
-    const user = await this.getUserById(id);
-    if (!user) return null;
+  // Add default permissions
+  const isAdmin = userData.role === 'admin';
 
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      const permissions = await memoryStore.get('permissions', id);
-      return {
-        ...user,
-        permissions: permissions || null,
-      };
-    }
+  await db.insert(permissions).values({
+    userId: newUser[0].id,
+    canCreatePosts: true,
+    canEditOwnPosts: true,
+    canDeleteOwnPosts: true,
+    canEditAllPosts: isAdmin,
+    canDeleteAllPosts: isAdmin,
+    canManageUsers: isAdmin,
+    canManageSettings: isAdmin,
+  });
 
-    // Real database mode
-    const db = await getDb();
-    const [userPermissions] = await db.select().from(permissions).where(eq(permissions.userId, id));
+  return newUser[0];
+}
 
+// Get a user by ID
+export async function getUserById(id: number) {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    return memoryStore.get('users', id);
+  }
+
+  // Real database mode
+  const db = await getDb();
+  const result = await db.select().from(users).where(eq(users.id, id));
+  return result[0] || null;
+}
+
+// Get a user by username
+export async function getUserByUsername(username: string) {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    const allUsers = await memoryStore.list('users');
+    return allUsers.find((user) => user.username === username) || null;
+  }
+
+  // Real database mode
+  const db = await getDb();
+  const result = await db.select().from(users).where(eq(users.username, username));
+  return result[0] || null;
+}
+
+// Get a user with permissions
+export async function getUserWithPermissions(id: number) {
+  // Get the user first
+  const user = await getUserById(id);
+  if (!user) return null;
+
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    const perms = await memoryStore.get('permissions', id);
     return {
       ...user,
-      permissions: userPermissions || null,
+      permissions: perms || null,
     };
-  },
+  }
 
-  // Authenticate a user
-  async authenticateUser(username: string, password: string) {
-    const user = await this.getUserByUsername(username);
-    if (!user) return null;
+  // Real database mode
+  const db = await getDb();
+  const [userPermissions] = await db.select().from(permissions).where(eq(permissions.userId, id));
 
-    const passwordMatch = await compare(password, user.password);
-    if (!passwordMatch) return null;
+  return {
+    ...user,
+    permissions: userPermissions || null,
+  };
+}
 
-    return user;
-  },
+// Authenticate a user
+export async function authenticateUser(username: string, password: string) {
+  const user = await getUserByUsername(username);
+  if (!user) return null;
 
-  // Update a user
-  async updateUser(
-    id: number,
-    userData: Partial<Omit<NewUser, 'password'> & { password?: string }>,
-  ) {
-    // Prepare updates
-    const updates: Partial<NewUser> = { ...userData };
+  const passwordMatch = await compare(password, user.password);
+  if (!passwordMatch) return null;
 
-    // Hash the password if provided
-    if (userData.password) {
-      updates.password = await hash(userData.password, 10);
-    }
+  return user;
+}
 
-    // Add updated timestamp
-    updates.updatedAt = new Date();
+// Update a user
+export async function updateUser(
+  id: number,
+  userData: Partial<Omit<NewUser, 'password'> & { password?: string }>,
+) {
+  // Prepare updates
+  const updates: Partial<NewUser> = { ...userData };
 
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      const updated = await memoryStore.update('users', id, updates);
-      return updated;
-    }
+  // Hash the password if provided
+  if (userData.password) {
+    updates.password = await hash(userData.password, 10);
+  }
 
-    // Real database mode
-    const db = await getDb();
-    const updated = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+  // Add updated timestamp
+  updates.updatedAt = new Date();
 
-    return updated[0] || null;
-  },
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    const updated = await memoryStore.update('users', id, updates);
+    return updated;
+  }
 
-  // Update user permissions
-  async updatePermissions(userId: number, permData: Partial<NewPermission>) {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      // Check if permissions exist
-      const existing = await memoryStore.get('permissions', userId);
+  // Real database mode
+  const db = await getDb();
+  const updated = await db.update(users).set(updates).where(eq(users.id, id)).returning();
 
-      if (!existing) {
-        // Create new permissions
-        return memoryStore.create('permissions', userId, {
-          id: userId,
-          userId,
-          ...permData,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-      }
+  return updated[0] || null;
+}
 
-      // Update existing permissions
-      return memoryStore.update('permissions', userId, {
+// Update user permissions
+export async function updatePermissions(userId: number, permData: Partial<NewPermission>) {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    // Check if permissions exist
+    const existing = await memoryStore.get('permissions', userId);
+
+    if (!existing) {
+      // Create new permissions
+      return memoryStore.create('permissions', userId, {
+        id: userId,
+        userId,
         ...permData,
+        createdAt: new Date(),
         updatedAt: new Date(),
       });
     }
 
-    // Real database mode
-    const db = await getDb();
-    const [existing] = await db.select().from(permissions).where(eq(permissions.userId, userId));
+    // Update existing permissions
+    return memoryStore.update('permissions', userId, {
+      ...permData,
+      updatedAt: new Date(),
+    });
+  }
 
-    if (!existing) {
-      // Create if not exists
-      const [created] = await db
-        .insert(permissions)
-        .values({
-          userId,
-          ...permData,
-        })
-        .returning();
+  // Real database mode
+  const db = await getDb();
+  const [existing] = await db.select().from(permissions).where(eq(permissions.userId, userId));
 
-      return created;
-    }
-
-    // Update existing
-    const [updated] = await db
-      .update(permissions)
-      .set({
+  if (!existing) {
+    // Create if not exists
+    const [created] = await db
+      .insert(permissions)
+      .values({
+        userId,
         ...permData,
-        updatedAt: new Date(),
       })
-      .where(eq(permissions.userId, userId))
       .returning();
 
-    return updated;
-  },
+    return created;
+  }
 
-  // Delete a user
-  async deleteUser(id: number) {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      // Delete permissions first (no cascade in memory store)
-      await memoryStore.delete('permissions', id);
-      // Delete user
-      return memoryStore.delete('users', id);
-    }
+  // Update existing
+  const [updated] = await db
+    .update(permissions)
+    .set({
+      ...permData,
+      updatedAt: new Date(),
+    })
+    .where(eq(permissions.userId, userId))
+    .returning();
 
-    // Real database mode (permissions will be deleted via cascade)
-    const db = await getDb();
-    await db.delete(users).where(eq(users.id, id));
-    return true;
-  },
+  return updated;
+}
 
-  // List all users
-  async listUsers(limit = 20, offset = 0) {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      const allUsers = await memoryStore.list('users');
-      return allUsers.slice(offset, offset + limit);
-    }
+// Delete a user
+export async function deleteUser(id: number) {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    // Delete permissions first (no cascade in memory store)
+    await memoryStore.delete('permissions', id);
+    // Delete user
+    return memoryStore.delete('users', id);
+  }
 
-    // Real database mode
-    const db = await getDb();
-    const usersList = await db.select().from(users).limit(limit).offset(offset);
-    return usersList;
-  },
+  // Real database mode (permissions will be deleted via cascade)
+  const db = await getDb();
+  await db.delete(users).where(eq(users.id, id));
+  return true;
+}
 
-  // Count total users
-  async countUsers() {
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      const allUsers = await memoryStore.list('users');
-      return allUsers.length;
-    }
+// List all users
+export async function listUsers(limit = 20, offset = 0) {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    const allUsers = await memoryStore.list('users');
+    return allUsers.slice(offset, offset + limit);
+  }
 
-    // Real database mode
-    const db = await getDb();
-    const result = await db.select({ count: sql`count(*)` }).from(users);
-    return Number(result[0]?.count || 0);
-  },
+  // Real database mode
+  const db = await getDb();
+  const usersList = await db.select().from(users).limit(limit).offset(offset);
+  return usersList;
+}
 
-  // Check if a user has specific permissions
-  async hasPermission(
-    userId: number,
-    permissionKey: keyof Omit<Permission, 'id' | 'userId' | 'createdAt' | 'updatedAt'>,
-  ) {
-    // Get the user first
-    const user = await this.getUserById(userId);
-    if (!user) return false;
+// Count total users
+export async function countUsers() {
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    const allUsers = await memoryStore.list('users');
+    return allUsers.length;
+  }
 
-    // Admin users have all permissions
-    if (user.role === 'admin') return true;
+  // Real database mode
+  const db = await getDb();
+  const result = await db.select({ count: sql`count(*)` }).from(users);
+  return Number(result[0]?.count || 0);
+}
 
-    // Use in-memory store in development mode
-    if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
-      const userPermissions = await memoryStore.get('permissions', userId);
-      if (!userPermissions) return false;
-      return !!userPermissions[permissionKey];
-    }
+// Check if a user has specific permissions
+export async function hasPermission(
+  userId: number,
+  permissionKey: keyof Omit<Permission, 'id' | 'userId' | 'createdAt' | 'updatedAt'>,
+) {
+  // Get the user first
+  const user = await getUserById(userId);
+  if (!user) return false;
 
-    // Real database mode
-    const db = await getDb();
-    const [userPermissions] = await db
-      .select()
-      .from(permissions)
-      .where(eq(permissions.userId, userId));
+  // Admin users have all permissions
+  if (user.role === 'admin') return true;
 
+  // Use in-memory store in development mode
+  if (databaseConfig.useInMemoryStore && !databaseConfig.enableDatabase) {
+    const userPermissions = await memoryStore.get('permissions', userId);
     if (!userPermissions) return false;
-
     return !!userPermissions[permissionKey];
-  },
+  }
 
-  // Initialize root admin user if no users exist
-  async initializeRootUser() {
-    try {
-      const existingUsers = await this.listUsers(1);
+  // Real database mode
+  const db = await getDb();
+  const [userPermissions] = await db
+    .select()
+    .from(permissions)
+    .where(eq(permissions.userId, userId));
 
-      if (existingUsers.length === 0) {
-        // Create root admin user
-        await this.createUser({
-          username: 'admin',
-          email: 'admin@example.com',
-          password: 'password', // Should be changed immediately
-          realName: 'Administrator',
-          role: 'admin',
-        });
+  if (!userPermissions) return false;
 
-        console.log('Root admin user created');
-      }
-    } catch (error) {
-      console.error('Failed to initialize root user:', error);
-      // Continue even if this fails
+  return !!userPermissions[permissionKey];
+}
+
+// Initialize root admin user if no users exist
+export async function initializeRootUser() {
+  try {
+    const existingUsers = await listUsers(1);
+
+    if (existingUsers.length === 0) {
+      // Create root admin user
+      await createUser({
+        username: 'admin',
+        email: 'admin@example.com',
+        password: 'password', // Should be changed immediately
+        realName: 'Administrator',
+        role: 'admin',
+      });
+
+      console.log('Root admin user created');
     }
-  },
-};
+  } catch (error) {
+    console.error('Failed to initialize root user:', error);
+    // Continue even if this fails
+  }
+}

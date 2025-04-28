@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { databaseConfig } from './lib/db/config';
+import { initializeRootUser } from '@/lib/services/users';
 
 // Initialization flag
 let hasInitialized = false;
@@ -17,7 +18,6 @@ export async function middleware(request: NextRequest) {
     try {
       // Dynamic imports to avoid loading database modules when not needed
       // Removed 'runMigrations' from this import as it's not used/defined
-      const { usersService } = await import('./lib/services/users');
       const { settingsService } = await import('./lib/services/settings');
 
       // Run database setup asynchronously, but don't wait for it
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
           // await runMigrations(); // <-- REMOVED THIS LINE
 
           // Initialize root admin user if no users exist
-          await usersService.initializeRootUser();
+          await initializeRootUser();
 
           // Initialize default settings
           await settingsService.initializeDefaultSettings();

@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
-import { usersService } from '@/lib/services/users';
+import { listUsers, hasPermission, getUserByUsername, createUser } from '@/lib/services/users';
 import { hash } from 'bcryptjs';
 
 // Constants
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     // Check if user is admin or has permission to manage users
     if (
       auth.role !== 'admin' &&
-      !(await usersService.hasPermission(auth.userId, 'canManageUsers'))
+      !(await hasPermission(auth.userId, 'canManageUsers'))
     ) {
       return NextResponse.json(
         { message: 'You do not have permission to view users' },
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
     // Get users from service
-    const users = await usersService.listUsers(limit, offset);
+    const users = await listUsers(limit, offset);
 
     // Remove passwords from response
     const safeUsers = users.map((user: { [x: string]: any; password: any }) => {
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     // Check if user is admin or has permission to manage users
     if (
       auth.role !== 'admin' &&
-      !(await usersService.hasPermission(auth.userId, 'canManageUsers'))
+      !(await hasPermission(auth.userId, 'canManageUsers'))
     ) {
       return NextResponse.json(
         { message: 'You do not have permission to create users' },
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     }
 
     // Check if username already exists
-    const existingUser = await usersService.getUserByUsername(username);
+    const existingUser = await getUserByUsername(username);
     if (existingUser) {
       return NextResponse.json({ message: 'Username already exists' }, { status: 400 });
     }
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     }
 
     // Create the user
-    const user = await usersService.createUser({
+    const user = await createUser({
       username,
       email,
       password,
