@@ -1,35 +1,35 @@
 // components/admin/stat-card.tsx
 
-import { ArrowUp, ArrowDown } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { ArrowUp, ArrowDown } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface StatCardProps {
-  title: string
-  value: string
-  icon: React.ReactNode
-  change?: number
-  isPositiveChangeGood?: boolean
-  isLoading?: boolean
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  change?: number;
+  isPositiveChangeGood?: boolean;
+  isLoading?: boolean;
 }
 
 /**
  * StatCard displays a metric with optional trend indicator
  * Used in dashboard to show key statistics
  */
-export function StatCard({ 
-  title, 
-  value, 
-  icon, 
-  change, 
+export function StatCard({
+  title,
+  value,
+  icon,
+  change,
   isPositiveChangeGood = true,
-  isLoading = false 
+  isLoading = false,
 }: StatCardProps) {
   // Determine if change is positive or negative
-  const isPositive = change ? change > 0 : false
-  
+  const isPositive = change ? change > 0 : false;
+
   // Determine if the change is "good" based on context
-  const isGoodChange = isPositiveChangeGood ? isPositive : !isPositive
-  
+  const isGoodChange = isPositiveChangeGood ? isPositive : !isPositive;
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -42,7 +42,9 @@ export function StatCard({
               <div className="flex items-end gap-2">
                 <h3 className="text-2xl font-bold">{value}</h3>
                 {change !== undefined && (
-                  <div className={`flex items-center text-xs font-medium ${isGoodChange ? 'text-green-500' : 'text-red-500'}`}>
+                  <div
+                    className={`flex items-center text-xs font-medium ${isGoodChange ? 'text-green-500' : 'text-red-500'}`}
+                  >
                     {isPositive ? (
                       <ArrowUp className="h-3 w-3 mr-1" />
                     ) : (
@@ -54,11 +56,9 @@ export function StatCard({
               </div>
             )}
           </div>
-          <div className="bg-primary/10 p-2 rounded-md">
-            {icon}
-          </div>
+          <div className="bg-primary/10 p-2 rounded-md">{icon}</div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

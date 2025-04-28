@@ -9,18 +9,18 @@ export class Pool {
   constructor(options: any) {
     console.log('Mock PG Pool initialized');
   }
-  
+
   async connect() {
     return {
       query: async () => ({ rows: [] }),
-      release: () => {}
+      release: () => {},
     };
   }
-  
+
   async query() {
     return { rows: [] };
   }
-  
+
   end() {
     return Promise.resolve();
   }
@@ -29,15 +29,15 @@ export class Pool {
 // Mock Client class
 export class Client {
   constructor(options: any) {}
-  
+
   async connect() {
     return Promise.resolve();
   }
-  
+
   async query() {
     return { rows: [] };
   }
-  
+
   end() {
     return Promise.resolve();
   }

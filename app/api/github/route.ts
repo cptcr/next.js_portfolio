@@ -1,11 +1,11 @@
 // app/api/github/route.ts
 
 import { NextResponse } from 'next/server';
-import { 
-  getRepositoryStats, 
-  getUserActivity, 
-  getUserContributions, 
-  getUserRepositories 
+import {
+  getRepositoryStats,
+  getUserActivity,
+  getUserContributions,
+  getUserRepositories,
 } from '@/lib/api/github';
 
 /**
@@ -37,6 +37,9 @@ export async function GET(request: Request) {
     }
   } catch (error: any) {
     console.error('Error in /api/github:', error);
-    return NextResponse.json({ error: 'Failed to process request', message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to process request', message: error.message },
+      { status: 500 },
+    );
   }
 }

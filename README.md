@@ -209,6 +209,7 @@ Contributions are welcome! To contribute:
 This project is licensed under the MIT License. See the LICENSE file for more details.
 
 ## Built with
+
 [![Next.js](https://img.shields.io/badge/Next.js-v15-000000?style=for-the-badge&logo=next.js&logoColor=ffffff)](https://nextjs.org/)
 [![Neon](https://img.shields.io/badge/Neon-Cloud-9c64c5?style=for-the-badge)](https://neon.tech/)
 [![ShadCN](https://img.shields.io/badge/ShadCN-UI-0088cc?style=for-the-badge)](https://shadcn.dev/)

@@ -1,19 +1,32 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { 
-  Calendar, Clock, Search, Tag, BookOpen, User,
-  X, ArrowLeft, ArrowRight, SlidersHorizontal
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
-import { 
-  Select, SelectContent, SelectGroup, SelectItem, 
-  SelectLabel, SelectTrigger, SelectValue
-} from "@/components/ui/select";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  Calendar,
+  Clock,
+  Search,
+  Tag,
+  BookOpen,
+  User,
+  X,
+  ArrowLeft,
+  ArrowRight,
+  SlidersHorizontal,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +34,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 export interface BlogPost {
   slug: string;
@@ -34,7 +47,7 @@ export interface BlogPost {
   featured: boolean;
   author?: {
     id: number;
-    username: string | null;  // Allow null username
+    username: string | null; // Allow null username
     realName: string | null;
     avatarUrl: string | null;
   };
@@ -49,55 +62,53 @@ export interface BlogListProps {
 
 const POSTS_PER_PAGE = 6;
 
-export default function BlogList({ 
-  posts, 
-  featuredPosts = [], 
+export default function BlogList({
+  posts,
+  featuredPosts = [],
   categories,
-  showAuthorInfo = true 
+  showAuthorInfo = true,
 }: BlogListProps) {
   // States for search and filtering
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(posts);
-  const [sortBy, setSortBy] = useState<"date" | "title">("date");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Update filtered posts when search or filters change
   useEffect(() => {
     let result = [...posts];
-    
+
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
-        post => 
-          post.title.toLowerCase().includes(term) || 
+        (post) =>
+          post.title.toLowerCase().includes(term) ||
           post.excerpt.toLowerCase().includes(term) ||
-          post.category.toLowerCase().includes(term)
+          post.category.toLowerCase().includes(term),
       );
     }
-    
+
     // Apply category filter
-    if (selectedCategory !== "all") {
-      result = result.filter(post => post.category === selectedCategory);
+    if (selectedCategory !== 'all') {
+      result = result.filter((post) => post.category === selectedCategory);
     }
-    
+
     // Apply sorting
     result.sort((a, b) => {
-      if (sortBy === "date") {
+      if (sortBy === 'date') {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
-        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
       } else {
         const titleA = a.title.toLowerCase();
         const titleB = b.title.toLowerCase();
-        return sortOrder === "asc" 
-          ? titleA.localeCompare(titleB) 
-          : titleB.localeCompare(titleA);
+        return sortOrder === 'asc' ? titleA.localeCompare(titleB) : titleB.localeCompare(titleA);
       }
     });
-    
+
     setFilteredPosts(result);
     setCurrentPage(1); // Reset to first page when filters change
   }, [posts, searchTerm, selectedCategory, sortBy, sortOrder]);
@@ -106,15 +117,15 @@ export default function BlogList({
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
   const paginatedPosts = filteredPosts.slice(
     (currentPage - 1) * POSTS_PER_PAGE,
-    currentPage * POSTS_PER_PAGE
+    currentPage * POSTS_PER_PAGE,
   );
 
   // Reset filters function
   const resetFilters = () => {
-    setSearchTerm("");
-    setSelectedCategory("all");
-    setSortBy("date");
-    setSortOrder("desc");
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setSortBy('date');
+    setSortOrder('desc');
   };
 
   // Handle page change
@@ -123,17 +134,17 @@ export default function BlogList({
     setCurrentPage(page);
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   };
 
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 
@@ -149,9 +160,7 @@ export default function BlogList({
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <Badge className="mb-2">{post.category}</Badge>
-                    {post.featured && (
-                      <Badge variant="secondary">Featured</Badge>
-                    )}
+                    {post.featured && <Badge variant="secondary">Featured</Badge>}
                   </div>
                   <Link
                     href={`/blog/${post.slug}`}
@@ -161,9 +170,7 @@ export default function BlogList({
                   </Link>
                 </CardHeader>
                 <CardContent className="pb-2">
-                  <p className="mb-4 text-muted-foreground line-clamp-3">
-                    {post.excerpt}
-                  </p>
+                  <p className="mb-4 text-muted-foreground line-clamp-3">{post.excerpt}</p>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1" />
@@ -217,7 +224,7 @@ export default function BlogList({
             />
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm("")}
+                onClick={() => setSearchTerm('')}
                 className="absolute transform -translate-y-1/2 right-3 top-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-4 h-4" />
@@ -253,37 +260,37 @@ export default function BlogList({
                 <DropdownMenuLabel>Sort By</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuCheckboxItem
-                  checked={sortBy === "date" && sortOrder === "desc"}
+                  checked={sortBy === 'date' && sortOrder === 'desc'}
                   onCheckedChange={() => {
-                    setSortBy("date");
-                    setSortOrder("desc");
+                    setSortBy('date');
+                    setSortOrder('desc');
                   }}
                 >
                   Latest First
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
-                  checked={sortBy === "date" && sortOrder === "asc"}
+                  checked={sortBy === 'date' && sortOrder === 'asc'}
                   onCheckedChange={() => {
-                    setSortBy("date");
-                    setSortOrder("asc");
+                    setSortBy('date');
+                    setSortOrder('asc');
                   }}
                 >
                   Oldest First
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
-                  checked={sortBy === "title" && sortOrder === "asc"}
+                  checked={sortBy === 'title' && sortOrder === 'asc'}
                   onCheckedChange={() => {
-                    setSortBy("title");
-                    setSortOrder("asc");
+                    setSortBy('title');
+                    setSortOrder('asc');
                   }}
                 >
                   Title (A-Z)
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
-                  checked={sortBy === "title" && sortOrder === "desc"}
+                  checked={sortBy === 'title' && sortOrder === 'desc'}
                   onCheckedChange={() => {
-                    setSortBy("title");
-                    setSortOrder("desc");
+                    setSortBy('title');
+                    setSortOrder('desc');
                   }}
                 >
                   Title (Z-A)
@@ -303,39 +310,28 @@ export default function BlogList({
         </div>
 
         {/* Active filters display */}
-        {(searchTerm || selectedCategory !== "all") && (
+        {(searchTerm || selectedCategory !== 'all') && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">Active filters:</span>
             {searchTerm && (
               <Badge variant="outline" className="flex items-center gap-1">
                 <Search className="w-3 h-3" />
                 {searchTerm}
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="ml-1"
-                >
+                <button onClick={() => setSearchTerm('')} className="ml-1">
                   <X className="w-3 h-3" />
                 </button>
               </Badge>
             )}
-            {selectedCategory !== "all" && (
+            {selectedCategory !== 'all' && (
               <Badge variant="outline" className="flex items-center gap-1">
                 <Tag className="w-3 h-3" />
                 {selectedCategory}
-                <button
-                  onClick={() => setSelectedCategory("all")}
-                  className="ml-1"
-                >
+                <button onClick={() => setSelectedCategory('all')} className="ml-1">
                   <X className="w-3 h-3" />
                 </button>
               </Badge>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="px-2 text-xs h-7"
-              onClick={resetFilters}
-            >
+            <Button variant="ghost" size="sm" className="px-2 text-xs h-7" onClick={resetFilters}>
               Clear all
             </Button>
           </div>
@@ -346,10 +342,11 @@ export default function BlogList({
       <div className="flex items-center justify-between mb-6">
         <span className="text-sm text-muted-foreground">
           {filteredPosts.length === 0
-            ? "No posts found"
-            : `Showing ${(currentPage - 1) * POSTS_PER_PAGE + 1}-${
-                Math.min(currentPage * POSTS_PER_PAGE, filteredPosts.length)
-              } of ${filteredPosts.length} posts`}
+            ? 'No posts found'
+            : `Showing ${(currentPage - 1) * POSTS_PER_PAGE + 1}-${Math.min(
+                currentPage * POSTS_PER_PAGE,
+                filteredPosts.length,
+              )} of ${filteredPosts.length} posts`}
         </span>
       </div>
 
@@ -368,9 +365,7 @@ export default function BlogList({
                 </Link>
               </CardHeader>
               <CardContent className="pb-2">
-                <p className="mb-4 text-muted-foreground line-clamp-3">
-                  {post.excerpt}
-                </p>
+                <p className="mb-4 text-muted-foreground line-clamp-3">{post.excerpt}</p>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
@@ -420,9 +415,7 @@ export default function BlogList({
             <Search className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="mb-2 text-xl font-bold">No posts found</h3>
-          <p className="mb-4 text-muted-foreground">
-            Try adjusting your search or filter criteria
-          </p>
+          <p className="mb-4 text-muted-foreground">Try adjusting your search or filter criteria</p>
           <Button onClick={resetFilters} variant="secondary">
             Reset Filters
           </Button>
@@ -440,7 +433,7 @@ export default function BlogList({
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          
+
           {Array.from({ length: totalPages }).map((_, i) => {
             const page = i + 1;
             // Show first page, current page, last page, and pages around current
@@ -452,7 +445,7 @@ export default function BlogList({
               return (
                 <Button
                   key={page}
-                  variant={currentPage === page ? "default" : "outline"}
+                  variant={currentPage === page ? 'default' : 'outline'}
                   className="w-10 h-10"
                   onClick={() => changePage(page)}
                 >
@@ -476,7 +469,7 @@ export default function BlogList({
             }
             return null;
           })}
-          
+
           <Button
             variant="outline"
             size="icon"

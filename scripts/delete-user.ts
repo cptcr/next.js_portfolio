@@ -21,7 +21,8 @@ const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
-const question = (query: string): Promise<string> => new Promise((resolve) => rl.question(query, resolve));
+const question = (query: string): Promise<string> =>
+  new Promise((resolve) => rl.question(query, resolve));
 
 // --- Database Client Configuration ---
 // Use the DATABASE_URL environment variable
@@ -44,12 +45,13 @@ console.log('🔌 Drizzle client initialized.');
 async function listUsers() {
   try {
     console.log('\n--- Current Users ---');
-    const allUsers = await db.select({
+    const allUsers = await db
+      .select({
         id: users.id,
         username: users.username,
         email: users.email,
         role: users.role,
-        createdAt: users.createdAt // Optional: show creation date
+        createdAt: users.createdAt, // Optional: show creation date
       })
       .from(users)
       .orderBy(users.id); // Order by ID for consistency
@@ -59,14 +61,13 @@ async function listUsers() {
       return false; // Indicate no users exist
     }
 
-    allUsers.forEach(user => {
+    allUsers.forEach((user) => {
       console.log(
-        ` ID: ${user.id} | Username: ${user.username} | Email: ${user.email} | Role: ${user.role} | Created: ${user.createdAt?.toLocaleDateString() ?? 'N/A'}`
+        ` ID: ${user.id} | Username: ${user.username} | Email: ${user.email} | Role: ${user.role} | Created: ${user.createdAt?.toLocaleDateString() ?? 'N/A'}`,
       );
     });
     console.log('---------------------\n');
     return true; // Indicate users were found and listed
-
   } catch (err) {
     console.error('❌ Error fetching users:', err);
     return false; // Indicate failure
@@ -81,18 +82,22 @@ async function deleteUserById(userId: number) {
   let deletedUsername: string | null = null;
   try {
     // Optional: Fetch username before deleting for better logging
-    const userToDelete = await db.select({ username: users.username }).from(users).where(eq(users.id, userId)).limit(1);
+    const userToDelete = await db
+      .select({ username: users.username })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     if (userToDelete.length > 0) {
-        deletedUsername = userToDelete[0].username;
+      deletedUsername = userToDelete[0].username;
     } else {
-        console.warn(`⚠️ User with ID ${userId} not found. Skipping deletion.`);
-        return; // Exit if user doesn't exist
+      console.warn(`⚠️ User with ID ${userId} not found. Skipping deletion.`);
+      return; // Exit if user doesn't exist
     }
-
 
     // 1. Delete associated permissions first to avoid foreign key constraints
     //    (assuming permissions.userId references users.id)
-    const deletedPermissions = await db.delete(permissions)
+    const deletedPermissions = await db
+      .delete(permissions)
       .where(eq(permissions.userId, userId))
       .returning({ deletedUserId: permissions.userId }); // Check if any permissions were deleted
 
@@ -103,7 +108,8 @@ async function deleteUserById(userId: number) {
     }
 
     // 2. Delete the user
-    const deletedUsers = await db.delete(users)
+    const deletedUsers = await db
+      .delete(users)
       .where(eq(users.id, userId))
       .returning({ deletedId: users.id }); // Ensure the user was actually deleted
 
@@ -111,14 +117,17 @@ async function deleteUserById(userId: number) {
       console.log(`✅ Successfully deleted user '${deletedUsername}' (ID: ${userId}).`);
     } else {
       // This case should ideally be caught by the initial check, but added for safety
-      console.warn(`❓ User with ID ${userId} could not be deleted (might have been deleted already or never existed).`);
+      console.warn(
+        `❓ User with ID ${userId} could not be deleted (might have been deleted already or never existed).`,
+      );
     }
-
   } catch (err: any) {
     console.error(`❌ Error deleting user ID ${userId}:`, err);
     // Provide more specific error feedback if possible
     if (err.message?.includes('foreign key constraint')) {
-        console.error("Hint: Ensure related data (e.g., posts) is handled or cascade delete is set up if this user created content.");
+      console.error(
+        'Hint: Ensure related data (e.g., posts) is handled or cascade delete is set up if this user created content.',
+      );
     }
   }
 }
@@ -132,7 +141,7 @@ async function promptAndDeleteUser() {
     const usersExist = await listUsers();
 
     if (!usersExist) {
-      console.log("No users to delete.");
+      console.log('No users to delete.');
       return; // Exit if there are no users
     }
 
@@ -147,7 +156,9 @@ async function promptAndDeleteUser() {
     }
 
     // Confirmation step (CRITICAL for destructive actions)
-    const confirmation = await question(`🚨 Are you sure you want to delete user ID ${userId}? This action CANNOT be undone. (yes/no): `);
+    const confirmation = await question(
+      `🚨 Are you sure you want to delete user ID ${userId}? This action CANNOT be undone. (yes/no): `,
+    );
 
     if (confirmation.toLowerCase() !== 'yes') {
       console.log('ℹ️ Deletion cancelled.');
@@ -156,7 +167,6 @@ async function promptAndDeleteUser() {
 
     // Call the deletion function
     await deleteUserById(userId);
-
   } catch (err) {
     console.error('❌ An error occurred during the deletion process:', err);
   } finally {

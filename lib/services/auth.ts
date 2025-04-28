@@ -40,7 +40,11 @@ export const authService = {
     const options: SignOptions = { expiresIn: `${expiresInMs / 1000}s` }; // jwt expects seconds or string like '1d'
 
     try {
-      console.log(`[generateToken] Generating token with payload:`, payload, ` Secret exists: ${!!secret}`);
+      console.log(
+        `[generateToken] Generating token with payload:`,
+        payload,
+        ` Secret exists: ${!!secret}`,
+      );
       const token = sign(payload, secret, options);
       console.log(`[generateToken] Token generated successfully.`);
       return token;
@@ -57,7 +61,7 @@ export const authService = {
       console.log(`[verifyToken] Verifying token. Secret exists: ${!!secret}`);
       // Explicitly type the decoded payload
       const decoded = verify(token, secret) as JwtPayload;
-       // Basic check for expected properties
+      // Basic check for expected properties
       if (typeof decoded !== 'object' || !decoded.userId || !decoded.username || !decoded.role) {
         console.error('[verifyToken] Decoded token payload is invalid or missing required fields.');
         return null;
@@ -67,14 +71,19 @@ export const authService = {
     } catch (error: any) {
       // Log specific JWT errors
       if (error.name === 'TokenExpiredError') {
-          console.error('[verifyToken] Token verification failed: Token expired at', new Date(error.expiredAt * 1000));
+        console.error(
+          '[verifyToken] Token verification failed: Token expired at',
+          new Date(error.expiredAt * 1000),
+        );
       } else if (error.name === 'JsonWebTokenError') {
-          console.error('[verifyToken] Token verification failed: Invalid token -', error.message);
+        console.error('[verifyToken] Token verification failed: Invalid token -', error.message);
       } else if (error.name === 'NotBeforeError') {
-          console.error('[verifyToken] Token verification failed: Token not active yet -', error.message);
-      }
-       else {
-          console.error('[verifyToken] Error verifying token:', error);
+        console.error(
+          '[verifyToken] Token verification failed: Token not active yet -',
+          error.message,
+        );
+      } else {
+        console.error('[verifyToken] Error verifying token:', error);
       }
       return null;
     }
@@ -165,7 +174,9 @@ export const authService = {
         console.log(`[getCurrentUser] User not found in DB for ID: ${payload.userId}`); // Log user not found
         // Attempt to clear the invalid cookie if user doesn't exist for the token ID
         await this.clearAuthCookie();
-        console.log(`[getCurrentUser] Cleared invalid auth cookie for non-existent user ID: ${payload.userId}`);
+        console.log(
+          `[getCurrentUser] Cleared invalid auth cookie for non-existent user ID: ${payload.userId}`,
+        );
         return null;
       }
       console.log(`[getCurrentUser] User found in DB: ${user.username}`); // Log user found
@@ -179,7 +190,10 @@ export const authService = {
         permissions: user.permissions, // Assuming getUserWithPermissions returns this
       };
     } catch (error) {
-      console.error(`[getCurrentUser] Error fetching user from DB for ID ${payload.userId}:`, error); // Log DB error
+      console.error(
+        `[getCurrentUser] Error fetching user from DB for ID ${payload.userId}:`,
+        error,
+      ); // Log DB error
       return null;
     }
   },
@@ -187,39 +201,42 @@ export const authService = {
   // Set authentication cookie (server-side)
   async setAuthCookie(token: string): Promise<void> {
     try {
-        const cookieStore = cookies();
-        const expires = new Date(Date.now() + this.parseExpiryToMs(env.JWT_EXPIRY || '1d'));
-        console.log(`[setAuthCookie] Setting cookie '${AUTH_COOKIE_NAME}'. Expires: ${expires.toISOString()}`);
-        (await cookieStore).set({ // Removed await here
-            name: AUTH_COOKIE_NAME,
-            value: token,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-            expires: expires,
-            sameSite: 'lax', // Added SameSite attribute for security
-        });
-    } catch(error) {
-        console.error(`[setAuthCookie] Failed to set auth cookie:`, error);
+      const cookieStore = cookies();
+      const expires = new Date(Date.now() + this.parseExpiryToMs(env.JWT_EXPIRY || '1d'));
+      console.log(
+        `[setAuthCookie] Setting cookie '${AUTH_COOKIE_NAME}'. Expires: ${expires.toISOString()}`,
+      );
+      (await cookieStore).set({
+        // Removed await here
+        name: AUTH_COOKIE_NAME,
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        expires: expires,
+        sameSite: 'lax', // Added SameSite attribute for security
+      });
+    } catch (error) {
+      console.error(`[setAuthCookie] Failed to set auth cookie:`, error);
     }
   },
 
   // Clear authentication cookie (server-side)
   async clearAuthCookie(): Promise<void> {
-     try {
-        const cookieStore = cookies();
-        console.log(`[clearAuthCookie] Deleting cookie '${AUTH_COOKIE_NAME}'.`);
-        (await cookieStore).delete(AUTH_COOKIE_NAME); // Removed await here
-     } catch (error) {
-        console.error(`[clearAuthCookie] Failed to delete auth cookie:`, error);
-     }
+    try {
+      const cookieStore = cookies();
+      console.log(`[clearAuthCookie] Deleting cookie '${AUTH_COOKIE_NAME}'.`);
+      (await cookieStore).delete(AUTH_COOKIE_NAME); // Removed await here
+    } catch (error) {
+      console.error(`[clearAuthCookie] Failed to delete auth cookie:`, error);
+    }
   },
 
   // Protect a route, redirecting to login if not authenticated (server-side)
   async protectRoute(
     redirectTo = '/admin/login',
     requiredRole?: string,
-    requiredPermission?: string // Consider defining a specific permission key type
+    requiredPermission?: string, // Consider defining a specific permission key type
   ): Promise<{
     id: number;
     username: string;
@@ -237,18 +254,22 @@ export const authService = {
 
     // Check role if required (Allow admin to bypass role check)
     if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
-      console.log(`[protectRoute] User role '${user.role}' does not match required role '${requiredRole}'. Redirecting.`);
+      console.log(
+        `[protectRoute] User role '${user.role}' does not match required role '${requiredRole}'. Redirecting.`,
+      );
       redirect(redirectTo);
     }
 
     // Check permission if required (Allow admin to bypass permission check)
     // Ensure permissions object exists and the key is valid
     if (requiredPermission && user.role !== 'admin') {
-        const hasPermission = user.permissions && user.permissions[requiredPermission];
-        if (!hasPermission) {
-            console.log(`[protectRoute] User '${user.username}' lacks required permission '${requiredPermission}'. Redirecting.`);
-            redirect(redirectTo);
-        }
+      const hasPermission = user.permissions && user.permissions[requiredPermission];
+      if (!hasPermission) {
+        console.log(
+          `[protectRoute] User '${user.username}' lacks required permission '${requiredPermission}'. Redirecting.`,
+        );
+        redirect(redirectTo);
+      }
     }
 
     console.log(`[protectRoute] User '${user.username}' authorized.`);
@@ -264,12 +285,17 @@ export const authService = {
       return 24 * 60 * 60 * 1000; // Default to 1 day
     }
 
-    switch(unit) {
-        case 's': return num * 1000;
-        case 'm': return num * 60 * 1000;
-        case 'h': return num * 60 * 60 * 1000;
-        case 'd': return num * 24 * 60 * 60 * 1000;
-        default: return num * 1000; // Assume seconds if no unit or invalid unit
+    switch (unit) {
+      case 's':
+        return num * 1000;
+      case 'm':
+        return num * 60 * 1000;
+      case 'h':
+        return num * 60 * 60 * 1000;
+      case 'd':
+        return num * 24 * 60 * 60 * 1000;
+      default:
+        return num * 1000; // Assume seconds if no unit or invalid unit
     }
   },
 };

@@ -27,7 +27,7 @@ export interface AuthVerification {
 }
 
 /**
- * Password change request 
+ * Password change request
  */
 export interface PasswordChangeRequest {
   currentPassword: string;

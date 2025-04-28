@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Loader2,
   BarChart3,
@@ -13,9 +13,9 @@ import {
   LayoutDashboard,
   Hexagon,
   AlertCircle,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
   CardContent,
@@ -23,11 +23,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,14 +37,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
-import AnalyticsDashboard from "@/components/admin/analytics-dashboard";
-import EditorialCalendar from "@/components/admin/editorial-calendar";
-import PostEditor from "@/components/admin/post-editor";
-import SettingsPanel from "@/components/admin/settings-panel";
-import PostsList from "@/components/admin/posts-list";
-import UserManagement from "@/components/admin/user-management";
+import AnalyticsDashboard from '@/components/admin/analytics-dashboard';
+import EditorialCalendar from '@/components/admin/editorial-calendar';
+import PostEditor from '@/components/admin/post-editor';
+import SettingsPanel from '@/components/admin/settings-panel';
+import PostsList from '@/components/admin/posts-list';
+import UserManagement from '@/components/admin/user-management';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -52,33 +52,26 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("analytics");
+  const [activeTab, setActiveTab] = useState<string>('analytics');
   const [firstTimeSetupOpen, setFirstTimeSetupOpen] = useState<boolean>(false);
   const [setupCredentials, setSetupCredentials] = useState({
-    username: "admin",
-    password: "",
-    confirmPassword: "",
+    username: 'admin',
+    password: '',
+    confirmPassword: '',
   });
   const [isSubmittingSetup, setIsSubmittingSetup] = useState<boolean>(false);
   const [userPermissions, setUserPermissions] = useState<any>(null);
-  const [userRole, setUserRole] = useState<string>("user");
+  const [userRole, setUserRole] = useState<string>('user');
 
   // Get URL search params to check for tab parameter
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
-      const tabParam = searchParams.get("tab");
+      const tabParam = searchParams.get('tab');
 
       if (
         tabParam &&
-        [
-          "analytics",
-          "posts",
-          "create",
-          "calendar",
-          "settings",
-          "users",
-        ].includes(tabParam)
+        ['analytics', 'posts', 'create', 'calendar', 'settings', 'users'].includes(tabParam)
       ) {
         setActiveTab(tabParam);
       }
@@ -89,12 +82,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        const token = localStorage.getItem("adminToken");
+        const token = localStorage.getItem('adminToken');
         if (!token) {
-          throw new Error("No token found");
+          throw new Error('No token found');
         }
 
-        const response = await fetch("/api/admin/verify", {
+        const response = await fetch('/api/admin/verify', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -102,19 +95,17 @@ export default function AdminDashboard() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || "Invalid token");
+          throw new Error(errorData.message || 'Invalid token');
         }
 
         const data = await response.json();
         setIsAuthenticated(true);
         await fetchUserPermissions(data.username);
       } catch (error) {
-        console.error("Auth error:", error);
-        localStorage.removeItem("adminToken");
-        setError(
-          error instanceof Error ? error.message : "Authentication failed",
-        );
-        router.push("/admin");
+        console.error('Auth error:', error);
+        localStorage.removeItem('adminToken');
+        setError(error instanceof Error ? error.message : 'Authentication failed');
+        router.push('/admin');
       } finally {
         setIsLoading(false);
       }
@@ -123,7 +114,7 @@ export default function AdminDashboard() {
     // Check if we need to show first-time setup
     const checkFirstTimeSetup = async () => {
       try {
-        const response = await fetch("/api/admin/check-setup");
+        const response = await fetch('/api/admin/check-setup');
         if (response.ok) {
           const data = await response.json();
           if (data.needsSetup) {
@@ -131,7 +122,7 @@ export default function AdminDashboard() {
           }
         }
       } catch (error) {
-        console.error("Error checking setup:", error);
+        console.error('Error checking setup:', error);
       }
     };
 
@@ -142,10 +133,10 @@ export default function AdminDashboard() {
   // Fetch user permissions
   const fetchUserPermissions = async (username: string) => {
     try {
-      const token = localStorage.getItem("adminToken");
+      const token = localStorage.getItem('adminToken');
       if (!token) return;
 
-      const response = await fetch("/api/admin/me", {
+      const response = await fetch('/api/admin/me', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -154,10 +145,10 @@ export default function AdminDashboard() {
       if (response.ok) {
         const data = await response.json();
         setUserPermissions(data.permissions || {});
-        setUserRole(data.role || "user");
+        setUserRole(data.role || 'user');
       }
     } catch (error) {
-      console.error("Error fetching user permissions:", error);
+      console.error('Error fetching user permissions:', error);
     }
   };
 
@@ -166,17 +157,17 @@ export default function AdminDashboard() {
     setActiveTab(value);
 
     // Update URL without refreshing the page
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      url.searchParams.set("tab", value);
-      window.history.pushState({}, "", url.toString());
+      url.searchParams.set('tab', value);
+      window.history.pushState({}, '', url.toString());
     }
   };
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    router.push("/admin");
+    localStorage.removeItem('adminToken');
+    router.push('/admin');
   };
 
   // Handle setup form submission
@@ -185,17 +176,17 @@ export default function AdminDashboard() {
     if (setupCredentials.password !== setupCredentials.confirmPassword) {
       toast({
         title: "Passwords don't match",
-        description: "Please make sure both passwords match",
-        variant: "destructive",
+        description: 'Please make sure both passwords match',
+        variant: 'destructive',
       });
       return;
     }
 
     if (setupCredentials.password.length < 8) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive",
+        title: 'Password too short',
+        description: 'Password must be at least 8 characters long',
+        variant: 'destructive',
       });
       return;
     }
@@ -203,10 +194,10 @@ export default function AdminDashboard() {
     setIsSubmittingSetup(true);
 
     try {
-      const response = await fetch("/api/admin/setup", {
-        method: "POST",
+      const response = await fetch('/api/admin/setup', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           username: setupCredentials.username,
@@ -216,23 +207,22 @@ export default function AdminDashboard() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "Failed to setup admin account");
+        throw new Error(data.message || 'Failed to setup admin account');
       }
 
       toast({
-        title: "Setup complete",
-        description: "Your admin account has been created. Please log in.",
+        title: 'Setup complete',
+        description: 'Your admin account has been created. Please log in.',
       });
 
       // Close dialog and redirect to login
       setFirstTimeSetupOpen(false);
-      router.push("/admin");
+      router.push('/admin');
     } catch (error) {
       toast({
-        title: "Setup failed",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
+        title: 'Setup failed',
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmittingSetup(false);
@@ -280,9 +270,7 @@ export default function AdminDashboard() {
             <CardDescription className="text-center">{error}</CardDescription>
           </CardHeader>
           <CardFooter className="flex justify-center">
-            <Button onClick={() => router.push("/admin")}>
-              Return to Login
-            </Button>
+            <Button onClick={() => router.push('/admin')}>Return to Login</Button>
           </CardFooter>
         </Card>
       </div>
@@ -290,10 +278,8 @@ export default function AdminDashboard() {
   }
 
   // Check if the user has permission to access certain tabs
-  const canAccessUsers =
-    userRole === "admin" || userPermissions?.canManageUsers;
-  const canAccessSettings =
-    userRole === "admin" || userPermissions?.canManageSettings;
+  const canAccessUsers = userRole === 'admin' || userPermissions?.canManageUsers;
+  const canAccessSettings = userRole === 'admin' || userPermissions?.canManageSettings;
 
   return (
     <>
@@ -306,16 +292,10 @@ export default function AdminDashboard() {
                 <Hexagon className="mr-2 h-7 w-7 text-primary" />
                 Admin Dashboard
               </h1>
-              <p className="text-muted-foreground">
-                Manage your blog content and settings
-              </p>
+              <p className="text-muted-foreground">Manage your blog content and settings</p>
             </div>
 
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="flex items-center"
-            >
+            <Button variant="outline" onClick={handleLogout} className="flex items-center">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
@@ -324,8 +304,8 @@ export default function AdminDashboard() {
           {/* Status Cards */}
           <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 md:grid-cols-4">
             <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === "analytics" ? "border-primary bg-primary/5" : ""}`}
-              onClick={() => handleTabChange("analytics")}
+              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'analytics' ? 'border-primary bg-primary/5' : ''}`}
+              onClick={() => handleTabChange('analytics')}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -334,7 +314,7 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-semibold">View Data</p>
                   </div>
                   <div
-                    className={`p-2 rounded-md ${activeTab === "analytics" ? "bg-primary/20" : "bg-muted"}`}
+                    className={`p-2 rounded-md ${activeTab === 'analytics' ? 'bg-primary/20' : 'bg-muted'}`}
                   >
                     <BarChart3 className="w-5 h-5 text-blue-500" />
                   </div>
@@ -343,8 +323,8 @@ export default function AdminDashboard() {
             </Card>
 
             <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === "posts" ? "border-primary bg-primary/5" : ""}`}
-              onClick={() => handleTabChange("posts")}
+              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'posts' ? 'border-primary bg-primary/5' : ''}`}
+              onClick={() => handleTabChange('posts')}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -353,7 +333,7 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-semibold">Manage Content</p>
                   </div>
                   <div
-                    className={`p-2 rounded-md ${activeTab === "posts" ? "bg-primary/20" : "bg-muted"}`}
+                    className={`p-2 rounded-md ${activeTab === 'posts' ? 'bg-primary/20' : 'bg-muted'}`}
                   >
                     <FileText className="w-5 h-5 text-green-500" />
                   </div>
@@ -362,8 +342,8 @@ export default function AdminDashboard() {
             </Card>
 
             <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === "create" ? "border-primary bg-primary/5" : ""}`}
-              onClick={() => handleTabChange("create")}
+              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'create' ? 'border-primary bg-primary/5' : ''}`}
+              onClick={() => handleTabChange('create')}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -372,7 +352,7 @@ export default function AdminDashboard() {
                     <p className="text-2xl font-semibold">Create Content</p>
                   </div>
                   <div
-                    className={`p-2 rounded-md ${activeTab === "create" ? "bg-primary/20" : "bg-muted"}`}
+                    className={`p-2 rounded-md ${activeTab === 'create' ? 'bg-primary/20' : 'bg-muted'}`}
                   >
                     <LayoutDashboard className="w-5 h-5 text-purple-500" />
                   </div>
@@ -381,19 +361,17 @@ export default function AdminDashboard() {
             </Card>
 
             <Card
-              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === "calendar" ? "border-primary bg-primary/5" : ""}`}
-              onClick={() => handleTabChange("calendar")}
+              className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'calendar' ? 'border-primary bg-primary/5' : ''}`}
+              onClick={() => handleTabChange('calendar')}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      Editorial Calendar
-                    </p>
+                    <p className="text-sm text-muted-foreground">Editorial Calendar</p>
                     <p className="text-2xl font-semibold">Plan Content</p>
                   </div>
                   <div
-                    className={`p-2 rounded-md ${activeTab === "calendar" ? "bg-primary/20" : "bg-muted"}`}
+                    className={`p-2 rounded-md ${activeTab === 'calendar' ? 'bg-primary/20' : 'bg-muted'}`}
                   >
                     <Calendar className="w-5 h-5 text-orange-500" />
                   </div>
@@ -403,11 +381,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Main tabs navigation */}
-          <Tabs
-            value={activeTab}
-            onValueChange={handleTabChange}
-            className="mb-6"
-          >
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
             <div className="mb-4 overflow-x-auto border-b border-border">
               <TabsList className="flex justify-start p-0 bg-transparent">
                 <TabsTrigger
@@ -465,10 +439,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="posts" className="mt-0">
-              <PostsList
-                userRole={userRole}
-                userPermissions={userPermissions}
-              />
+              <PostsList userRole={userRole} userPermissions={userPermissions} />
             </TabsContent>
 
             <TabsContent value="create" className="mt-0">
@@ -513,16 +484,12 @@ export default function AdminDashboard() {
       </div>
 
       {/* First Time Setup Dialog */}
-      <AlertDialog
-        open={firstTimeSetupOpen}
-        onOpenChange={setFirstTimeSetupOpen}
-      >
+      <AlertDialog open={firstTimeSetupOpen} onOpenChange={setFirstTimeSetupOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Initial Admin Setup</AlertDialogTitle>
             <AlertDialogDescription>
-              Welcome to your new blog dashboard! Please create your admin
-              account to get started.
+              Welcome to your new blog dashboard! Please create your admin account to get started.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -579,9 +546,7 @@ export default function AdminDashboard() {
             <AlertDialogAction
               onClick={handleSetupSubmit}
               disabled={
-                isSubmittingSetup ||
-                !setupCredentials.password ||
-                !setupCredentials.confirmPassword
+                isSubmittingSetup || !setupCredentials.password || !setupCredentials.confirmPassword
               }
             >
               {isSubmittingSetup ? (
@@ -590,7 +555,7 @@ export default function AdminDashboard() {
                   Setting up...
                 </>
               ) : (
-                "Complete Setup"
+                'Complete Setup'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

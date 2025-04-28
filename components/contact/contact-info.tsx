@@ -1,7 +1,7 @@
-import Link from "next/link"
-import { Mail, MapPin, Github, Linkedin, Twitter } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import Link from 'next/link';
+import { Mail, MapPin, Github, Linkedin, Twitter } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function ContactInfo() {
   return (
@@ -15,8 +15,8 @@ export default function ContactInfo() {
           <Mail className="h-5 w-5 text-primary mr-3" />
           <div>
             <h3 className="text-sm font-medium">Email</h3>
-            <Link 
-              href="mailto:contact@cptcr.dev" 
+            <Link
+              href="mailto:contact@cptcr.dev"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               contact@cptcr.dev
@@ -43,7 +43,7 @@ export default function ContactInfo() {
                 GitHub
               </Link>
             </Button>
-            
+
             <Button asChild variant="outline" size="sm" className="gap-2">
               <Link href="https://twitter.com/cptcrr" target="_blank" rel="noopener noreferrer">
                 <Twitter className="h-4 w-4" />
@@ -54,5 +54,5 @@ export default function ContactInfo() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

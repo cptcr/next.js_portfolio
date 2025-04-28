@@ -1,0 +1,30 @@
+# EditorConfig helps maintain consistent coding styles across different editors and IDEs.
+# See https://editorconfig.org
+
+# Top-most EditorConfig file
+root = true
+
+# 4 space indentation for general files
+[*]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# 4 space indentation for TypeScript files
+[*.ts]
+indent_size = 2
+
+# 4 space indentation for TypeScript React files (TSX)
+[*.tsx]
+indent_size = 2
+
+# 4 space indentation for JavaScript files
+[*.js]
+indent_size = 2
+
+# Ignore configuration files (prettier, eslint)
+[*.{json,yml,yaml}]
+indent_size = 2

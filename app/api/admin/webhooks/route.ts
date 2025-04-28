@@ -1,98 +1,82 @@
 // app/api/admin/webhooks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/lib/services/auth';
-import { discordService } from '@/lib/services/discord';
-import { usersService } from '@/lib/services/users';
+import { verifyAuthToken } from '@/lib/utils/admin-service';
+import { discordWebhooks, db } from '@/lib/db/postgres';
+import { eq } from 'drizzle-orm';
 
-// GET: List all webhook configurations
+type WebhookBodyData = {
+  name: string;
+  url: string;
+  avatar?: string;
+  enabled?: boolean;
+  categories?: string[] | null;
+};
+
+// GET: List all webhooks
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate
-    const currentUser = await authService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
-      );
+    // Verify authentication
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
+
+    if (!auth.authenticated) {
+      return NextResponse.json({ message: auth.error }, { status: 401 });
     }
-    
-    // Check if user has permission to manage settings
-    const canManageSettings = await usersService.hasPermission(currentUser.id, 'canManageSettings');
-    
-    if (!canManageSettings && currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Not authorized to view webhooks' },
-        { status: 403 }
-      );
-    }
-    
-    const webhooks = await discordService.listWebhooks();
-    
+
+    // Get all webhooks from database
+    const webhooks = await db.select().from(discordWebhooks);
+
     return NextResponse.json({ webhooks });
   } catch (error) {
     console.error('Error listing webhooks:', error);
     return NextResponse.json(
-      { message: 'Failed to list webhooks' },
-      { status: 500 }
+      { message: 'Failed to list webhooks', error: String(error) },
+      { status: 500 },
     );
   }
 }
 
-// POST: Create a new webhook configuration
+// POST: Create a new webhook
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate
-    const currentUser = await authService.getCurrentUser();
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
-      );
+    // Verify authentication
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
+
+    if (!auth.authenticated) {
+      return NextResponse.json({ message: auth.error }, { status: 401 });
     }
-    
-    // Check if user has permission to manage settings
-    const canManageSettings = await usersService.hasPermission(currentUser.id, 'canManageSettings');
-    
-    if (!canManageSettings && currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Not authorized to create webhooks' },
-        { status: 403 }
-      );
-    }
-    
+
     // Parse request body
-    const body = await request.json();
+    const body: WebhookBodyData = await request.json();
     const { name, url, avatar, enabled = true, categories } = body;
-    
+
     // Validate required fields
     if (!name || !url) {
-      return NextResponse.json(
-        { message: 'Name and URL are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'Name and URL are required' }, { status: 400 });
     }
-    
+
     // Validate URL format
     try {
       new URL(url);
     } catch (e) {
-      return NextResponse.json(
-        { message: 'Invalid URL format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'Invalid URL format' }, { status: 400 });
     }
-    
-    // Create webhook
-    const webhook = await discordService.createWebhook({
-      name,
-      url,
-      avatar,
-      enabled,
-      categories: categories || null,
-    });
-    
+
+    // Insert webhook into database
+    const [webhook] = await db
+      .insert(discordWebhooks)
+      .values({
+        name,
+        url,
+        avatar: avatar || null,
+        enabled,
+        categories: categories || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
     return NextResponse.json({
       webhook,
       message: 'Webhook created successfully',
@@ -100,8 +84,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating webhook:', error);
     return NextResponse.json(
-      { message: 'Failed to create webhook' },
-      { status: 500 }
+      { message: 'Failed to create webhook', error: String(error) },
+      { status: 500 },
     );
   }
 }

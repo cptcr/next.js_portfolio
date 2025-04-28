@@ -1,11 +1,11 @@
 // lib/db/schema.ts
-import { 
-  pgTable, 
-  serial, 
-  varchar, 
-  text, 
-  timestamp, 
-  boolean, 
+import {
+  pgTable,
+  serial,
+  varchar,
+  text,
+  timestamp,
+  boolean,
   json,
   integer,
   uniqueIndex,
@@ -14,28 +14,34 @@ import { relations } from 'drizzle-orm';
 import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm';
 
 // Users Table
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  username: varchar('username', { length: 100 }).notNull().unique(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  password: varchar('password', { length: 255 }).notNull(),
-  realName: varchar('real_name', { length: 255 }),
-  avatarUrl: text('avatar_url'),
-  bio: text('bio'),
-  role: varchar('role', { length: 50 }).notNull().default('user'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => {
-  return {
-    usernameIdx: uniqueIndex('username_idx').on(table.username),
-    emailIdx: uniqueIndex('email_idx').on(table.email),
-  };
-});
+export const users = pgTable(
+  'users',
+  {
+    id: serial('id').primaryKey(),
+    username: varchar('username', { length: 100 }).notNull().unique(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    password: varchar('password', { length: 255 }).notNull(),
+    realName: varchar('real_name', { length: 255 }),
+    avatarUrl: text('avatar_url'),
+    bio: text('bio'),
+    role: varchar('role', { length: 50 }).notNull().default('user'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      usernameIdx: uniqueIndex('username_idx').on(table.username),
+      emailIdx: uniqueIndex('email_idx').on(table.email),
+    };
+  },
+);
 
 // User Permissions table - checking if changes are needed
 export const permissions = pgTable('permissions', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   canCreatePosts: boolean('can_create_posts').notNull().default(false),
   canEditOwnPosts: boolean('can_edit_own_posts').notNull().default(false),
   canEditAllPosts: boolean('can_edit_all_posts').notNull().default(false),
@@ -54,7 +60,9 @@ export const posts = pgTable('posts', {
   title: varchar('title', { length: 255 }).notNull(),
   excerpt: text('excerpt'),
   content: text('content').notNull(),
-  authorId: integer('author_id').notNull().references(() => users.id),
+  authorId: integer('author_id')
+    .notNull()
+    .references(() => users.id),
   category: varchar('category', { length: 100 }),
   featured: boolean('featured').default(false),
   publishedAt: timestamp('published_at').defaultNow().notNull(),
