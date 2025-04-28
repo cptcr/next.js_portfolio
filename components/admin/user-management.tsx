@@ -23,15 +23,12 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import {
   AlertCircle,
-  Check,
-  Edit,
   Loader2,
   Pencil,
   Plus,
   Shield,
   Trash2,
   User,
-  UserPlus,
   Users,
 } from 'lucide-react';
 
@@ -39,8 +36,8 @@ interface UserData {
   id: number;
   username: string;
   email: string;
-  realName?: string;
-  avatarUrl?: string;
+  realName?: string | null;
+  avatarUrl?: string | null;
   role: string;
   createdAt: string;
 }
@@ -71,6 +68,7 @@ export default function UserManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editUserDialogOpen, setEditUserDialogOpen] = useState(false);
+  const [permissionsChanged, setPermissionsChanged] = useState(false);
 
   const [newUser, setNewUser] = useState({
     username: '',
@@ -195,6 +193,7 @@ export default function UserManagement() {
           canManageSettings: false,
         },
       );
+      setPermissionsChanged(false);
     } catch (err) {
       console.error('Error fetching user permissions:', err);
       toast({
@@ -252,7 +251,7 @@ export default function UserManagement() {
         body: JSON.stringify({
           username: newUser.username,
           email: newUser.email,
-          realName: newUser.realName,
+          realName: newUser.realName || null,
           password: newUser.password,
           role: newUser.role,
         }),
@@ -336,7 +335,7 @@ export default function UserManagement() {
       const userData: any = {
         username: editUser.username,
         email: editUser.email,
-        realName: editUser.realName,
+        realName: editUser.realName || null,
         role: editUser.role,
       };
 
@@ -417,6 +416,8 @@ export default function UserManagement() {
         title: 'Permissions Updated',
         description: `Permissions for ${selectedUser.username} have been updated successfully`,
       });
+      
+      setPermissionsChanged(false);
     } catch (err) {
       console.error('Error updating permissions:', err);
       toast({
@@ -494,6 +495,7 @@ export default function UserManagement() {
       ...selectedUserPermissions,
       [permission]: value,
     });
+    setPermissionsChanged(true);
   };
 
   // Check if user can be edited or deleted
@@ -545,7 +547,7 @@ export default function UserManagement() {
         <h2 className="text-2xl font-bold">User Management</h2>
 
         <Button onClick={() => setCreateDialogOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2" />
           Add User
         </Button>
       </div>
@@ -768,7 +770,7 @@ export default function UserManagement() {
                           </div>
                         </div>
 
-                        {canModifyUser(selectedUser) && (
+                        {canModifyUser(selectedUser) && permissionsChanged && (
                           <div className="flex justify-end">
                             <Button onClick={handleUpdatePermissions} disabled={isSubmitting}>
                               {isSubmitting ? (

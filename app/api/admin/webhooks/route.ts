@@ -1,61 +1,30 @@
 // app/api/admin/webhooks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
-import { discordService } from '@/lib/services/discord';
-import { usersService } from '@/lib/services/users';
+import { verifyAuthToken } from '@/lib/utils/admin-service';
+import { discordWebhooks, db } from '@/lib/db/postgres';
+import { eq } from 'drizzle-orm';
 
-// Constants
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
-
-// Middleware to verify authentication
-async function verifyAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return {
-      authenticated: false,
-      error: 'Missing or invalid authorization header',
-    };
-  }
-
-  const token = authHeader.substring(7);
-
-  try {
-    const payload = verify(token, JWT_SECRET);
-    return {
-      authenticated: true,
-      username: (payload as any).username,
-      userId: (payload as any).userId,
-      role: (payload as any).role,
-    };
-  } catch (error) {
-    return { authenticated: false, error: 'Invalid or expired token' };
-  }
-}
+type WebhookBodyData = {
+  name: string;
+  url: string;
+  avatar?: string;
+  enabled?: boolean;
+  categories?: string[] | null;
+};
 
 // GET: List all webhooks
 export async function GET(request: NextRequest) {
   try {
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
 
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Check if user has permission to manage settings
-    const canManageSettings =
-      auth.role === 'admin' || (await usersService.hasPermission(auth.userId, 'canManageSettings'));
-
-    if (!canManageSettings) {
-      return NextResponse.json(
-        { message: 'You do not have permission to manage webhooks' },
-        { status: 403 },
-      );
-    }
-
-    // Get all webhooks
-    const webhooks = await discordService.listWebhooks();
+    // Get all webhooks from database
+    const webhooks = await db.select().from(discordWebhooks);
 
     return NextResponse.json({ webhooks });
   } catch (error) {
@@ -71,25 +40,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
 
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Check if user has permission to manage settings
-    const canManageSettings =
-      auth.role === 'admin' || (await usersService.hasPermission(auth.userId, 'canManageSettings'));
-
-    if (!canManageSettings) {
-      return NextResponse.json(
-        { message: 'You do not have permission to manage webhooks' },
-        { status: 403 },
-      );
-    }
-
     // Parse request body
-    const body = await request.json();
+    const body: WebhookBodyData = await request.json();
     const { name, url, avatar, enabled = true, categories } = body;
 
     // Validate required fields
@@ -104,14 +63,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Invalid URL format' }, { status: 400 });
     }
 
-    // Create webhook
-    const webhook = await discordService.createWebhook({
-      name,
-      url,
-      avatar,
-      enabled,
-      categories: categories || null,
-    });
+    // Insert webhook into database
+    const [webhook] = await db
+      .insert(discordWebhooks)
+      .values({
+        name,
+        url,
+        avatar: avatar || null,
+        enabled,
+        categories: categories || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
 
     return NextResponse.json({
       webhook,

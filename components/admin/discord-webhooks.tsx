@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,6 +64,7 @@ export default function DiscordWebhooks() {
   const [isTesting, setIsTesting] = useState(false);
 
   const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const [selectedWebhook, setSelectedWebhook] = useState<WebhookData | null>(null);
   const [newWebhook, setNewWebhook] = useState({
@@ -162,16 +163,18 @@ export default function DiscordWebhooks() {
       const token = localStorage.getItem('adminToken');
       if (!token) throw new Error('Not authenticated');
 
+      const webhookData = {
+        ...newWebhook,
+        categories: selectedCategory ? [selectedCategory] : null,
+      };
+
       const response = await fetch('/api/admin/webhooks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...newWebhook,
-          categories: newWebhook.categories.length > 0 ? newWebhook.categories : null,
-        }),
+        body: JSON.stringify(webhookData),
       });
 
       if (!response.ok) {
@@ -191,6 +194,7 @@ export default function DiscordWebhooks() {
         enabled: true,
         categories: [],
       });
+      setSelectedCategory(null);
       setCreateDialogOpen(false);
       fetchWebhooks();
     } catch (err) {
@@ -233,22 +237,21 @@ export default function DiscordWebhooks() {
       const token = localStorage.getItem('adminToken');
       if (!token) throw new Error('Not authenticated');
 
+      const webhookData = {
+        name: selectedWebhook.name,
+        url: selectedWebhook.url,
+        avatar: selectedWebhook.avatar,
+        enabled: selectedWebhook.enabled,
+        categories: selectedCategory ? [selectedCategory] : null,
+      };
+
       const response = await fetch(`/api/admin/webhooks/${selectedWebhook.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: selectedWebhook.name,
-          url: selectedWebhook.url,
-          avatar: selectedWebhook.avatar,
-          enabled: selectedWebhook.enabled,
-          categories:
-            selectedWebhook.categories && selectedWebhook.categories.length > 0
-              ? selectedWebhook.categories
-              : null,
-        }),
+        body: JSON.stringify(webhookData),
       });
 
       if (!response.ok) {
@@ -322,8 +325,7 @@ export default function DiscordWebhooks() {
       const token = localStorage.getItem('adminToken');
       if (!token) throw new Error('Not authenticated');
 
-      const content =
-        testMessage ||
+      const content = testMessage.trim() || 
         "🔔 This is a test message from your blog's admin panel. If you're seeing this, your webhook is working properly!";
 
       const response = await fetch(`/api/admin/webhooks/${selectedWebhook.id}/test`, {
@@ -394,6 +396,13 @@ export default function DiscordWebhooks() {
       );
     }
   };
+
+  const handleEditWebhook = (webhook: WebhookData) => {
+    setSelectedWebhook(webhook);
+    setSelectedCategory(webhook.categories && webhook.categories.length > 0 ? webhook.categories[0] : null);
+    setEditDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -422,67 +431,86 @@ export default function DiscordWebhooks() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {webhooks.map((webhook) => (
-          <Card key={webhook.id}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <div>
-                <CardTitle className="text-lg">{webhook.name}</CardTitle>
+        {webhooks.length === 0 ? (
+          <Card className="col-span-full">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="p-6 mb-4 rounded-full bg-muted">
+                <AlertCircle className="w-12 h-12 text-muted-foreground/60" />
               </div>
-              <Switch
-                checked={webhook.enabled}
-                onCheckedChange={(checked) => toggleWebhookEnabled(webhook, checked)}
-              />
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-sm break-words text-muted-foreground">{webhook.url}</p>
-
-              <div className="flex flex-wrap gap-2 mt-2">
-                {webhook.categories?.length ? (
-                  webhook.categories.map((cat) => (
-                    <Badge key={cat} variant="outline">
-                      {cat}
-                    </Badge>
-                  ))
-                ) : (
-                  <Badge variant="secondary">All Categories</Badge>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    setSelectedWebhook(webhook);
-                    setTestDialogOpen(true);
-                  }}
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    setSelectedWebhook(webhook);
-                    setEditDialogOpen(true);
-                  }}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => {
-                    setSelectedWebhook(webhook);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
+              <h3 className="mb-2 text-xl font-bold">No Webhooks Found</h3>
+              <p className="mb-6 text-center text-muted-foreground">
+                You haven't created any Discord webhooks yet. Create your first webhook to receive
+                notifications when new content is published.
+              </p>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Webhook
+              </Button>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          webhooks.map((webhook) => (
+            <Card key={webhook.id}>
+              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                <div>
+                  <CardTitle className="text-lg">{webhook.name}</CardTitle>
+                </div>
+                <Switch
+                  checked={webhook.enabled}
+                  onCheckedChange={(checked) => toggleWebhookEnabled(webhook, checked)}
+                />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-sm break-words text-muted-foreground">{webhook.url}</p>
+
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {webhook.categories?.length ? (
+                    webhook.categories.map((cat) => (
+                      <Badge key={cat} variant="outline">
+                        {cat}
+                      </Badge>
+                    ))
+                  ) : (
+                    <Badge variant="secondary">All Categories</Badge>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedWebhook(webhook);
+                      setTestDialogOpen(true);
+                    }}
+                    title="Test webhook"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleEditWebhook(webhook)}
+                    title="Edit webhook"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedWebhook(webhook);
+                      setDeleteDialogOpen(true);
+                    }}
+                    title="Delete webhook"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Create Webhook Dialog */}
@@ -497,7 +525,7 @@ export default function DiscordWebhooks() {
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Name</Label>
+              <Label>Name*</Label>
               <Input
                 value={newWebhook.name}
                 onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })}
@@ -506,16 +534,19 @@ export default function DiscordWebhooks() {
             </div>
 
             <div className="grid gap-2">
-              <Label>URL</Label>
+              <Label>Discord Webhook URL*</Label>
               <Input
                 value={newWebhook.url}
                 onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })}
                 placeholder="https://discord.com/api/webhooks/..."
               />
+              <p className="text-xs text-muted-foreground">
+                You can find this URL in your Discord server settings under Integrations &gt; Webhooks
+              </p>
             </div>
 
             <div className="grid gap-2">
-              <Label>Avatar (optional)</Label>
+              <Label>Avatar URL (optional)</Label>
               <Input
                 value={newWebhook.avatar}
                 onChange={(e) => setNewWebhook({ ...newWebhook, avatar: e.target.value })}
@@ -524,15 +555,13 @@ export default function DiscordWebhooks() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Categories</Label>
-              <Select
-                value={newWebhook.categories?.[0] ?? ''}
-                onValueChange={(value) => setNewWebhook({ ...newWebhook, categories: [value] })}
-              >
+              <Label>Category Filter (optional)</Label>
+              <Select value={selectedCategory || ''} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select categories (or leave empty)" />
+                  <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">All categories</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
@@ -540,13 +569,22 @@ export default function DiscordWebhooks() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                If selected, notifications will only be sent for posts in this category
+              </p>
             </div>
           </div>
 
           <DialogFooter>
             <Button onClick={handleCreateWebhook} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Create
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Webhook'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -562,7 +600,7 @@ export default function DiscordWebhooks() {
           {selectedWebhook && (
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label>Name</Label>
+                <Label>Name*</Label>
                 <Input
                   value={selectedWebhook.name}
                   onChange={(e) =>
@@ -575,7 +613,7 @@ export default function DiscordWebhooks() {
               </div>
 
               <div className="grid gap-2">
-                <Label>URL</Label>
+                <Label>Discord Webhook URL*</Label>
                 <Input
                   value={selectedWebhook.url}
                   onChange={(e) =>
@@ -588,7 +626,7 @@ export default function DiscordWebhooks() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Avatar (optional)</Label>
+                <Label>Avatar URL (optional)</Label>
                 <Input
                   value={selectedWebhook.avatar || ''}
                   onChange={(e) =>
@@ -601,15 +639,13 @@ export default function DiscordWebhooks() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Categories</Label>
-                <Select
-                  value={newWebhook.categories?.[0] ?? ''}
-                  onValueChange={(value) => setNewWebhook({ ...newWebhook, categories: [value] })}
-                >
+                <Label>Category Filter (optional)</Label>
+                <Select value={selectedCategory || ''} onValueChange={setSelectedCategory}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select categories (or leave empty)" />
+                    <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">All categories</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
@@ -617,20 +653,43 @@ export default function DiscordWebhooks() {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  If selected, notifications will only be sent for posts in this category
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="webhook-enabled">Enabled</Label>
+                <Switch
+                  id="webhook-enabled"
+                  checked={selectedWebhook.enabled}
+                  onCheckedChange={(checked) =>
+                    setSelectedWebhook({
+                      ...selectedWebhook,
+                      enabled: checked,
+                    })
+                  }
+                />
               </div>
             </div>
           )}
 
           <DialogFooter>
             <Button onClick={handleUpdateWebhook} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Save Changes
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Webhook Dialog */}
+      {/* Delete Webhook Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -644,8 +703,14 @@ export default function DiscordWebhooks() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteWebhook} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Delete
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -656,18 +721,33 @@ export default function DiscordWebhooks() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Send Test Message</DialogTitle>
+            <DialogDescription>
+              Test your webhook by sending a custom message to Discord.
+            </DialogDescription>
           </DialogHeader>
 
-          <Textarea
-            placeholder="Enter test message (or leave empty for default)"
-            value={testMessage}
-            onChange={(e) => setTestMessage(e.target.value)}
-          />
+          <div className="py-4 space-y-4">
+            <Textarea
+              placeholder="Enter test message (or leave empty for default)"
+              value={testMessage}
+              onChange={(e) => setTestMessage(e.target.value)}
+              rows={4}
+            />
+            <p className="text-sm text-muted-foreground">
+              If left empty, a default test message will be sent.
+            </p>
+          </div>
 
           <DialogFooter>
             <Button onClick={handleTestWebhook} disabled={isTesting}>
-              {isTesting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Send Test
+              {isTesting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Send Test Message'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

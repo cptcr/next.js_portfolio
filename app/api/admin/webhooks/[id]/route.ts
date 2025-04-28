@@ -1,37 +1,16 @@
 // app/api/admin/webhooks/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
-import { discordService } from '@/lib/services/discord';
-import { usersService } from '@/lib/services/users';
+import { verifyAuthToken } from '@/lib/utils/admin-service';
+import { discordWebhooks, db } from '@/lib/db/postgres';
+import { eq } from 'drizzle-orm';
 
-// Constants
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
-
-// Middleware to verify authentication
-async function verifyAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return {
-      authenticated: false,
-      error: 'Missing or invalid authorization header',
-    };
-  }
-
-  const token = authHeader.substring(7);
-
-  try {
-    const payload = verify(token, JWT_SECRET);
-    return {
-      authenticated: true,
-      username: (payload as any).username,
-      userId: (payload as any).userId,
-      role: (payload as any).role,
-    };
-  } catch (error) {
-    return { authenticated: false, error: 'Invalid or expired token' };
-  }
-}
+type WebhookUpdateData = {
+  name?: string;
+  url?: string;
+  avatar?: string | null;
+  enabled?: boolean;
+  categories?: string[] | null;
+};
 
 // GET: Get a single webhook by ID
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -43,25 +22,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
 
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Check if user has permission to manage settings
-    const canManageSettings =
-      auth.role === 'admin' || (await usersService.hasPermission(auth.userId, 'canManageSettings'));
-
-    if (!canManageSettings) {
-      return NextResponse.json(
-        { message: 'You do not have permission to view webhooks' },
-        { status: 403 },
-      );
-    }
-
-    // Get webhook
-    const webhook = await discordService.getWebhookById(id);
+    // Get webhook from database
+    const [webhook] = await db.select().from(discordWebhooks).where(eq(discordWebhooks.id, id));
 
     if (!webhook) {
       return NextResponse.json({ message: 'Webhook not found' }, { status: 404 });
@@ -87,39 +56,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
 
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Check if user has permission to manage settings
-    const canManageSettings =
-      auth.role === 'admin' || (await usersService.hasPermission(auth.userId, 'canManageSettings'));
-
-    if (!canManageSettings) {
-      return NextResponse.json(
-        { message: 'You do not have permission to update webhooks' },
-        { status: 403 },
-      );
-    }
-
     // Check if webhook exists
-    const existingWebhook = await discordService.getWebhookById(id);
+    const [existingWebhook] = await db.select().from(discordWebhooks).where(eq(discordWebhooks.id, id));
 
     if (!existingWebhook) {
       return NextResponse.json({ message: 'Webhook not found' }, { status: 404 });
     }
 
     // Parse request body
-    const body = await request.json();
+    const body: WebhookUpdateData = await request.json();
     const { name, url, avatar, enabled, categories } = body;
 
-    // Create update object
-    const updateData: any = {};
+    // Create update object with only provided fields
+    const updateData: WebhookUpdateData = {};
     if (name !== undefined) updateData.name = name;
     if (url !== undefined) {
-      // Validate URL format
+      // Validate URL format if provided
       try {
         new URL(url);
         updateData.url = url;
@@ -131,8 +90,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (enabled !== undefined) updateData.enabled = enabled;
     if (categories !== undefined) updateData.categories = categories;
 
-    // Update webhook
-    const updatedWebhook = await discordService.updateWebhook(id, updateData);
+    // Add updated timestamp
+    updateData.updatedAt = new Date();
+
+    // Update webhook in database
+    const [updatedWebhook] = await db
+      .update(discordWebhooks)
+      .set(updateData)
+      .where(eq(discordWebhooks.id, id))
+      .returning();
 
     return NextResponse.json({
       webhook: updatedWebhook,
@@ -157,32 +123,22 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
 
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Check if user has permission to manage settings
-    const canManageSettings =
-      auth.role === 'admin' || (await usersService.hasPermission(auth.userId, 'canManageSettings'));
-
-    if (!canManageSettings) {
-      return NextResponse.json(
-        { message: 'You do not have permission to delete webhooks' },
-        { status: 403 },
-      );
-    }
-
     // Check if webhook exists
-    const existingWebhook = await discordService.getWebhookById(id);
+    const [existingWebhook] = await db.select().from(discordWebhooks).where(eq(discordWebhooks.id, id));
 
     if (!existingWebhook) {
       return NextResponse.json({ message: 'Webhook not found' }, { status: 404 });
     }
 
-    // Delete webhook
-    await discordService.deleteWebhook(id);
+    // Delete webhook from database
+    await db.delete(discordWebhooks).where(eq(discordWebhooks.id, id));
 
     return NextResponse.json({
       message: 'Webhook deleted successfully',

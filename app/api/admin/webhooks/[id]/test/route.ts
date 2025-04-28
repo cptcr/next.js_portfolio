@@ -1,36 +1,8 @@
 // app/api/admin/webhooks/[id]/test/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verify } from 'jsonwebtoken';
-import { discordService } from '@/lib/services/discord';
-
-// Constants
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
-
-// Middleware to verify authentication
-async function verifyAuth(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return {
-      authenticated: false,
-      error: 'Missing or invalid authorization header',
-    };
-  }
-
-  const token = authHeader.substring(7);
-
-  try {
-    const payload = verify(token, JWT_SECRET);
-    return {
-      authenticated: true,
-      username: (payload as any).username,
-      userId: (payload as any).userId,
-      role: (payload as any).role,
-    };
-  } catch (error) {
-    return { authenticated: false, error: 'Invalid or expired token' };
-  }
-}
+import { verifyAuthToken } from '@/lib/utils/admin-service';
+import { discordWebhooks, db } from '@/lib/db/postgres';
+import { eq } from 'drizzle-orm';
 
 // POST: Test a webhook
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
@@ -42,14 +14,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Verify authentication
-    const auth = await verifyAuth(request);
+    const authHeader = request.headers.get('authorization');
+    const auth = await verifyAuthToken(authHeader);
 
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
 
-    // Get webhook
-    const webhook = await discordService.getWebhookById(id);
+    // Get webhook from database
+    const [webhook] = await db.select().from(discordWebhooks).where(eq(discordWebhooks.id, id));
 
     if (!webhook) {
       return NextResponse.json({ message: 'Webhook not found' }, { status: 404 });
@@ -76,14 +49,24 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       timestamp: new Date().toISOString(),
     };
 
-    // Send test message
-    await discordService.sendWebhookNotification(
-      webhook.url,
-      message,
-      [embed],
-      webhook.name || 'Test Notification',
-      webhook.avatar || undefined,
-    );
+    // Send test message to Discord
+    const response = await fetch(webhook.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: message,
+        embeds: [embed],
+        username: webhook.name || 'Test Notification',
+        avatar_url: webhook.avatar || undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Discord webhook error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
 
     return NextResponse.json({
       message: 'Test message sent successfully',
