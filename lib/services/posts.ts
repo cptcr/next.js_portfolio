@@ -245,25 +245,42 @@ export const postsService = {
       .offset(offset);
 
     // Transform results to include author info
-    return results.map((post: { id: any; slug: any; title: any; excerpt: any; content: any; category: any; featured: any; publishedAt: any; createdAt: any; updatedAt: any; authorId: any; authorUsername: any; authorRealName: any; authorAvatarUrl: any; }) => ({
-      id: post.id,
-      slug: post.slug,
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      category: post.category,
-      featured: post.featured,
-      publishedAt: post.publishedAt,
-      createdAt: post.createdAt,
-      updatedAt: post.updatedAt,
-      authorId: post.authorId,
-      author: {
-        id: post.authorId,
-        username: post.authorUsername,
-        realName: post.authorRealName || null,
-        avatarUrl: post.authorAvatarUrl || null,
-      },
-    }));
+    return results.map(
+      (post: {
+        id: any;
+        slug: any;
+        title: any;
+        excerpt: any;
+        content: any;
+        category: any;
+        featured: any;
+        publishedAt: any;
+        createdAt: any;
+        updatedAt: any;
+        authorId: any;
+        authorUsername: any;
+        authorRealName: any;
+        authorAvatarUrl: any;
+      }) => ({
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        content: post.content,
+        category: post.category,
+        featured: post.featured,
+        publishedAt: post.publishedAt,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+        authorId: post.authorId,
+        author: {
+          id: post.authorId,
+          username: post.authorUsername,
+          realName: post.authorRealName || null,
+          avatarUrl: post.authorAvatarUrl || null,
+        },
+      }),
+    );
   },
 
   // Count total posts
@@ -318,7 +335,7 @@ export const postsService = {
       .from(posts)
       .groupBy(posts.category);
 
-    return results.map((row: { category: any; }) => row.category).filter(Boolean) as string[];
+    return results.map((row: { category: any }) => row.category).filter(Boolean) as string[];
   },
 
   // Calculate reading time for a post

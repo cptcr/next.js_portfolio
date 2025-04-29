@@ -80,9 +80,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     console.error(`Error testing webhook:`, error);
     // Provide a more specific error message if possible
     const errorMessage = error instanceof Error ? error.message : 'Failed to send test message';
-    return NextResponse.json(
-      { message: errorMessage, error: String(error) },
-      { status: 500 },
-    );
+    return NextResponse.json({ message: errorMessage, error: String(error) }, { status: 500 });
   }
 }

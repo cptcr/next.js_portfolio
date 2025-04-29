@@ -325,7 +325,8 @@ export default function DiscordWebhooks() {
       const token = localStorage.getItem('adminToken');
       if (!token) throw new Error('Not authenticated');
 
-      const content = testMessage.trim() ||
+      const content =
+        testMessage.trim() ||
         "🔔 This is a test message from your blog's admin panel. If you're seeing this, your webhook is working properly!";
 
       const response = await fetch(`/api/admin/webhooks/${selectedWebhook.id}/test`, {
@@ -400,7 +401,9 @@ export default function DiscordWebhooks() {
 
   const handleEditWebhook = (webhook: WebhookData) => {
     setSelectedWebhook(webhook);
-    setSelectedCategory(webhook.categories && webhook.categories.length > 0 ? webhook.categories[0] : null);
+    setSelectedCategory(
+      webhook.categories && webhook.categories.length > 0 ? webhook.categories[0] : null,
+    );
     setEditDialogOpen(true);
   };
 
@@ -542,7 +545,8 @@ export default function DiscordWebhooks() {
                 placeholder="https://discord.com/api/webhooks/..."
               />
               <p className="text-xs text-muted-foreground">
-                You can find this URL in your Discord server settings under Integrations &gt; Webhooks
+                You can find this URL in your Discord server settings under Integrations &gt;
+                Webhooks
               </p>
             </div>
 

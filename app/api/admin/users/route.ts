@@ -45,10 +45,7 @@ export async function GET(request: Request) {
     }
 
     // Check if user is admin or has permission to manage users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to view users' },
         { status: 403 },
@@ -90,10 +87,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user is admin or has permission to manage users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to create users' },
         { status: 403 },
