@@ -41,16 +41,19 @@ import {
   Check,
   Globe,
   Image,
+  Key,
   Loader2,
   Paintbrush,
   RefreshCw,
   Save,
   SlidersHorizontal,
   User,
+  Webhook,
 } from 'lucide-react';
 import DiscordWebhooks from './discord-webhooks';
 import SettingsIntegrations from './settings-integrations';
 import UserProfileEditor from './user-profile-editor';
+import ApiKeysManagement from './api-key-management';
 
 // Types
 interface SettingsState {
@@ -1024,7 +1027,27 @@ export default function SettingsPanel() {
 
         {/* Integrations Settings */}
         <TabsContent value="integrations" className="space-y-6">
-          <SettingsIntegrations />
+          {/* API Access Section */}
+          <Tabs defaultValue="api-keys">
+            <TabsList className="mb-4">
+              <TabsTrigger value="api-keys">
+                <Key className="w-4 h-4 mr-2" />
+                API Keys
+              </TabsTrigger>
+              <TabsTrigger value="webhooks">
+                <Webhook className="w-4 h-4 mr-2" />
+                Webhooks
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="api-keys">
+              <ApiKeysManagement />
+            </TabsContent>
+
+            <TabsContent value="webhooks">
+              <DiscordWebhooks />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         {/* Account Settings */}

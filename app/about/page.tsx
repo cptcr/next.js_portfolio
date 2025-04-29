@@ -17,9 +17,7 @@ export default function AboutPage() {
         <div className="container px-4">
           <div className="max-w-4xl mx-auto">
             <h1 className="mb-6 text-4xl font-bold md:text-5xl">{about.content.hero.title}</h1>
-            <p className="text-xl text-muted-foreground">
-              {about.content.hero.description}
-            </p>
+            <p className="text-xl text-muted-foreground">{about.content.hero.description}</p>
           </div>
         </div>
       </section>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Loader2,
   BarChart3,
@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Hexagon,
   AlertCircle,
+  Key,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,9 +46,12 @@ import PostEditor from '@/components/admin/post-editor';
 import SettingsPanel from '@/components/admin/settings-panel';
 import PostsList from '@/components/admin/posts-list';
 import UserManagement from '@/components/admin/user-management';
+import ApiKeysManagement from '@/components/admin/api-key-management';
+import ApiKeyLogs from '@/components/admin/api-key-logs';
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -66,17 +70,18 @@ export default function AdminDashboard() {
   // Get URL search params to check for tab parameter
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
       const tabParam = searchParams.get('tab');
 
       if (
         tabParam &&
-        ['analytics', 'posts', 'create', 'calendar', 'settings', 'users'].includes(tabParam)
+        ['analytics', 'posts', 'create', 'calendar', 'settings', 'users', 'api-keys'].includes(
+          tabParam,
+        )
       ) {
         setActiveTab(tabParam);
       }
     }
-  }, []);
+  }, [searchParams]);
 
   // Verify authentication on component mount
   useEffect(() => {
@@ -280,6 +285,8 @@ export default function AdminDashboard() {
   // Check if the user has permission to access certain tabs
   const canAccessUsers = userRole === 'admin' || userPermissions?.canManageUsers;
   const canAccessSettings = userRole === 'admin' || userPermissions?.canManageSettings;
+  const canAccessApiKeys =
+    userRole === 'admin' || userPermissions?.canManageApiKeys || userPermissions?.canCreateApiKeys;
 
   return (
     <>
@@ -421,6 +428,15 @@ export default function AdminDashboard() {
                     User Management
                   </TabsTrigger>
                 )}
+                {canAccessApiKeys && (
+                  <TabsTrigger
+                    value="api-keys"
+                    className="px-4 py-2 data-[state=active]:bg-card data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-primary"
+                  >
+                    <Key className="w-4 h-4 mr-2" />
+                    API Keys
+                  </TabsTrigger>
+                )}
                 {canAccessSettings && (
                   <TabsTrigger
                     value="settings"
@@ -459,6 +475,25 @@ export default function AdminDashboard() {
                     <CardTitle>Access Denied</CardTitle>
                     <CardDescription>
                       You do not have permission to access user management.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="api-keys" className="mt-0">
+              {canAccessApiKeys ? (
+                searchParams.get('key') ? (
+                  <ApiKeyLogs />
+                ) : (
+                  <ApiKeysManagement />
+                )
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Access Denied</CardTitle>
+                    <CardDescription>
+                      You do not have permission to access API key management.
                     </CardDescription>
                   </CardHeader>
                 </Card>
