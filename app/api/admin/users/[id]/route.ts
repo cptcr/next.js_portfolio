@@ -1,7 +1,7 @@
 // app/api/admin/users/[id]/route.ts
 import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
-import { usersService } from '@/lib/services/users';
+import { hasPermission, getUserById, updateUser, listUsers, deleteUser } from '@/lib/services/users';
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
@@ -45,7 +45,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Check if user has permission to view users
     if (
       auth.role !== 'admin' &&
-      !(await usersService.hasPermission(auth.userId, 'canManageUsers'))
+      !(await hasPermission(auth.userId, 'canManageUsers'))
     ) {
       return NextResponse.json(
         { message: 'You do not have permission to view user details' },
@@ -59,7 +59,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     // Get user
-    const user = await usersService.getUserById(id);
+    const user = await getUserById(id);
 
     if (!user) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
@@ -93,7 +93,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     // Check if user has permission to update users
     if (
       auth.role !== 'admin' &&
-      !(await usersService.hasPermission(auth.userId, 'canManageUsers'))
+      !(await hasPermission(auth.userId, 'canManageUsers'))
     ) {
       return NextResponse.json(
         { message: 'You do not have permission to update users' },
@@ -111,7 +111,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const { username, email, password, realName, role } = body;
 
     // Check if user exists
-    const existingUser = await usersService.getUserById(id);
+    const existingUser = await getUserById(id);
     if (!existingUser) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
@@ -132,7 +132,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (realName !== undefined) updates.realName = realName;
     if (role) updates.role = role;
 
-    const updatedUser = await usersService.updateUser(id, updates);
+    const updatedUser = await updateUser(id, updates);
 
     if (!updatedUser) {
       return NextResponse.json({ message: 'Failed to update user' }, { status: 500 });
@@ -167,7 +167,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     // Check if user has permission to delete users
     if (
       auth.role !== 'admin' &&
-      !(await usersService.hasPermission(auth.userId, 'canManageUsers'))
+      !(await hasPermission(auth.userId, 'canManageUsers'))
     ) {
       return NextResponse.json(
         { message: 'You do not have permission to delete users' },
@@ -181,14 +181,14 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     // Check if user exists
-    const existingUser = await usersService.getUserById(id);
+    const existingUser = await getUserById(id);
     if (!existingUser) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
     // Prevent deleting the last admin
     if (existingUser.role === 'admin') {
-      const allUsers = await usersService.listUsers(100);
+      const allUsers = await listUsers(100);
       const adminUsers = allUsers.filter((user: { role: string }) => user.role === 'admin');
 
       if (adminUsers.length <= 1) {
@@ -197,7 +197,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     // Delete the user
-    await usersService.deleteUser(id);
+    await deleteUser(id);
 
     return NextResponse.json({
       message: 'User deleted successfully',
