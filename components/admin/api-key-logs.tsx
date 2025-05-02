@@ -14,12 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -27,11 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Table,
@@ -50,7 +41,7 @@ import {
   FilterIcon,
   LayersIcon,
   Loader2,
-  BarChart,
+  BarChart as BarChartIcon,
   BarChart2,
   XCircle,
   ArrowLeft,
@@ -123,7 +114,7 @@ export default function ApiKeyLogs() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const keyId = searchParams.get('key');
-  
+
   const [apiKey, setApiKey] = useState<ApiKey | null>(null);
   const [logs, setLogs] = useState<ApiLog[]>([]);
   const [stats, setStats] = useState<ApiUsageStats | null>(null);
@@ -199,17 +190,17 @@ export default function ApiKeyLogs() {
 
       const { startDate, endDate } = dateRange;
       let url = `/api/admin/api-keys/${id}/logs?limit=${pagination.limit}`;
-      
+
       if (loadMore) {
         url += `&offset=${pagination.offset + pagination.limit}`;
       } else {
         url += '&offset=0';
       }
-      
+
       if (startDate) {
         url += `&startDate=${startDate.toISOString()}`;
       }
-      
+
       if (endDate) {
         url += `&endDate=${endDate.toISOString()}`;
       }
@@ -225,13 +216,13 @@ export default function ApiKeyLogs() {
       }
 
       const data = await response.json();
-      
+
       if (loadMore) {
         setLogs([...logs, ...data.logs]);
       } else {
         setLogs(data.logs);
       }
-      
+
       setStats(data.stats);
       setPagination({
         ...pagination,
@@ -257,15 +248,15 @@ export default function ApiKeyLogs() {
       if (endpointFilter !== 'all' && !log.endpoint.includes(endpointFilter)) {
         return false;
       }
-      
+
       if (statusFilter === 'success' && log.statusCode >= 400) {
         return false;
       }
-      
+
       if (statusFilter === 'error' && log.statusCode < 400) {
         return false;
       }
-      
+
       return true;
     });
   };
@@ -273,7 +264,7 @@ export default function ApiKeyLogs() {
   // Transform stats data for charts
   const getEndpointChartData = () => {
     if (!stats) return [];
-    
+
     return Object.entries(stats.requestsByEndpoint).map(([endpoint, count], index) => ({
       name: endpoint.split('/').slice(-2).join('/'),
       value: count,
@@ -308,13 +299,10 @@ export default function ApiKeyLogs() {
   };
 
   // Handle date range change
-  const handleDateRangeChange = (
-    range: 'today' | 'week' | 'month' | 'custom',
-    date?: Date
-  ) => {
+  const handleDateRangeChange = (range: 'today' | 'week' | 'month' | 'custom', date?: Date) => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    
+
     switch (range) {
       case 'today':
         const startOfToday = new Date();
@@ -349,7 +337,7 @@ export default function ApiKeyLogs() {
 
   // Get unique endpoints for filtering
   const getUniqueEndpoints = () => {
-    const endpoints = logs.map(log => log.endpoint);
+    const endpoints = logs.map((log) => log.endpoint);
     return Array.from(new Set(endpoints));
   };
 
@@ -406,21 +394,23 @@ export default function ApiKeyLogs() {
           </Button>
           <h2 className="text-2xl font-bold">API Key: {apiKey.name}</h2>
           <p className="text-muted-foreground">
-            Prefix: <code className="p-1 text-xs rounded bg-muted">{apiKey.prefix}</code> • 
+            Prefix: <code className="p-1 text-xs rounded bg-muted">{apiKey.prefix}</code> •
             {apiKey.enabled ? (
               <Badge className="ml-2">Active</Badge>
             ) : (
-              <Badge variant="secondary" className="ml-2">Disabled</Badge>
+              <Badge variant="secondary" className="ml-2">
+                Disabled
+              </Badge>
             )}
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
                 <CalendarIcon className="w-4 h-4 mr-2" />
-                {dateRange.startDate ? format(dateRange.startDate, 'PP') : 'Start date'} - 
+                {dateRange.startDate ? format(dateRange.startDate, 'PP') : 'Start date'} -
                 {dateRange.endDate ? format(dateRange.endDate, 'PP') : 'End date'}
               </Button>
             </PopoverTrigger>
@@ -448,11 +438,7 @@ export default function ApiKeyLogs() {
                   >
                     Today
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDateRangeChange('week')}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handleDateRangeChange('week')}>
                     Last Week
                   </Button>
                   <Button
@@ -466,7 +452,7 @@ export default function ApiKeyLogs() {
               </div>
             </PopoverContent>
           </Popover>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -487,7 +473,7 @@ export default function ApiKeyLogs() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="logs">Request Logs</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-4">
           {/* Stats cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -501,12 +487,10 @@ export default function ApiKeyLogs() {
                 <div className="text-2xl font-bold">
                   {stats ? stats.totalRequests.toLocaleString() : '-'}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  In the selected time period
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">In the selected time period</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -522,7 +506,7 @@ export default function ApiKeyLogs() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -539,14 +523,12 @@ export default function ApiKeyLogs() {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Endpoint distribution chart */}
           <Card>
             <CardHeader>
               <CardTitle>Endpoint Distribution</CardTitle>
-              <CardDescription>
-                Request distribution by endpoint
-              </CardDescription>
+              <CardDescription>Request distribution by endpoint</CardDescription>
             </CardHeader>
             <CardContent>
               {endpointChartData.length > 0 ? (
@@ -567,7 +549,7 @@ export default function ApiKeyLogs() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: any, name: any, props: any) => {
                           return [`${value} requests`, props.payload.fullEndpoint];
                         }}
@@ -587,9 +569,7 @@ export default function ApiKeyLogs() {
           <Card>
             <CardHeader>
               <CardTitle>Recent Requests</CardTitle>
-              <CardDescription>
-                Recent API requests made with this key
-              </CardDescription>
+              <CardDescription>Recent API requests made with this key</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -606,63 +586,57 @@ export default function ApiKeyLogs() {
                   <TableBody>
                     {logs.slice(0, 5).map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell>
-                          {formatDate(log.createdAt)}
-                        </TableCell>
+                        <TableCell>{formatDate(log.createdAt)}</TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {formatEndpoint(log.endpoint)}
                         </TableCell>
                         <TableCell>
-                          <Badge 
+                          <Badge
                             variant="outline"
                             className={
-                              log.method === 'GET' ? 'bg-blue-500/10 text-blue-500' :
-                              log.method === 'POST' ? 'bg-green-500/10 text-green-500' :
-                              log.method === 'PUT' ? 'bg-amber-500/10 text-amber-500' :
-                              log.method === 'DELETE' ? 'bg-red-500/10 text-red-500' :
-                              ''
+                              log.method === 'GET'
+                                ? 'bg-blue-500/10 text-blue-500'
+                                : log.method === 'POST'
+                                  ? 'bg-green-500/10 text-green-500'
+                                  : log.method === 'PUT'
+                                    ? 'bg-amber-500/10 text-amber-500'
+                                    : log.method === 'DELETE'
+                                      ? 'bg-red-500/10 text-red-500'
+                                      : ''
                             }
                           >
                             {log.method}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={log.statusCode < 400 ? 'default' : 'destructive'}
-                          >
+                          <Badge variant={log.statusCode < 400 ? 'default' : 'destructive'}>
                             {log.statusCode}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {log.responseTime}ms
-                        </TableCell>
+                        <TableCell className="text-right">{log.responseTime}ms</TableCell>
                       </TableRow>
                     ))}
-                    {logs.length > 5 && (
-                <div className="mt-4 text-center">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setActiveTab('logs')}
-                  >
-                    View All Logs
-                  </Button>
-                </div>
-              )}
+                  </TableBody>
+                </Table>
+                {logs.length > 5 && (
+                  <div className="mt-4 text-center">
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab('logs')}>
+                      View All Logs
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="logs" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle>Request Logs</CardTitle>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={endpointFilter}
-                    onValueChange={setEndpointFilter}
-                  >
+                  <Select value={endpointFilter} onValueChange={setEndpointFilter}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Filter by endpoint" />
                     </SelectTrigger>
@@ -675,11 +649,8 @@ export default function ApiKeyLogs() {
                       ))}
                     </SelectContent>
                   </Select>
-                  
-                  <Select
-                    value={statusFilter}
-                    onValueChange={setStatusFilter}
-                  >
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
@@ -689,13 +660,8 @@ export default function ApiKeyLogs() {
                       <SelectItem value="error">Error (4xx/5xx)</SelectItem>
                     </SelectContent>
                   </Select>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={resetFilters}
-                    className="h-9"
-                  >
+
+                  <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9">
                     Reset
                   </Button>
                 </div>
@@ -720,39 +686,35 @@ export default function ApiKeyLogs() {
                   <TableBody>
                     {filteredLogs.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell>
-                          {formatDate(log.createdAt)}
-                        </TableCell>
+                        <TableCell>{formatDate(log.createdAt)}</TableCell>
                         <TableCell className="max-w-[200px] truncate" title={log.endpoint}>
                           {formatEndpoint(log.endpoint)}
                         </TableCell>
                         <TableCell>
-                          <Badge 
+                          <Badge
                             variant="outline"
                             className={
-                              log.method === 'GET' ? 'bg-blue-500/10 text-blue-500' :
-                              log.method === 'POST' ? 'bg-green-500/10 text-green-500' :
-                              log.method === 'PUT' ? 'bg-amber-500/10 text-amber-500' :
-                              log.method === 'DELETE' ? 'bg-red-500/10 text-red-500' :
-                              ''
+                              log.method === 'GET'
+                                ? 'bg-blue-500/10 text-blue-500'
+                                : log.method === 'POST'
+                                  ? 'bg-green-500/10 text-green-500'
+                                  : log.method === 'PUT'
+                                    ? 'bg-amber-500/10 text-amber-500'
+                                    : log.method === 'DELETE'
+                                      ? 'bg-red-500/10 text-red-500'
+                                      : ''
                             }
                           >
                             {log.method}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={log.statusCode < 400 ? 'default' : 'destructive'}
-                          >
+                          <Badge variant={log.statusCode < 400 ? 'default' : 'destructive'}>
                             {log.statusCode}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {log.requestIp}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {log.responseTime}ms
-                        </TableCell>
+                        <TableCell>{log.requestIp}</TableCell>
+                        <TableCell className="text-right">{log.responseTime}ms</TableCell>
                       </TableRow>
                     ))}
                     {filteredLogs.length === 0 && (
@@ -765,14 +727,10 @@ export default function ApiKeyLogs() {
                   </TableBody>
                 </Table>
               </div>
-              
+
               {pagination.hasMore && (
                 <div className="mt-4 text-center">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleLoadMore}
-                    disabled={isLoadingMore}
-                  >
+                  <Button variant="outline" onClick={handleLoadMore} disabled={isLoadingMore}>
                     {isLoadingMore ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

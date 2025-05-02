@@ -1,7 +1,7 @@
 // app/api/admin/users/[id]/avatar/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
-import { usersService } from '@/lib/services/users';
+import { hasPermission, getUserById, updateUser } from '@/lib/services/users';
 import { join } from 'path';
 import { mkdir, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (
       auth.userId !== id &&
       auth.role !== 'admin' &&
-      !(await usersService.hasPermission(auth.userId, 'canManageUsers'))
+      !(await hasPermission(auth.userId, 'canManageUsers'))
     ) {
       return NextResponse.json(
         {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Check if user exists
-    const user = await usersService.getUserById(id);
+    const user = await getUserById(id);
     if (!user) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const avatarUrl = `/uploads/avatars/${fileName}`;
 
     // Update user record with new avatar URL
-    await usersService.updateUser(id, { avatarUrl });
+    await updateUser(id, { avatarUrl });
 
     return NextResponse.json({
       message: 'Avatar uploaded successfully',

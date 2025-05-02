@@ -1,7 +1,7 @@
 // app/api/admin/setup/route.ts
 import { NextResponse } from 'next/server';
 import { updateCredentials, verifyCredentials } from '@/lib/auth/credentials';
-import { usersService } from '@/lib/services/users';
+import { hasPermission, updateUser, getUserByUsername, createUser } from '@/lib/services/users';
 import { settingsService } from '@/lib/services/settings';
 
 // Setup endpoint for first-time setup
@@ -37,11 +37,11 @@ export async function POST(request: Request) {
 
     try {
       // Initialize the database with root user if needed
-      const adminUser = await usersService.getUserByUsername('admin');
+      const adminUser = await getUserByUsername('admin');
 
       if (!adminUser) {
         // Create admin user in the database
-        await usersService.createUser({
+        await createUser({
           username,
           email: 'admin@example.com', // Default email, can be changed later
           password,
@@ -50,13 +50,13 @@ export async function POST(request: Request) {
         });
       } else if (username !== 'admin') {
         // Update the username if it was changed
-        await usersService.updateUser(adminUser.id, {
+        await updateUser(adminUser.id, {
           username,
           password,
         });
       } else {
         // Just update the password
-        await usersService.updateUser(adminUser.id, { password });
+        await updateUser(adminUser.id, { password });
       }
 
       // Initialize default settings if needed

@@ -1,6 +1,8 @@
+// /app/admin/dashboard/admin-dashboard-client.tsx
+// IMPORTANT: 'use client' MUST be the very first line
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Import React
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Loader2,
@@ -40,6 +42,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+// Assuming these components exist and are correctly imported
 import AnalyticsDashboard from '@/components/admin/analytics-dashboard';
 import EditorialCalendar from '@/components/admin/editorial-calendar';
 import PostEditor from '@/components/admin/post-editor';
@@ -49,9 +52,10 @@ import UserManagement from '@/components/admin/user-management';
 import ApiKeysManagement from '@/components/admin/api-key-management';
 import ApiKeyLogs from '@/components/admin/api-key-logs';
 
-export default function AdminDashboard() {
+// Make sure this export name is consistent
+export default function AdminDashboardClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // The hook requiring 'use client' and Suspense
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -64,27 +68,30 @@ export default function AdminDashboard() {
     confirmPassword: '',
   });
   const [isSubmittingSetup, setIsSubmittingSetup] = useState<boolean>(false);
+  // Use a more specific type if possible, otherwise 'any' or a defined interface
   const [userPermissions, setUserPermissions] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>('user');
 
   // Get URL search params to check for tab parameter
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const tabParam = searchParams.get('tab');
-
-      if (
-        tabParam &&
-        ['analytics', 'posts', 'create', 'calendar', 'settings', 'users', 'api-keys'].includes(
-          tabParam,
-        )
-      ) {
-        setActiveTab(tabParam);
-      }
+    // This check ensures searchParams is only accessed client-side after hydration
+    const tabParam = searchParams.get('tab');
+    if (
+      tabParam &&
+      ['analytics', 'posts', 'create', 'calendar', 'settings', 'users', 'api-keys'].includes(
+        tabParam,
+      )
+    ) {
+      setActiveTab(tabParam);
     }
+    // Adding check for window is generally redundant now with useSearchParams,
+    // as the hook itself ensures client-side execution for this effect logic.
   }, [searchParams]);
 
   // Verify authentication on component mount
   useEffect(() => {
+    let isMounted = true; // Prevent state updates on unmounted component
+
     const verifyAuth = async () => {
       try {
         const token = localStorage.getItem('adminToken');
@@ -103,16 +110,29 @@ export default function AdminDashboard() {
           throw new Error(errorData.message || 'Invalid token');
         }
 
+        if (!isMounted) return; // Check if component is still mounted
+
         const data = await response.json();
         setIsAuthenticated(true);
-        await fetchUserPermissions(data.username);
+        await fetchUserPermissions(data.username); // Fetch permissions only after auth success
       } catch (error) {
         console.error('Auth error:', error);
         localStorage.removeItem('adminToken');
-        setError(error instanceof Error ? error.message : 'Authentication failed');
-        router.push('/admin');
+        if (isMounted) {
+          setError(error instanceof Error ? error.message : 'Authentication failed');
+          setIsLoading(false); // Ensure loading stops on error
+          router.push('/admin'); // Redirect on error
+        }
       } finally {
-        setIsLoading(false);
+        // Only set loading false here if auth succeeded without error
+        // Error case handles its own setIsLoading
+        if (isAuthenticated && isMounted) {
+          // Or check if error is null
+          setIsLoading(false);
+        } else if (!error && isMounted) {
+          // If auth check finished without error but wasn't authenticated (e.g., verify failed)
+          setIsLoading(false);
+        }
       }
     };
 
@@ -122,7 +142,7 @@ export default function AdminDashboard() {
         const response = await fetch('/api/admin/check-setup');
         if (response.ok) {
           const data = await response.json();
-          if (data.needsSetup) {
+          if (data.needsSetup && isMounted) {
             setFirstTimeSetupOpen(true);
           }
         }
@@ -133,10 +153,16 @@ export default function AdminDashboard() {
 
     verifyAuth();
     checkFirstTimeSetup();
-  }, [router]);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, [router, isAuthenticated, error]); // Added isAuthenticated/error dependencies for more robust loading state handling
 
   // Fetch user permissions
   const fetchUserPermissions = async (username: string) => {
+    // No need for isMounted check here usually, as it's called by verifyAuth which checks mounting
     try {
       const token = localStorage.getItem('adminToken');
       if (!token) return;
@@ -149,35 +175,32 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         const data = await response.json();
+        // Check mount before setting state if called independently in future
         setUserPermissions(data.permissions || {});
         setUserRole(data.role || 'user');
       }
-    } catch (error) {
-      console.error('Error fetching user permissions:', error);
+    } catch (err) {
+      console.error('Error fetching user permissions:', err);
     }
   };
 
   // Handle tab change with URL update
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-
     // Update URL without refreshing the page
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', value);
-      window.history.pushState({}, '', url.toString());
-    }
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.pushState({}, '', url.toString());
   };
 
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
-    router.push('/admin');
+    router.push('/admin'); // Redirect to login page
   };
 
   // Handle setup form submission
   const handleSetupSubmit = async () => {
-    // Validate passwords
     if (setupCredentials.password !== setupCredentials.confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -186,7 +209,6 @@ export default function AdminDashboard() {
       });
       return;
     }
-
     if (setupCredentials.password.length < 8) {
       toast({
         title: 'Password too short',
@@ -197,13 +219,10 @@ export default function AdminDashboard() {
     }
 
     setIsSubmittingSetup(true);
-
     try {
       const response = await fetch('/api/admin/setup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: setupCredentials.username,
           password: setupCredentials.password,
@@ -219,14 +238,12 @@ export default function AdminDashboard() {
         title: 'Setup complete',
         description: 'Your admin account has been created. Please log in.',
       });
-
-      // Close dialog and redirect to login
       setFirstTimeSetupOpen(false);
-      router.push('/admin');
-    } catch (error) {
+      router.push('/admin'); // Redirect to login after setup
+    } catch (err) {
       toast({
         title: 'Setup failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description: err instanceof Error ? err.message : 'An unknown error occurred',
         variant: 'destructive',
       });
     } finally {
@@ -234,7 +251,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Show loading state
+  // Show internal loading state (after initial Suspense fallback)
   if (isLoading) {
     return (
       <div className="min-h-screen pt-24 pb-12">
@@ -243,26 +260,24 @@ export default function AdminDashboard() {
             <Skeleton className="w-64 h-8" />
             <Skeleton className="h-10 w-28" />
           </div>
-
           <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 md:grid-cols-4">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32" />
+            <Skeleton className="h-32" /> <Skeleton className="h-32" />
+            <Skeleton className="h-32" /> <Skeleton className="h-32" />
           </div>
-
           <Skeleton className="h-96" />
         </div>
       </div>
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated && !isLoading) {
-    return null; // Router will handle the redirect
+  // Render null if redirecting (useEffect handles the push)
+  if (!isAuthenticated && !isLoading && !error) {
+    // This state should ideally be brief as useEffect redirects.
+    // Render null or a minimal placeholder if needed.
+    return null;
   }
 
-  // Handle error state
+  // Handle error state UI
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen pt-24 pb-12">
@@ -282,7 +297,8 @@ export default function AdminDashboard() {
     );
   }
 
-  // Check if the user has permission to access certain tabs
+  // Main authenticated dashboard UI
+  // Check permissions
   const canAccessUsers = userRole === 'admin' || userPermissions?.canManageUsers;
   const canAccessSettings = userRole === 'admin' || userPermissions?.canManageSettings;
   const canAccessApiKeys =
@@ -292,24 +308,22 @@ export default function AdminDashboard() {
     <>
       <div className="min-h-screen pt-24 pb-12">
         <div className="container max-w-6xl px-4 mx-auto">
-          {/* Header with title and logout button */}
+          {/* Header */}
           <div className="flex flex-col items-start justify-between gap-4 mb-8 md:flex-row md:items-center">
             <div>
               <h1 className="flex items-center text-3xl font-bold">
-                <Hexagon className="mr-2 h-7 w-7 text-primary" />
-                Admin Dashboard
+                <Hexagon className="mr-2 h-7 w-7 text-primary" /> Admin Dashboard
               </h1>
               <p className="text-muted-foreground">Manage your blog content and settings</p>
             </div>
-
             <Button variant="outline" onClick={handleLogout} className="flex items-center">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              <LogOut className="w-4 h-4 mr-2" /> Logout
             </Button>
           </div>
 
           {/* Status Cards */}
           <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 md:grid-cols-4">
+            {/* Analytics Card */}
             <Card
               className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'analytics' ? 'border-primary bg-primary/5' : ''}`}
               onClick={() => handleTabChange('analytics')}
@@ -328,7 +342,7 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-
+            {/* Posts Card */}
             <Card
               className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'posts' ? 'border-primary bg-primary/5' : ''}`}
               onClick={() => handleTabChange('posts')}
@@ -347,7 +361,7 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-
+            {/* Create Card */}
             <Card
               className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'create' ? 'border-primary bg-primary/5' : ''}`}
               onClick={() => handleTabChange('create')}
@@ -366,7 +380,7 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-
+            {/* Calendar Card */}
             <Card
               className={`cursor-pointer transition-all hover:shadow-md ${activeTab === 'calendar' ? 'border-primary bg-primary/5' : ''}`}
               onClick={() => handleTabChange('calendar')}
@@ -387,7 +401,7 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Main tabs navigation */}
+          {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
             <div className="mb-4 overflow-x-auto border-b border-border">
               <TabsList className="flex justify-start p-0 bg-transparent">
@@ -449,23 +463,19 @@ export default function AdminDashboard() {
               </TabsList>
             </div>
 
-            {/* Tab Contents */}
+            {/* Tab Content Panes */}
             <TabsContent value="analytics" className="mt-0">
               <AnalyticsDashboard />
             </TabsContent>
-
             <TabsContent value="posts" className="mt-0">
               <PostsList userRole={userRole} userPermissions={userPermissions} />
             </TabsContent>
-
             <TabsContent value="create" className="mt-0">
               <PostEditor />
             </TabsContent>
-
             <TabsContent value="calendar" className="mt-0">
               <EditorialCalendar />
             </TabsContent>
-
             <TabsContent value="users" className="mt-0">
               {canAccessUsers ? (
                 <UserManagement />
@@ -480,7 +490,6 @@ export default function AdminDashboard() {
                 </Card>
               )}
             </TabsContent>
-
             <TabsContent value="api-keys" className="mt-0">
               {canAccessApiKeys ? (
                 searchParams.get('key') ? (
@@ -499,7 +508,6 @@ export default function AdminDashboard() {
                 </Card>
               )}
             </TabsContent>
-
             <TabsContent value="settings" className="mt-0">
               {canAccessSettings ? (
                 <SettingsPanel />
@@ -524,10 +532,9 @@ export default function AdminDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Initial Admin Setup</AlertDialogTitle>
             <AlertDialogDescription>
-              Welcome to your new blog dashboard! Please create your admin account to get started.
+              Welcome! Please create your admin account.
             </AlertDialogDescription>
           </AlertDialogHeader>
-
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="setup-username">Admin Username</Label>
@@ -535,15 +542,11 @@ export default function AdminDashboard() {
                 id="setup-username"
                 value={setupCredentials.username}
                 onChange={(e) =>
-                  setSetupCredentials({
-                    ...setupCredentials,
-                    username: e.target.value,
-                  })
+                  setSetupCredentials({ ...setupCredentials, username: e.target.value })
                 }
                 placeholder="admin"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="setup-password">Admin Password</Label>
               <Input
@@ -551,15 +554,11 @@ export default function AdminDashboard() {
                 type="password"
                 value={setupCredentials.password}
                 onChange={(e) =>
-                  setSetupCredentials({
-                    ...setupCredentials,
-                    password: e.target.value,
-                  })
+                  setSetupCredentials({ ...setupCredentials, password: e.target.value })
                 }
                 placeholder="Enter a secure password"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="setup-confirm-password">Confirm Password</Label>
               <Input
@@ -567,16 +566,12 @@ export default function AdminDashboard() {
                 type="password"
                 value={setupCredentials.confirmPassword}
                 onChange={(e) =>
-                  setSetupCredentials({
-                    ...setupCredentials,
-                    confirmPassword: e.target.value,
-                  })
+                  setSetupCredentials({ ...setupCredentials, confirmPassword: e.target.value })
                 }
                 placeholder="Confirm your password"
               />
             </div>
           </div>
-
           <AlertDialogFooter>
             <AlertDialogAction
               onClick={handleSetupSubmit}

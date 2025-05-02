@@ -8,19 +8,13 @@ import { hasPermission } from '@/lib/services/users';
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
 
-// Verify authentication middleware
+// Verify authentication middleware (Original - Unchanged)
 async function verifyAuth(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
-
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return {
-      authenticated: false,
-      error: 'Missing or invalid authorization header',
-    };
+    return { authenticated: false, error: 'Missing or invalid authorization header' };
   }
-
   const token = authHeader.substring(7);
-
   try {
     const payload = verify(token, JWT_SECRET);
     return {
@@ -34,41 +28,36 @@ async function verifyAuth(request: NextRequest) {
   }
 }
 
-// Middleware to check if user can access the API key logs
+// Middleware to check if user can access the API key logs (Original - Unchanged)
 async function canAccessKeyLogs(auth: any, keyId: number) {
   if (!auth.authenticated) {
     return { allowed: false, error: auth.error };
   }
-
-  // Admin can access all logs
   if (auth.role === 'admin') {
     return { allowed: true };
   }
-
-  // Check if user has permission to manage API keys
   const canManageApiKeys = await hasPermission(auth.userId, 'canManageApiKeys');
   if (!canManageApiKeys) {
     return { allowed: false, error: 'Not authorized to access API key logs' };
   }
-
-  // Get the API key to check ownership
   const apiKey = await apiKeysService.getApiKeyById(keyId);
   if (!apiKey) {
     return { allowed: false, error: 'API key not found' };
   }
-
-  // Check if the API key belongs to the user
   if (apiKey.userId !== auth.userId) {
     return { allowed: false, error: 'Not authorized to access logs for this API key' };
   }
-
   return { allowed: true, apiKey };
 }
 
 // GET: Get logs for a specific API key
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: { id: string } }) {
   try {
-    const id = parseInt(params.id, 10);
+    // Await context.params before accessing its properties
+    const params = await context.params;
+    const idParam = params.id;
+    const id = parseInt(idParam, 10);
+
     if (isNaN(id)) {
       return NextResponse.json({ message: 'Invalid API key ID' }, { status: 400 });
     }
@@ -85,12 +74,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: error }, { status: 403 });
     }
 
-    // Parse query parameters
+    // Parse query parameters (Original logic)
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100;
-    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0;
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100; // Original default
+    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0; // Original default
 
-    // Parse date range if provided
+    // Parse date range if provided (Original logic)
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
@@ -108,7 +97,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       }
     }
 
-    // Get logs for the API key
+    // Get logs for the API key (Original logic)
     const logs = await apiKeysService.getApiLogs({
       apiKeyId: id,
       limit,
@@ -117,20 +106,21 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       endDate,
     });
 
-    // Get usage statistics
+    // Get usage statistics (Original logic)
     const stats = await apiKeysService.getApiUsageStats({
       apiKeyId: id,
       startDate,
       endDate,
     });
 
+    // Return response (Original logic)
     return NextResponse.json({
       logs,
       stats,
       pagination: {
         limit,
         offset,
-        hasMore: logs.length === limit,
+        hasMore: logs.length === limit, // Original calculation
       },
     });
   } catch (error) {

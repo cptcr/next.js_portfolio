@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@/lib/services/auth';
 import { settingsService, SiteSettingsKey } from '@/lib/services/settings';
-import { usersService } from '@/lib/services/users';
+import { hasPermission } from '@/lib/services/users';
 
 // GET: Get a specific setting by key
 export async function GET(request: NextRequest, { params }: { params: { key: string } }) {
@@ -41,7 +41,7 @@ export async function PUT(request: NextRequest, { params }: { params: { key: str
     }
 
     // Check if user has permission to manage settings
-    const canManageSettings = await usersService.hasPermission(currentUser.id, 'canManageSettings');
+    const canManageSettings = await hasPermission(currentUser.id, 'canManageSettings');
 
     if (!canManageSettings && currentUser.role !== 'admin') {
       return NextResponse.json({ message: 'Not authorized to manage settings' }, { status: 403 });
@@ -79,7 +79,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { key: 
     }
 
     // Check if user has permission to manage settings
-    const canManageSettings = await usersService.hasPermission(currentUser.id, 'canManageSettings');
+    const canManageSettings = await hasPermission(currentUser.id, 'canManageSettings');
 
     if (!canManageSettings && currentUser.role !== 'admin') {
       return NextResponse.json({ message: 'Not authorized to manage settings' }, { status: 403 });

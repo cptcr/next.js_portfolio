@@ -34,6 +34,8 @@ interface UserData {
 }
 
 interface UserPermissions {
+  canCreateApiKeys: boolean | undefined;
+  canManageApiKeys: boolean | undefined;
   userId: number;
   canCreatePosts: boolean;
   canEditOwnPosts: boolean;
@@ -727,6 +729,18 @@ export default function UserManagement() {
                                   disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
+
+                              <div className="flex items-center justify-between">
+                                <Label htmlFor="canCreateApiKeys">Create API Keys</Label>
+                                <Switch
+                                  id="canCreateApiKeys"
+                                  checked={selectedUserPermissions.canCreateApiKeys}
+                                  onCheckedChange={(checked) =>
+                                    handlePermissionChange('canCreateApiKeys', checked)
+                                  }
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -753,6 +767,18 @@ export default function UserManagement() {
                                   checked={selectedUserPermissions.canManageSettings}
                                   onCheckedChange={(checked) =>
                                     handlePermissionChange('canManageSettings', checked)
+                                  }
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <Label htmlFor="canManageApiKeys">Manage API Keys</Label>
+                                <Switch
+                                  id="canManageApiKeys"
+                                  checked={selectedUserPermissions.canManageApiKeys}
+                                  onCheckedChange={(checked) =>
+                                    handlePermissionChange('canManageApiKeys', checked)
                                   }
                                   disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
