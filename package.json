@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:tp": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "create_user": "tsx ./scripts/create-user.ts",
     "delete_user": "tsx ./scripts/delete-user.ts",
-    "pretty": "prettier --write ."
+    "pretty": "prettier --write .",
+    "test_api": "tsx ./scripts/test-api.ts"
   },
   "dependencies": {
     "@mswjs/interceptors": "^0.38.6",
@@ -34,6 +36,7 @@
     "autoprefixer": "^10.4.14",
     "aws-sdk": "^2.1692.0",
     "bcryptjs": "^3.0.2",
+    "chalk": "^5.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -62,7 +65,8 @@
     "remark-html": "^16.0.1",
     "tailwind-merge": "^3.2.0",
     "tailwindcss": "^3.3.3",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "timers": "^0.1.1"
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",

@@ -17,7 +17,6 @@ const nextConfig = {
   experimental: {
     reactCompiler: true,
     optimizeCss: true,
-    serverExternalPackages: ["bcrypt"], // Add bcrypt as external package
   },
   transpilePackages: [
     "framer-motion",

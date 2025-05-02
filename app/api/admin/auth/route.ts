@@ -29,11 +29,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid username or password' }, { status: 401 });
     }
 
-    const token = sign(
-      { userId: user.id, username: user.username, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN },
-    );
+    const token = sign({ userId: user.id, username: user.username, role: user.role }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
 
     return NextResponse.json({
       message: 'Authentication successful',

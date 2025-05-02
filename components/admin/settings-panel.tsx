@@ -41,16 +41,19 @@ import {
   Check,
   Globe,
   Image,
+  Key,
   Loader2,
   Paintbrush,
   RefreshCw,
   Save,
   SlidersHorizontal,
   User,
+  Webhook,
 } from 'lucide-react';
 import DiscordWebhooks from './discord-webhooks';
 import SettingsIntegrations from './settings-integrations';
 import UserProfileEditor from './user-profile-editor';
+import ApiKeysManagement from './api-key-management';
 
 // Types
 interface SettingsState {
@@ -198,7 +201,7 @@ export default function SettingsPanel() {
     const loadSettings = async () => {
       try {
         setIsLoading(true);
-        
+
         // Get token for API call
         const token = localStorage.getItem('adminToken');
         if (!token) {
@@ -753,7 +756,9 @@ export default function SettingsPanel() {
                       className="pl-28"
                       placeholder="username"
                       value={settings.socialLinks.linkedin}
-                      onChange={(e) => handleInputChange('socialLinks.linkedin', '', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange('socialLinks.linkedin', '', e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -769,7 +774,9 @@ export default function SettingsPanel() {
                       className="pl-8"
                       placeholder="username"
                       value={settings.socialLinks.instagram}
-                      onChange={(e) => handleInputChange('socialLinks.instagram', '', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange('socialLinks.instagram', '', e.target.value)
+                      }
                     />
                   </div>
                 </div>
@@ -812,7 +819,9 @@ export default function SettingsPanel() {
                   <Label htmlFor="posts-per-page">Posts Per Page</Label>
                   <Select
                     value={settings.display.postsPerPage.toString()}
-                    onValueChange={(value) => handleInputChange('display', 'postsPerPage', parseInt(value))}
+                    onValueChange={(value) =>
+                      handleInputChange('display', 'postsPerPage', parseInt(value))
+                    }
                   >
                     <SelectTrigger id="posts-per-page">
                       <SelectValue placeholder="Select" />
@@ -855,7 +864,9 @@ export default function SettingsPanel() {
                 <Switch
                   id="featured-section"
                   checked={settings.display.featuredSection}
-                  onCheckedChange={(checked) => handleInputChange('display', 'featuredSection', checked)}
+                  onCheckedChange={(checked) =>
+                    handleInputChange('display', 'featuredSection', checked)
+                  }
                 />
               </div>
 
@@ -875,7 +886,8 @@ export default function SettingsPanel() {
                 <div className="space-y-0.5">
                   <Label htmlFor="show-dates">Show Publish Dates</Label>
                   <p className="text-xs text-muted-foreground">
-                    Display when posts were published or updated</p>
+                    Display when posts were published or updated
+                  </p>
                 </div>
                 <Switch
                   id="show-dates"
@@ -894,7 +906,9 @@ export default function SettingsPanel() {
                 <Switch
                   id="show-related"
                   checked={settings.display.showRelated}
-                  onCheckedChange={(checked) => handleInputChange('display', 'showRelated', checked)}
+                  onCheckedChange={(checked) =>
+                    handleInputChange('display', 'showRelated', checked)
+                  }
                 />
               </div>
             </CardContent>
@@ -909,16 +923,16 @@ export default function SettingsPanel() {
               <div className="space-y-2">
                 <Label htmlFor="primary-color">Primary Color</Label>
                 <div className="flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-md" 
+                  <div
+                    className="w-10 h-10 rounded-md"
                     style={{ backgroundColor: settings.theme.primaryColor }}
                   ></div>
-                  <Input 
-                    id="primary-color" 
-                    type="text" 
-                    value={settings.theme.primaryColor} 
+                  <Input
+                    id="primary-color"
+                    type="text"
+                    value={settings.theme.primaryColor}
                     onChange={(e) => handleInputChange('theme', 'primaryColor', e.target.value)}
-                    className="w-32" 
+                    className="w-32"
                   />
                 </div>
               </div>
@@ -1013,15 +1027,38 @@ export default function SettingsPanel() {
 
         {/* Integrations Settings */}
         <TabsContent value="integrations" className="space-y-6">
-          <SettingsIntegrations />
+          {/* API Access Section */}
+          <Tabs defaultValue="api-keys">
+            <TabsList className="mb-4">
+              <TabsTrigger value="api-keys">
+                <Key className="w-4 h-4 mr-2" />
+                API Keys
+              </TabsTrigger>
+              <TabsTrigger value="webhooks">
+                <Webhook className="w-4 h-4 mr-2" />
+                Webhooks
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="api-keys">
+              <ApiKeysManagement />
+            </TabsContent>
+
+            <TabsContent value="webhooks">
+              <DiscordWebhooks />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         {/* Account Settings */}
         <TabsContent value="account" className="space-y-6">
           {currentUser ? (
             <>
-              <UserProfileEditor currentUser={currentUser} isCurrentUserAdmin={currentUser.role === 'admin'} />
-              
+              <UserProfileEditor
+                currentUser={currentUser}
+                isCurrentUserAdmin={currentUser.role === 'admin'}
+              />
+
               <Card>
                 <CardHeader>
                   <CardTitle>Security</CardTitle>
@@ -1068,13 +1105,17 @@ export default function SettingsPanel() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Your password should be at least 8 characters and include a mix of letters, numbers and
-                    symbols
+                    Your password should be at least 8 characters and include a mix of letters,
+                    numbers and symbols
                   </p>
                 </CardContent>
 
                 <CardFooter className="flex justify-end">
-                  <Button onClick={handlePasswordChange} disabled={isChangingPassword} variant="outline">
+                  <Button
+                    onClick={handlePasswordChange}
+                    disabled={isChangingPassword}
+                    variant="outline"
+                  >
                     {isChangingPassword ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1146,8 +1187,8 @@ export default function SettingsPanel() {
       {/* Fixed save button */}
       <div className="sticky flex justify-end bottom-6">
         <div className="p-4 border rounded-lg shadow-lg bg-background/80 backdrop-blur-sm border-border">
-          <Button 
-            onClick={handleSaveSettings} 
+          <Button
+            onClick={handleSaveSettings}
             disabled={isSaving || !settings.isDirty}
             className="relative"
           >

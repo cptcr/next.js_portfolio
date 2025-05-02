@@ -1,7 +1,13 @@
 // app/api/admin/users/[id]/route.ts
 import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
-import { hasPermission, getUserById, updateUser, listUsers, deleteUser } from '@/lib/services/users';
+import {
+  hasPermission,
+  getUserById,
+  updateUser,
+  listUsers,
+  deleteUser,
+} from '@/lib/services/users';
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
@@ -43,10 +49,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     // Check if user has permission to view users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to view user details' },
         { status: 403 },
@@ -91,10 +94,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     // Check if user has permission to update users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to update users' },
         { status: 403 },
@@ -165,10 +165,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     // Check if user has permission to delete users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to delete users' },
         { status: 403 },

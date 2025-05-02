@@ -1,13 +1,19 @@
 // app/api/admin/users/[id]/permissions/route.ts
 import { NextResponse, NextRequest } from 'next/server'; // Import NextRequest
 import { verify } from 'jsonwebtoken';
-import { getUserWithPermissions, updatePermissions, hasPermission, getUserById } from '@/lib/services/users'; // Assuming paths are correct
+import {
+  getUserWithPermissions,
+  updatePermissions,
+  hasPermission,
+  getUserById,
+} from '@/lib/services/users'; // Assuming paths are correct
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
 
 // Middleware to verify authentication (Consider moving to dedicated middleware file)
-async function verifyAuth(request: NextRequest) { // Use NextRequest here
+async function verifyAuth(request: NextRequest) {
+  // Use NextRequest here
   const authHeader = request.headers.get('authorization');
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -48,15 +54,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // Verify authentication
     const auth = await verifyAuth(request);
 
-    if (!auth.authenticated || !auth.userId) { // Check userId existence
+    if (!auth.authenticated || !auth.userId) {
+      // Check userId existence
       return NextResponse.json({ message: auth.error || 'Authentication failed' }, { status: 401 });
     }
 
     // Check if user has permission to manage users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to view user permissions' },
         { status: 403 },
@@ -97,15 +101,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Verify authentication
     const auth = await verifyAuth(request);
 
-    if (!auth.authenticated || !auth.userId) { // Check userId existence
+    if (!auth.authenticated || !auth.userId) {
+      // Check userId existence
       return NextResponse.json({ message: auth.error || 'Authentication failed' }, { status: 401 });
     }
 
     // Check if user has permission to manage users
-    if (
-      auth.role !== 'admin' &&
-      !(await hasPermission(auth.userId, 'canManageUsers'))
-    ) {
+    if (auth.role !== 'admin' && !(await hasPermission(auth.userId, 'canManageUsers'))) {
       return NextResponse.json(
         { message: 'You do not have permission to update user permissions' },
         { status: 403 },

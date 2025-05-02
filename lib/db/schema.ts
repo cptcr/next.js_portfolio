@@ -36,7 +36,6 @@ export const users = pgTable(
   },
 );
 
-// User Permissions table - checking if changes are needed
 export const permissions = pgTable('permissions', {
   id: serial('id').primaryKey(),
   userId: integer('user_id')
@@ -49,6 +48,9 @@ export const permissions = pgTable('permissions', {
   canDeleteAllPosts: boolean('can_delete_all_posts').notNull().default(false),
   canManageUsers: boolean('can_manage_users').notNull().default(false),
   canManageSettings: boolean('can_manage_settings').notNull().default(false),
+  // New API Key permissions
+  canCreateApiKeys: boolean('can_create_api_keys').notNull().default(false),
+  canManageApiKeys: boolean('can_manage_api_keys').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -129,3 +131,55 @@ export type NewSiteSetting = InferInsertModel<typeof siteSettings>;
 
 export type DiscordWebhook = InferSelectModel<typeof discordWebhooks>;
 export type NewDiscordWebhook = InferInsertModel<typeof discordWebhooks>;
+
+export const apiKeys = pgTable('api_keys', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 255 }).notNull(),
+  key: varchar('key', { length: 64 }).notNull().unique(),
+  prefix: varchar('prefix', { length: 8 }).notNull(),
+  permissions: json('permissions'),
+  expiresAt: timestamp('expires_at'),
+  lastUsed: timestamp('last_used'),
+  enabled: boolean('enabled').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// API Usage Logs Table
+export const apiLogs = pgTable('api_logs', {
+  id: serial('id').primaryKey(),
+  apiKeyId: integer('api_key_id').references(() => apiKeys.id, { onDelete: 'set null' }),
+  endpoint: varchar('endpoint', { length: 255 }).notNull(),
+  method: varchar('method', { length: 10 }).notNull(),
+  statusCode: integer('status_code'),
+  responseTime: integer('response_time'),
+  requestIp: varchar('request_ip', { length: 45 }),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Define relations
+export const apiKeysRelations = relations(apiKeys, ({ one, many }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
+    references: [users.id],
+  }),
+  logs: many(apiLogs),
+}));
+
+export const apiLogsRelations = relations(apiLogs, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [apiLogs.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+// Export types
+export type ApiKey = InferSelectModel<typeof apiKeys>;
+export type NewApiKey = InferInsertModel<typeof apiKeys>;
+
+export type ApiLog = InferSelectModel<typeof apiLogs>;
+export type NewApiLog = InferInsertModel<typeof apiLogs>;

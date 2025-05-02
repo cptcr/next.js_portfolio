@@ -21,16 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  AlertCircle,
-  Loader2,
-  Pencil,
-  Plus,
-  Shield,
-  Trash2,
-  User,
-  Users,
-} from 'lucide-react';
+import { AlertCircle, Loader2, Pencil, Plus, Shield, Trash2, User, Users } from 'lucide-react';
 
 interface UserData {
   id: number;
@@ -43,6 +34,8 @@ interface UserData {
 }
 
 interface UserPermissions {
+  canCreateApiKeys: boolean | undefined;
+  canManageApiKeys: boolean | undefined;
   userId: number;
   canCreatePosts: boolean;
   canEditOwnPosts: boolean;
@@ -416,7 +409,7 @@ export default function UserManagement() {
         title: 'Permissions Updated',
         description: `Permissions for ${selectedUser.username} have been updated successfully`,
       });
-      
+
       setPermissionsChanged(false);
     } catch (err) {
       console.error('Error updating permissions:', err);
@@ -736,6 +729,18 @@ export default function UserManagement() {
                                   disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />
                               </div>
+
+                              <div className="flex items-center justify-between">
+                                <Label htmlFor="canCreateApiKeys">Create API Keys</Label>
+                                <Switch
+                                  id="canCreateApiKeys"
+                                  checked={selectedUserPermissions.canCreateApiKeys}
+                                  onCheckedChange={(checked) =>
+                                    handlePermissionChange('canCreateApiKeys', checked)
+                                  }
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -762,6 +767,18 @@ export default function UserManagement() {
                                   checked={selectedUserPermissions.canManageSettings}
                                   onCheckedChange={(checked) =>
                                     handlePermissionChange('canManageSettings', checked)
+                                  }
+                                  disabled={!canModifyUser(selectedUser) || isSubmitting}
+                                />
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <Label htmlFor="canManageApiKeys">Manage API Keys</Label>
+                                <Switch
+                                  id="canManageApiKeys"
+                                  checked={selectedUserPermissions.canManageApiKeys}
+                                  onCheckedChange={(checked) =>
+                                    handlePermissionChange('canManageApiKeys', checked)
                                   }
                                   disabled={!canModifyUser(selectedUser) || isSubmitting}
                                 />

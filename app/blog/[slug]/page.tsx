@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${post.title} | Tony (cptcr)`,
+    title: `${post.title} | ${post.author?.realName || post.author?.username}`,
     description: post.excerpt,
   };
 }

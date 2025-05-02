@@ -29,8 +29,8 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-card text-card-foreground mt-24">
-      <div className="container mx-auto px-4 pt-16 pb-8">
+    <footer className="mt-24 bg-card text-card-foreground">
+      <div className="container px-4 pt-16 pb-8 mx-auto">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Branding & Description */}
           <div className="md:col-span-2">
@@ -39,7 +39,7 @@ export default function Footer() {
                 cptcr<span className="text-white">.</span>
               </span>
             </Link>
-            <p className="mt-4 text-sm text-muted-foreground max-w-xs">
+            <p className="max-w-xs mt-4 text-sm text-muted-foreground">
               17-year-old backend developer from Stuttgart, Germany. Specializing in Next.js,
               TypeScript, and TailwindCSS.
             </p>
@@ -50,10 +50,10 @@ export default function Footer() {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="transition-colors text-muted-foreground hover:text-primary"
                   aria-label={item.name}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="w-5 h-5" />
                 </Link>
               ))}
             </div>
@@ -61,13 +61,13 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Navigation</h3>
+            <h3 className="text-sm font-semibold tracking-wider uppercase">Navigation</h3>
             <ul className="mt-4 space-y-2">
               {NAVIGATION_ITEMS.map((item) => (
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-sm transition-colors text-muted-foreground hover:text-primary"
                   >
                     {item.name}
                   </Link>
@@ -78,12 +78,12 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Contact</h3>
+            <h3 className="text-sm font-semibold tracking-wider uppercase">Contact</h3>
             <ul className="mt-4 space-y-2">
               <li>
                 <Link
                   href="mailto:contact@cptcr.dev"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm transition-colors text-muted-foreground hover:text-primary"
                 >
                   contact@cptcr.dev
                 </Link>
@@ -91,7 +91,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm transition-colors text-muted-foreground hover:text-primary"
                 >
                   Contact Form
                 </Link>
@@ -100,14 +100,44 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Legal */}
+        <div className="pt-8 mt-12 border-t border-border">
+          <h3 className="text-sm font-semibold tracking-wider uppercase">Legal</h3>
+          <ul className="mt-4 space-y-2">
+            <li>
+              <Link
+                href="/legal/imprint"
+                className="text-sm transition-colors text-muted-foreground hover:text-primary"
+              >
+                Imprint
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/legal/privacy"
+                className="text-sm transition-colors text-muted-foreground hover:text-primary"
+              >
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/credits"
+                className="text-sm transition-colors text-muted-foreground hover:text-primary"
+              >
+                Credits
+              </Link>
+            </li>
+          </ul>
+        </div>
         {/* Copyright */}
-        <div className="mt-12 pt-8 border-t border-border">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-muted-foreground order-2 md:order-1 mt-4 md:mt-0">
+        <div className="pt-8 mt-12 border-t border-border">
+          <div className="flex flex-col items-center justify-between md:flex-row">
+            <p className="order-2 mt-4 text-sm text-muted-foreground md:order-1 md:mt-0">
               © {currentYear} Tony (cptcr). All rights reserved.
             </p>
-            <p className="text-sm text-muted-foreground flex items-center order-1 md:order-2">
-              Built with <Heart className="h-4 w-4 mx-1 text-red-500" /> using Next.js, TypeScript &
+            <p className="flex items-center order-1 text-sm text-muted-foreground md:order-2">
+              Built with <Heart className="w-4 h-4 mx-1 text-red-500" /> using Next.js, TypeScript &
               TailwindCSS
             </p>
           </div>

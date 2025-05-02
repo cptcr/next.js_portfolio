@@ -4,6 +4,9 @@ A modern, responsive portfolio and blog application built with Next.js, TypeScri
 
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 
+> [!WARNING]
+> The file `/config/legal/imprint.ts` is currently configured with CPTCR's legal information, including their address. Reusing this data without permission may result in legal action, as it contains personal or proprietary information not belonging to you.
+
 ## Features
 
 - Modern, responsive design with dark mode support
@@ -124,9 +127,7 @@ This project uses Neon Postgres with Drizzle ORM. Follow these steps to set up t
 2. Create a new project and database.
 3. Copy the connection string and add it to the `.env` file as `DATABASE_URL`.
 
-### User Management
-
-Manage users using the provided scripts:
+### Scripts
 
 ```bash
 # Create a new user
@@ -134,14 +135,14 @@ npm run create_user
 
 # Delete a user
 npm run delete_user
+
+# Test a API Key
+npm run test_api # You will be prompted for an API Key. Create one in the Admin dashboard.
 ```
 
 ## Blog Storage
 
-Blog posts are stored using Vercel Blob. To set up this feature:
-
-1. Configure Vercel Blob in your Vercel project settings.
-2. Add your Blob read/write token to your `.env` file as `BLOB_READ_WRITE_TOKEN`.
+Blog posts are stored using the https://neon.tech database.
 
 ## Discord Integration
 
