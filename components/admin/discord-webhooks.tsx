@@ -165,7 +165,8 @@ export default function DiscordWebhooks() {
 
       const webhookData = {
         ...newWebhook,
-        categories: selectedCategory ? [selectedCategory] : null,
+        // If no category is selected, treat it as "All Categories"
+        categories: selectedCategory ? [selectedCategory] : null, // null represents all categories
       };
 
       const response = await fetch('/api/admin/webhooks', {
@@ -192,9 +193,9 @@ export default function DiscordWebhooks() {
         url: '',
         avatar: '',
         enabled: true,
-        categories: [],
+        categories: [] as string[], // Clear categories
       });
-      setSelectedCategory(null);
+      setSelectedCategory(null); // Clear selected category
       setCreateDialogOpen(false);
       fetchWebhooks();
     } catch (err) {
@@ -242,7 +243,8 @@ export default function DiscordWebhooks() {
         url: selectedWebhook.url,
         avatar: selectedWebhook.avatar,
         enabled: selectedWebhook.enabled,
-        categories: selectedCategory ? [selectedCategory] : null,
+        // If no category is selected, treat it as "All Categories"
+        categories: selectedCategory ? [selectedCategory] : null, // null represents all categories
       };
 
       const response = await fetch(`/api/admin/webhooks/${selectedWebhook.id}`, {
