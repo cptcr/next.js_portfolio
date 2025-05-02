@@ -75,6 +75,17 @@ const SKILL_CATEGORIES: SkillCategory[] = [
       { name: 'ParrotOS', level: 5, color: '#00bfff' },
     ],
   },
+  {
+    name: 'Artificial Intelligence',
+    skills: [
+      { name: 'ChatGPT', level: 8, color: '#10a37f' },
+      { name: 'Claude', level: 9, color: '#f4c28e' },
+      { name: 'Gemini', level: 6, color: '#fbbc05' },
+      { name: 'Midjourney', level: 2, color: '#ff3d00' },
+      { name: 'DALL-E', level: 4, color: '#0072c6' },
+      { name: 'Stable Diffusion', level: 3, color: '#ff6f00' },
+    ],
+  },
 ];
 
 export default SKILL_CATEGORIES;

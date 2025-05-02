@@ -4,6 +4,9 @@ A modern, responsive portfolio and blog application built with Next.js, TypeScri
 
 ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 
+> [!WARNING]
+> The file `/config/legal/imprint.ts` is currently configured with CPTCR's legal information, including their address. Reusing this data without permission may result in legal action, as it contains personal or proprietary information not belonging to you.
+
 ## Features
 
 - Modern, responsive design with dark mode support
