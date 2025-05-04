@@ -36,8 +36,8 @@ export async function GET() {
       },
     );
 
-    let presenceStatus = 'offline';
-    let isOnline = false;
+    let presenceStatus: string | undefined;
+    let isOnline: boolean = true;
 
     if (presenceResponse.ok) {
       const presenceData = await presenceResponse.json();
@@ -45,9 +45,17 @@ export async function GET() {
         isOnline = true;
         presenceStatus = 'online';
       } else if (presenceData?.status === 'idle') {
+        isOnline = true;
         presenceStatus = 'idle';
       } else if (presenceData?.status === 'dnd') {
+        isOnline = true;
         presenceStatus = 'dnd';
+      } else if (presenceData?.status === 'invisible') {
+        isOnline = false;
+        presenceStatus = 'invisible';
+      } else if (presenceData?.status === 'offline') {
+        isOnline = false;
+        presenceStatus = 'offline';
       }
     }
 

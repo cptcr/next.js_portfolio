@@ -73,6 +73,23 @@ const CATEGORIES = [
   'Tutorial',
   'Career',
   'Other',
+  'Frontend Development',
+  'Backend Development',
+  'Full-Stack Development',
+  'Mobile Development',
+  'DevOps & Cloud Engineering',
+  'Data Engineering & Machine Learning',
+  'Programming Languages',
+  'Testing & Quality Assurance',
+  'Web Security',
+  'Software Design & Architecture',
+  'Career & Personal Development',
+  'Life as a Developer',
+  'Tools & Resources',
+  'Open Source & Community',
+  'Emerging Technologies',
+  'Career Transitions',
+  'Productivity & Workflow Automation',
 ];
 
 export default function PostEditor() {

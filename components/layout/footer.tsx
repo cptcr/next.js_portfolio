@@ -59,77 +59,81 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation */}
-          <div>
-            <h3 className="text-sm font-semibold tracking-wider uppercase">Navigation</h3>
-            <ul className="mt-4 space-y-2">
-              {NAVIGATION_ITEMS.map((item) => (
-                <li key={item.name}>
+          {/* Navigation, Contact & Legal */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:col-span-2">
+            {/* Navigation */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider uppercase">Navigation</h3>
+              <ul className="mt-4 space-y-2">
+                {NAVIGATION_ITEMS.map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className="text-sm transition-colors text-muted-foreground hover:text-primary"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider uppercase">Contact</h3>
+              <ul className="mt-4 space-y-2">
+                <li>
                   <Link
-                    href={item.href}
+                    href="mailto:contact@cptcr.dev"
                     className="text-sm transition-colors text-muted-foreground hover:text-primary"
                   >
-                    {item.name}
+                    contact@cptcr.dev
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="text-sm transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    Contact Form
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          {/* Contact */}
-          <div>
-            <h3 className="text-sm font-semibold tracking-wider uppercase">Contact</h3>
-            <ul className="mt-4 space-y-2">
-              <li>
-                <Link
-                  href="mailto:contact@cptcr.dev"
-                  className="text-sm transition-colors text-muted-foreground hover:text-primary"
-                >
-                  contact@cptcr.dev
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-sm transition-colors text-muted-foreground hover:text-primary"
-                >
-                  Contact Form
-                </Link>
-              </li>
-            </ul>
+            {/* Legal */}
+            <div>
+              <h3 className="text-sm font-semibold tracking-wider uppercase">Legal</h3>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <Link
+                    href="/legal/imprint"
+                    className="text-sm transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    Imprint
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/legal/privacy"
+                    className="text-sm transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/credits"
+                    className="text-sm transition-colors text-muted-foreground hover:text-primary"
+                  >
+                    Credits
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Legal */}
-        <div className="pt-8 mt-12 border-t border-border">
-          <h3 className="text-sm font-semibold tracking-wider uppercase">Legal</h3>
-          <ul className="mt-4 space-y-2">
-            <li>
-              <Link
-                href="/legal/imprint"
-                className="text-sm transition-colors text-muted-foreground hover:text-primary"
-              >
-                Imprint
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/legal/privacy"
-                className="text-sm transition-colors text-muted-foreground hover:text-primary"
-              >
-                Privacy Policy
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/credits"
-                className="text-sm transition-colors text-muted-foreground hover:text-primary"
-              >
-                Credits
-              </Link>
-            </li>
-          </ul>
-        </div>
         {/* Copyright */}
         <div className="pt-8 mt-12 border-t border-border">
           <div className="flex flex-col items-center justify-between md:flex-row">

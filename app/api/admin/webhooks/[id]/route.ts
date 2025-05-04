@@ -53,14 +53,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     );
   }
 }
-
 // PUT: Update a webhook
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // --- Correctly await params before accessing properties ---
     const resolvedParams = await params;
     const id = parseInt(resolvedParams.id);
-    // --- End of fix ---
 
     if (isNaN(id)) {
       return NextResponse.json({ message: 'Invalid webhook ID' }, { status: 400 });
@@ -102,7 +99,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
     if (avatar !== undefined) updateData.avatar = avatar;
     if (enabled !== undefined) updateData.enabled = enabled;
-    if (categories !== undefined) updateData.categories = categories;
+
+    // Handle categories: If empty array or null, treat it as "all categories"
+    if (categories !== undefined) {
+      // If categories are empty or null, treat it as "All Categories"
+      updateData.categories = categories && categories.length > 0 ? categories : null; // null for "All Categories"
+    }
 
     // Add updated timestamp
     updateData.updatedAt = new Date();
@@ -119,7 +121,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       message: 'Webhook updated successfully',
     });
   } catch (error) {
-    // Log with resolved ID if possible, otherwise use original params
     const errorId =
       typeof params === 'object' && params !== null && 'id' in params ? params.id : 'unknown ID';
     console.error(`Error updating webhook ${errorId}:`, error);
