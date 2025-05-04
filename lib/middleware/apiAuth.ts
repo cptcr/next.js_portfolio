@@ -6,8 +6,7 @@ import { headers } from 'next/headers';
 
 // API authentication middleware
 export async function apiAuthMiddleware(
-  req: NextRequest,
-  handler: (req: NextRequest, apiKeyId?: number) => Promise<NextResponse>,
+req: NextRequest, handler: (req: NextRequest, apiKeyId?: number) => Promise<NextResponse>, p0: { requiredPermissions: string[]; },
 ): Promise<NextResponse> {
   const startTime = Date.now();
   let apiKeyId: number | undefined = undefined;

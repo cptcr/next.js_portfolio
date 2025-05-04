@@ -1,4 +1,5 @@
 ### 1. **Add Config Files for Easier Template Customization**
+c67c224425771dac91320049826eea9f76f3297765351e4e3f4420447eedd151
 
 - Create a `config.ts` file to define:
   - App name, description

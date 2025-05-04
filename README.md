@@ -207,7 +207,7 @@ Contributions are welcome! To contribute:
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+This project is licensed under the CPTCR Non-Commercial Use License (CPTCR-NC 2025) License. See the LICENSE file for more details.
 
 ## Built with
 
