@@ -523,7 +523,7 @@ export default function CodeSnippetsAdmin() {
                             variant="outline"
                             size="icon" // Use icon size for single icon buttons
                             className="w-8 h-8" // Explicit size for consistency
-                            onClick={() => window.open(`/s/${snippet.snippetId}`, '_blank')} // Adjust path if needed
+                            onClick={() => window.open(`/snippets/${snippet.snippetId}`, '_blank')} // Adjust path if needed
                             title="View Snippet"
                           >
                             <ExternalLink className="w-4 h-4" />
