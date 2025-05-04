@@ -183,3 +183,28 @@ export type NewApiKey = InferInsertModel<typeof apiKeys>;
 
 export type ApiLog = InferSelectModel<typeof apiLogs>;
 export type NewApiLog = InferInsertModel<typeof apiLogs>;
+
+// URL Shortener Table
+export const urlShortener = pgTable('url_shortener', {
+  id: serial('id').primaryKey(),
+  shortId: varchar('short_id', { length: 10 }).notNull().unique(),
+  originalUrl: text('original_url').notNull(),
+  userId: integer('user_id').references(() => users.id), // Creator (null if anonymous)
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at'), // null means no expiration
+  isPublic: boolean('is_public').default(false).notNull(),
+  clickCount: integer('click_count').default(0).notNull(),
+  lastClickedAt: timestamp('last_clicked_at'),
+});
+
+// Relations
+export const urlShortenerRelations = relations(urlShortener, ({ one }) => ({
+  user: one(users, {
+    fields: [urlShortener.userId],
+    references: [users.id],
+  }),
+}));
+
+// Export types
+export type UrlShortener = InferSelectModel<typeof urlShortener>;
+export type NewUrlShortener = InferInsertModel<typeof urlShortener>;

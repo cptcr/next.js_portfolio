@@ -1,7 +1,8 @@
 // lib/services/settings.ts
-import { eq } from 'drizzle-orm';
+import { eq, SQL } from 'drizzle-orm';
 import { db } from '../db/postgres';
 import { siteSettings, SiteSetting, NewSiteSetting } from '../db/schema';
+import { PgTableWithColumns, PgColumn } from 'drizzle-orm/pg-core';
 
 // Types for settings
 export type SiteSettingsKey =
@@ -124,7 +125,7 @@ export const settingsService = {
     const settings: Record<string, any> = { ...DEFAULT_SETTINGS };
 
     // Override with saved settings
-    allSettings.forEach((setting) => {
+    allSettings.forEach((setting: { key: string | number; value: any; }) => {
       settings[setting.key] = setting.value;
     });
 
@@ -134,7 +135,34 @@ export const settingsService = {
   // Set multiple settings at once
   async setMultipleSettings(settings: Record<SiteSettingsKey, any>): Promise<boolean> {
     // Execute in a transaction
-    await db.transaction(async (tx) => {
+    interface SettingsTransaction {
+      select(): SettingsSelect;
+      update(table: typeof siteSettings): SettingsUpdate;
+      insert(table: typeof siteSettings): SettingsInsert;
+    }
+
+    interface SettingsSelect {
+      from(table: typeof siteSettings): SettingsFromClause;
+      where(condition: SQL): Promise<SiteSetting[]>;
+    }
+
+    interface SettingsFromClause {
+      where(condition: SQL): Promise<SiteSetting[]>;
+    }
+
+    interface SettingsUpdate {
+      set(data: Partial<SiteSetting>): SettingsWhere;
+    }
+
+    interface SettingsWhere {
+      where(condition: SQL): Promise<void>;
+    }
+
+    interface SettingsInsert {
+      values(data: NewSiteSetting | NewSiteSetting[]): Promise<void>;
+    }
+
+    await db.transaction(async (tx: SettingsTransaction) => {
       for (const [key, value] of Object.entries(settings) as [SiteSettingsKey, any][]) {
         const [existing] = await tx.select().from(siteSettings).where(eq(siteSettings.key, key));
 
