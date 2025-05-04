@@ -62,9 +62,9 @@ const logDebug = (message: string) => {
 
 // Helper function to mask API key for logging
 const maskApiKey = (key: string): string => {
-    if (!key) return '***';
-    return key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '***';
-}
+  if (!key) return '***';
+  return key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '***';
+};
 
 // --- API Test Functions ---
 
@@ -87,16 +87,22 @@ async function checkServerConnectivity(): Promise<boolean> {
       logSuccess(`Server is reachable (Status: ${response.status} at ${API_BASE_URL})`);
       return true;
     } else {
-      logWarning(`Server responded with unexpected status ${response.status} at ${API_BASE_URL}. Tests might fail.`);
+      logWarning(
+        `Server responded with unexpected status ${response.status} at ${API_BASE_URL}. Tests might fail.`,
+      );
       return true; // Server responded, even if unexpectedly
     }
   } catch (error: any) {
     if (error.name === 'AbortError') {
-        logError(`Could not connect: Request to ${API_BASE_URL} timed out (5s).`);
+      logError(`Could not connect: Request to ${API_BASE_URL} timed out (5s).`);
     } else {
-        logError(`Could not connect to ${API_BASE_URL}: ${error instanceof Error ? error.message : String(error)}`);
+      logError(
+        `Could not connect to ${API_BASE_URL}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
-    logInfo('Troubleshooting: Is the API server running? Is the URL correct? Check network/firewall.');
+    logInfo(
+      'Troubleshooting: Is the API server running? Is the URL correct? Check network/firewall.',
+    );
     return false;
   }
 }
@@ -105,7 +111,7 @@ async function checkServerConnectivity(): Promise<boolean> {
  * Tests GET /posts (list posts) with and without parameters.
  * Assumes 'x-api-key' authentication.
  */
-async function testGetPosts(apiKey: string): Promise<{success: boolean; posts: any[]}> {
+async function testGetPosts(apiKey: string): Promise<{ success: boolean; posts: any[] }> {
   logSection(`Testing GET ${ENDPOINTS.POSTS} (List Posts)`);
   let posts: any[] = [];
   const headers = { 'x-api-key': apiKey };
@@ -121,11 +127,15 @@ async function testGetPosts(apiKey: string): Promise<{success: boolean; posts: a
     logDebug(`Default - Status: ${response.status}, Response: ${JSON.stringify(data)}`);
 
     if (!response.ok) {
-      logError(`Default GET failed (Status: ${response.status}) - Error: ${data.message || JSON.stringify(data)}`);
+      logError(
+        `Default GET failed (Status: ${response.status}) - Error: ${data.message || JSON.stringify(data)}`,
+      );
       // Decide if we should continue testing params if default fails
       // return { success: false, posts }; // Option: fail fast
     } else {
-      logSuccess(`Default GET successful (Status: ${response.status}) - Retrieved ${data.posts?.length ?? 0} posts`);
+      logSuccess(
+        `Default GET successful (Status: ${response.status}) - Retrieved ${data.posts?.length ?? 0} posts`,
+      );
       posts = data.posts || [];
       if (data.pagination) logInfo(`Pagination: ${JSON.stringify(data.pagination)}`);
     }
@@ -139,20 +149,25 @@ async function testGetPosts(apiKey: string): Promise<{success: boolean; posts: a
     logDebug(`Params - Status: ${paramsResponse.status}, Response: ${JSON.stringify(paramsData)}`);
 
     if (!paramsResponse.ok) {
-      logError(`Params GET failed (Status: ${paramsResponse.status}) - Error: ${paramsData.message || JSON.stringify(paramsData)}`);
+      logError(
+        `Params GET failed (Status: ${paramsResponse.status}) - Error: ${paramsData.message || JSON.stringify(paramsData)}`,
+      );
     } else {
-      logSuccess(`Params GET successful (Status: ${paramsResponse.status}) - Retrieved ${paramsData.posts?.length ?? 0} posts`);
+      logSuccess(
+        `Params GET successful (Status: ${paramsResponse.status}) - Retrieved ${paramsData.posts?.length ?? 0} posts`,
+      );
     }
 
     // Success requires both attempts to be OK in this combined test function
     const overallSuccess = response.ok && paramsResponse.ok;
     if (!overallSuccess) {
-        logWarning('One or more GET /posts requests failed.');
+      logWarning('One or more GET /posts requests failed.');
     }
     return { success: overallSuccess, posts };
-
   } catch (error) {
-    logError(`Exception during GET ${ENDPOINTS.POSTS} test: ${error instanceof Error ? error.message : String(error)}`);
+    logError(
+      `Exception during GET ${ENDPOINTS.POSTS} test: ${error instanceof Error ? error.message : String(error)}`,
+    );
     logDebug(`Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
     return { success: false, posts };
   }
@@ -162,13 +177,17 @@ async function testGetPosts(apiKey: string): Promise<{success: boolean; posts: a
  * Tests GET /posts/:slug (fetch single post).
  * Assumes 'x-api-key' authentication.
  */
-async function testGetSinglePost(apiKey: string, slug: string, context: string = ""): Promise<boolean> {
-  const contextMsg = context ? ` (${context})` : "";
+async function testGetSinglePost(
+  apiKey: string,
+  slug: string,
+  context: string = '',
+): Promise<boolean> {
+  const contextMsg = context ? ` (${context})` : '';
   logSection(`Testing GET ${ENDPOINTS.POSTS}/${slug}${contextMsg}`);
 
   if (!slug) {
-      logError('Cannot test GET single post: No slug provided.');
-      return false;
+    logError('Cannot test GET single post: No slug provided.');
+    return false;
   }
   const headers = { 'x-api-key': apiKey };
   const url = `${API_BASE_URL}${ENDPOINTS.POSTS}/${slug}`;
@@ -189,12 +208,16 @@ async function testGetSinglePost(apiKey: string, slug: string, context: string =
         logWarning('Response OK but no post data found in the response key "post".');
       }
     } else {
-      logError(`GET failed (Status: ${response.status}) - Error: ${data.message || JSON.stringify(data)}`);
+      logError(
+        `GET failed (Status: ${response.status}) - Error: ${data.message || JSON.stringify(data)}`,
+      );
       if (response.status === 404) logError('Verify the slug exists and the API route is correct.');
     }
     return response.ok;
   } catch (error) {
-    logError(`Exception during GET ${ENDPOINTS.POSTS}/${slug} test: ${error instanceof Error ? error.message : String(error)}`);
+    logError(
+      `Exception during GET ${ENDPOINTS.POSTS}/${slug} test: ${error instanceof Error ? error.message : String(error)}`,
+    );
     logDebug(`Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
     return false;
   }
@@ -204,7 +227,7 @@ async function testGetSinglePost(apiKey: string, slug: string, context: string =
  * Tests GET /users (list users).
  * Assumes 'x-api-key' authentication.
  */
-async function testGetUsers(apiKey: string): Promise<{success: boolean; users: any[]}> {
+async function testGetUsers(apiKey: string): Promise<{ success: boolean; users: any[] }> {
   logSection(`Testing GET ${ENDPOINTS.USERS} (List Users)`);
   let users: any[] = [];
   const headers = { 'x-api-key': apiKey };
@@ -219,16 +242,23 @@ async function testGetUsers(apiKey: string): Promise<{success: boolean; users: a
     logDebug(`Status: ${response.status}, Response: ${JSON.stringify(data)}`);
 
     if (response.ok) {
-      logSuccess(`GET successful (Status: ${response.status}) - Retrieved ${data.users?.length ?? 0} users`);
+      logSuccess(
+        `GET successful (Status: ${response.status}) - Retrieved ${data.users?.length ?? 0} users`,
+      );
       users = data.users || [];
       if (users.length > 0) logInfo(`Sample user: ${JSON.stringify(users[0])}`);
     } else {
-      logError(`GET failed (Status: ${response.status}) - Error: ${data.message || JSON.stringify(data)}`);
-      if (response.status === 401 || response.status === 403) logError('Check API key validity and permissions for users endpoint.');
+      logError(
+        `GET failed (Status: ${response.status}) - Error: ${data.message || JSON.stringify(data)}`,
+      );
+      if (response.status === 401 || response.status === 403)
+        logError('Check API key validity and permissions for users endpoint.');
     }
     return { success: response.ok, users };
   } catch (error) {
-    logError(`Exception during GET ${ENDPOINTS.USERS} test: ${error instanceof Error ? error.message : String(error)}`);
+    logError(
+      `Exception during GET ${ENDPOINTS.USERS} test: ${error instanceof Error ? error.message : String(error)}`,
+    );
     logDebug(`Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
     return { success: false, users };
   }
@@ -242,10 +272,10 @@ async function testGetUsers(apiKey: string): Promise<{success: boolean; users: a
  * @param associatedUserId Optional: User ID expected to be linked to the API key (for logging only).
  */
 async function testPostCreation(
-    apiKey: string,
-    users: any[],
-    posts: any[],
-    associatedUserId?: number
+  apiKey: string,
+  users: any[],
+  posts: any[],
+  associatedUserId?: number,
 ): Promise<{ success: boolean; slug: string | null }> {
   logSection(`Testing POST ${ENDPOINTS.POSTS} (Create Post)`);
   const url = `${API_BASE_URL}${ENDPOINTS.POSTS}`;
@@ -257,28 +287,28 @@ async function testPostCreation(
     // Determine a category
     let validCategory = 'General'; // Default
     if (posts?.length > 0) {
-        const firstCategory = posts.find(p => p.category)?.category;
-        if (firstCategory) {
-            validCategory = firstCategory;
-            logInfo(`Using category "${validCategory}" from first existing post.`);
-        } else {
-            logInfo(`Using default category "${validCategory}" (no categories in existing posts).`);
-        }
+      const firstCategory = posts.find((p) => p.category)?.category;
+      if (firstCategory) {
+        validCategory = firstCategory;
+        logInfo(`Using category "${validCategory}" from first existing post.`);
+      } else {
+        logInfo(`Using default category "${validCategory}" (no categories in existing posts).`);
+      }
     } else {
-        logInfo(`Using default category "${validCategory}" (no existing posts found).`);
+      logInfo(`Using default category "${validCategory}" (no existing posts found).`);
     }
 
     // Log user association info (for context, not sent in request)
     if (associatedUserId !== undefined) {
-        const user = users?.find(u => u.id === associatedUserId);
-        if (user) {
-            logInfo(`API key is expected to belong to user ID ${associatedUserId} (${user.username}).`);
-        } else {
-            logWarning(`Provided user ID ${associatedUserId} was NOT found in fetched user list.`);
-        }
-         logInfo('The API should automatically assign the author based on the key.');
+      const user = users?.find((u) => u.id === associatedUserId);
+      if (user) {
+        logInfo(`API key is expected to belong to user ID ${associatedUserId} (${user.username}).`);
+      } else {
+        logWarning(`Provided user ID ${associatedUserId} was NOT found in fetched user list.`);
+      }
+      logInfo('The API should automatically assign the author based on the key.');
     } else {
-         logInfo('Assuming API will assign author based on the provided API key.');
+      logInfo('Assuming API will assign author based on the provided API key.');
     }
 
     // Prepare payload - IMPORTANT: authorId is NOT sent, API determines it
@@ -296,20 +326,24 @@ async function testPostCreation(
     logInfo('\nSending POST request...');
     logInfo(`Payload: ${JSON.stringify(testPost)}`);
     logDebug(`Request URL: ${url}`);
-    logDebug(`Headers: { 'x-api-key': '${maskApiKey(apiKey)}', 'Content-Type': 'application/json' }`);
+    logDebug(
+      `Headers: { 'x-api-key': '${maskApiKey(apiKey)}', 'Content-Type': 'application/json' }`,
+    );
 
     const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(testPost) });
     let data: any = {};
-    let responseText = "";
+    let responseText = '';
 
     try {
-        responseText = await response.text();
-        if (responseText) data = JSON.parse(responseText);
-        logDebug(`Status: ${response.status}, Response: ${responseText}`);
+      responseText = await response.text();
+      if (responseText) data = JSON.parse(responseText);
+      logDebug(`Status: ${response.status}, Response: ${responseText}`);
     } catch (parseError) {
-        logError(`Error parsing JSON response (Status: ${response.status}): ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-        logDebug(`Raw Response: ${responseText}`);
-        return { success: false, slug: null }; // Treat parse error as failure
+      logError(
+        `Error parsing JSON response (Status: ${response.status}): ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+      );
+      logDebug(`Raw Response: ${responseText}`);
+      return { success: false, slug: null }; // Treat parse error as failure
     }
 
     if (response.ok) {
@@ -325,19 +359,27 @@ async function testPostCreation(
       if (data.error) logError(`Detailed Error: ${JSON.stringify(data.error)}`);
 
       if (response.status === 401 || response.status === 403) {
-          logError('Authentication/Authorization Failed: Check API key validity and permissions for creating posts.');
+        logError(
+          'Authentication/Authorization Failed: Check API key validity and permissions for creating posts.',
+        );
       } else if (response.status === 400 || response.status === 422) {
-          logError('Bad Request / Validation Error: Check the payload structure and required fields.');
-          logError(`Sent Payload: ${JSON.stringify(testPost)}`);
+        logError(
+          'Bad Request / Validation Error: Check the payload structure and required fields.',
+        );
+        logError(`Sent Payload: ${JSON.stringify(testPost)}`);
       } else if (response.status === 500) {
-          logError('Internal Server Error: The API backend failed processing the request.');
-          logError('Possible causes: Database connection issue, Foreign Key constraint (e.g., authorId invalid/missing), Bug in API code.');
-          logError('Check the API server logs for detailed error information.');
+        logError('Internal Server Error: The API backend failed processing the request.');
+        logError(
+          'Possible causes: Database connection issue, Foreign Key constraint (e.g., authorId invalid/missing), Bug in API code.',
+        );
+        logError('Check the API server logs for detailed error information.');
       }
       return { success: false, slug: null };
     }
   } catch (error) {
-    logError(`Exception during POST ${ENDPOINTS.POSTS} test: ${error instanceof Error ? error.message : String(error)}`);
+    logError(
+      `Exception during POST ${ENDPOINTS.POSTS} test: ${error instanceof Error ? error.message : String(error)}`,
+    );
     logDebug(`Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
     return { success: false, slug: null };
   }
@@ -351,8 +393,8 @@ async function testPostUpdate(apiKey: string, slug: string): Promise<boolean> {
   logSection(`Testing PUT ${ENDPOINTS.POSTS}/${slug} (Update Post)`);
 
   if (!slug) {
-      logError('Cannot test PUT update: No slug provided.');
-      return false;
+    logError('Cannot test PUT update: No slug provided.');
+    return false;
   }
   const url = `${API_BASE_URL}${ENDPOINTS.POSTS}/${slug}`;
   const headers = { 'x-api-key': apiKey, 'Content-Type': 'application/json' };
@@ -366,45 +408,52 @@ async function testPostUpdate(apiKey: string, slug: string): Promise<boolean> {
     logInfo(`Sending PUT request for slug: ${slug}...`);
     logInfo(`Update Payload: ${JSON.stringify(updateData)}`);
     logDebug(`Request URL: ${url}`);
-    logDebug(`Headers: { 'x-api-key': '${maskApiKey(apiKey)}', 'Content-Type': 'application/json' }`);
+    logDebug(
+      `Headers: { 'x-api-key': '${maskApiKey(apiKey)}', 'Content-Type': 'application/json' }`,
+    );
 
     const response = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(updateData) });
     let data: any = {};
-    let responseText = "";
+    let responseText = '';
 
     try {
-        responseText = await response.text();
-        if(responseText) data = JSON.parse(responseText);
-        logDebug(`Status: ${response.status}, Response: ${responseText}`);
+      responseText = await response.text();
+      if (responseText) data = JSON.parse(responseText);
+      logDebug(`Status: ${response.status}, Response: ${responseText}`);
     } catch (parseError) {
-        logError(`Error parsing JSON response (Status: ${response.status}): ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-        logDebug(`Raw Response: ${responseText}`);
-        return false; // Treat parse error as failure
+      logError(
+        `Error parsing JSON response (Status: ${response.status}): ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+      );
+      logDebug(`Raw Response: ${responseText}`);
+      return false; // Treat parse error as failure
     }
 
     if (response.ok) {
       logSuccess(`PUT successful (Status: ${response.status})`);
       const updatedPost = data.post ?? data;
       if (updatedPost && updatedPost.title) {
-           logInfo(`Updated Title: ${updatedPost.title}`);
+        logInfo(`Updated Title: ${updatedPost.title}`);
       } else {
-           logWarning('PUT successful but response did not contain expected post data.');
+        logWarning('PUT successful but response did not contain expected post data.');
       }
     } else {
       logError(`PUT failed (Status: ${response.status})`);
       logError(`Error Message: ${data.message || responseText || 'No specific message returned.'}`);
-       if (response.status === 404) logError('Post not found. Was it deleted or slug changed?');
-       if (response.status === 401 || response.status === 403) logError('Check API key permissions for updating posts.');
-       if (response.status === 400 || response.status === 422) logError('Check update payload for validation errors.');
+      if (response.status === 404) logError('Post not found. Was it deleted or slug changed?');
+      if (response.status === 401 || response.status === 403)
+        logError('Check API key permissions for updating posts.');
+      if (response.status === 400 || response.status === 422)
+        logError('Check update payload for validation errors.');
     }
     return response.ok;
   } catch (error) {
-    logError(`Exception during PUT ${ENDPOINTS.POSTS}/${slug} test: ${error instanceof Error ? error.message : String(error)}`);
+    logError(
+      `Exception during PUT ${ENDPOINTS.POSTS}/${slug} test: ${error instanceof Error ? error.message : String(error)}`,
+    );
     logDebug(`Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
     return false;
   }
 }
-
 
 // --- Main Execution Logic ---
 
@@ -424,7 +473,8 @@ async function main() {
     const apiKey = await prompt('Please enter your API key (for x-api-key header): ');
     if (!apiKey) {
       logError('No API key provided. Exiting.');
-      rl.close(); return;
+      rl.close();
+      return;
     }
     logInfo(`Using API key: ${maskApiKey(apiKey)}`);
 
@@ -435,35 +485,39 @@ async function main() {
 
     let userId: number | undefined = undefined;
     let fetchedUsers: any[] = [];
-    const userIdInput = await prompt('Optional: Enter User ID associated with key (for validation log, leave blank to skip): ');
+    const userIdInput = await prompt(
+      'Optional: Enter User ID associated with key (for validation log, leave blank to skip): ',
+    );
     if (userIdInput) {
-        const parsedId = parseInt(userIdInput, 10);
-        if (!isNaN(parsedId)) userId = parsedId;
-        else logWarning('Invalid User ID input ignored.');
+      const parsedId = parseInt(userIdInput, 10);
+      if (!isNaN(parsedId)) userId = parsedId;
+      else logWarning('Invalid User ID input ignored.');
     }
 
     // --- Connectivity Check ---
-    if (!await checkServerConnectivity()) {
+    if (!(await checkServerConnectivity())) {
       const proceed = await prompt('Server connectivity check failed. Proceed anyway? (y/N): ');
       if (proceed.toLowerCase() !== 'y') {
         logInfo('Exiting...');
-        rl.close(); return;
+        rl.close();
+        return;
       }
       logWarning('Proceeding despite connectivity issues...');
     }
 
     // --- Test Selection ---
     const testsToRunInput = await prompt(
-      'Tests to run? (all, posts, users - comma-separated or "all" [default]): '
-    ).then(res => res.toLowerCase() || 'all');
+      'Tests to run? (all, posts, users - comma-separated or "all" [default]): ',
+    ).then((res) => res.toLowerCase() || 'all');
 
     const runAll = testsToRunInput.includes('all');
     const runPosts = runAll || testsToRunInput.includes('posts');
     const runUsers = runAll || testsToRunInput.includes('users');
 
     if (!runPosts && !runUsers) {
-        logWarning('No valid tests selected. Exiting.');
-        rl.close(); return;
+      logWarning('No valid tests selected. Exiting.');
+      rl.close();
+      return;
     }
     logInfo(`Selected tests: ${runAll ? 'all' : testsToRunInput.split(',').join(', ')}`);
     logInfo('Starting API tests...');
@@ -476,25 +530,27 @@ async function main() {
 
     // Fetch Users if needed (required for context in POST test even if only posts are run)
     if (runUsers || runPosts) {
-        logInfo('Fetching initial user data...');
-        const usersResult = await testGetUsers(apiKey);
-        fetchedUsers = usersResult.users;
-        if (runUsers) {
-            results[`GET ${ENDPOINTS.USERS}`] = usersResult.success;
-        } else {
-            // Log success/failure even if users test wasn't explicitly requested
-            logInfo(`Initial GET ${ENDPOINTS.USERS} ${usersResult.success ? 'succeeded' : 'failed'}. Used for context.`);
-        }
-        // Validate provided userId
-        if (userId !== undefined) {
-            if (fetchedUsers.find(u => u.id === userId)) logSuccess(`Provided user ID ${userId} found in fetched list.`);
-            else logWarning(`Provided user ID ${userId} was NOT found in fetched list.`);
-        }
-        await delay(500);
+      logInfo('Fetching initial user data...');
+      const usersResult = await testGetUsers(apiKey);
+      fetchedUsers = usersResult.users;
+      if (runUsers) {
+        results[`GET ${ENDPOINTS.USERS}`] = usersResult.success;
+      } else {
+        // Log success/failure even if users test wasn't explicitly requested
+        logInfo(
+          `Initial GET ${ENDPOINTS.USERS} ${usersResult.success ? 'succeeded' : 'failed'}. Used for context.`,
+        );
+      }
+      // Validate provided userId
+      if (userId !== undefined) {
+        if (fetchedUsers.find((u) => u.id === userId))
+          logSuccess(`Provided user ID ${userId} found in fetched list.`);
+        else logWarning(`Provided user ID ${userId} was NOT found in fetched list.`);
+      }
+      await delay(500);
     } else {
-        results[`GET ${ENDPOINTS.USERS}`] = 'SKIPPED';
+      results[`GET ${ENDPOINTS.USERS}`] = 'SKIPPED';
     }
-
 
     // Run Posts tests
     if (runPosts) {
@@ -504,33 +560,43 @@ async function main() {
       await delay(500);
 
       // Test POST only if listing worked (optional dependency)
-      if (postsResult.success || true) { // Allow attempting POST even if GET failed? Set to true.
-            const postCreateResult = await testPostCreation(apiKey, fetchedUsers, posts, userId);
-            results[`POST ${ENDPOINTS.POSTS}`] = postCreateResult.success;
-            createdSlug = postCreateResult.slug;
-            await delay(500);
+      if (postsResult.success || true) {
+        // Allow attempting POST even if GET failed? Set to true.
+        const postCreateResult = await testPostCreation(apiKey, fetchedUsers, posts, userId);
+        results[`POST ${ENDPOINTS.POSTS}`] = postCreateResult.success;
+        createdSlug = postCreateResult.slug;
+        await delay(500);
       } else {
-           results[`POST ${ENDPOINTS.POSTS}`] = 'SKIPPED (Prerequisite GET failed)';
-           createdSlug = null;
+        results[`POST ${ENDPOINTS.POSTS}`] = 'SKIPPED (Prerequisite GET failed)';
+        createdSlug = null;
       }
-
 
       // Test actions requiring a created slug
       if (createdSlug) {
-        results[`GET ${ENDPOINTS.POSTS}/${createdSlug} (Created)`] = await testGetSinglePost(apiKey, createdSlug, 'Created');
+        results[`GET ${ENDPOINTS.POSTS}/${createdSlug} (Created)`] = await testGetSinglePost(
+          apiKey,
+          createdSlug,
+          'Created',
+        );
         await delay(500);
 
-        results[`PUT ${ENDPOINTS.POSTS}/${createdSlug}`] = await testPostUpdate(apiKey, createdSlug);
+        results[`PUT ${ENDPOINTS.POSTS}/${createdSlug}`] = await testPostUpdate(
+          apiKey,
+          createdSlug,
+        );
         await delay(500);
 
         // Verify update
-        if(results[`PUT ${ENDPOINTS.POSTS}/${createdSlug}`] === true) {
-             results[`GET ${ENDPOINTS.POSTS}/${createdSlug} (Updated)`] = await testGetSinglePost(apiKey, createdSlug, 'Updated');
-             await delay(500);
+        if (results[`PUT ${ENDPOINTS.POSTS}/${createdSlug}`] === true) {
+          results[`GET ${ENDPOINTS.POSTS}/${createdSlug} (Updated)`] = await testGetSinglePost(
+            apiKey,
+            createdSlug,
+            'Updated',
+          );
+          await delay(500);
         } else {
-             results[`GET ${ENDPOINTS.POSTS}/${createdSlug} (Updated)`] = 'SKIPPED (Update failed)';
+          results[`GET ${ENDPOINTS.POSTS}/${createdSlug} (Updated)`] = 'SKIPPED (Update failed)';
         }
-
       } else {
         results[`GET ${ENDPOINTS.POSTS}/:slug (Created)`] = 'SKIPPED (POST failed or no slug)';
         results[`PUT ${ENDPOINTS.POSTS}/:slug`] = 'SKIPPED (POST failed or no slug)';
@@ -539,41 +605,57 @@ async function main() {
 
       // Test GET on an existing post (if any found initially)
       if (posts.length > 0 && posts[0].slug) {
-          results[`GET ${ENDPOINTS.POSTS}/${posts[0].slug} (Existing)`] = await testGetSinglePost(apiKey, posts[0].slug, 'Existing');
-          await delay(500);
+        results[`GET ${ENDPOINTS.POSTS}/${posts[0].slug} (Existing)`] = await testGetSinglePost(
+          apiKey,
+          posts[0].slug,
+          'Existing',
+        );
+        await delay(500);
       } else {
-           results[`GET ${ENDPOINTS.POSTS}/:slug (Existing)`] = 'SKIPPED (No existing posts found)';
+        results[`GET ${ENDPOINTS.POSTS}/:slug (Existing)`] = 'SKIPPED (No existing posts found)';
       }
-
     } else {
-        results[`GET ${ENDPOINTS.POSTS} (List)`] = 'SKIPPED';
-        results[`POST ${ENDPOINTS.POSTS}`] = 'SKIPPED';
-        results[`GET ${ENDPOINTS.POSTS}/:slug (Created)`] = 'SKIPPED';
-        results[`PUT ${ENDPOINTS.POSTS}/:slug`] = 'SKIPPED';
-        results[`GET ${ENDPOINTS.POSTS}/:slug (Updated)`] = 'SKIPPED';
-        results[`GET ${ENDPOINTS.POSTS}/:slug (Existing)`] = 'SKIPPED';
+      results[`GET ${ENDPOINTS.POSTS} (List)`] = 'SKIPPED';
+      results[`POST ${ENDPOINTS.POSTS}`] = 'SKIPPED';
+      results[`GET ${ENDPOINTS.POSTS}/:slug (Created)`] = 'SKIPPED';
+      results[`PUT ${ENDPOINTS.POSTS}/:slug`] = 'SKIPPED';
+      results[`GET ${ENDPOINTS.POSTS}/:slug (Updated)`] = 'SKIPPED';
+      results[`GET ${ENDPOINTS.POSTS}/:slug (Existing)`] = 'SKIPPED';
     }
-
 
     // --- Summary ---
     logSection('Test Results Summary');
-    let passed = 0, failed = 0, skipped = 0;
+    let passed = 0,
+      failed = 0,
+      skipped = 0;
     Object.entries(results).forEach(([endpoint, result]) => {
-      if (result === true) { logSuccess(`${endpoint}: PASSED`); passed++; }
-      else if (result === false) { logError(`${endpoint}: FAILED`); failed++; }
-      else { logWarning(`${endpoint}: ${result}`); skipped++; }
+      if (result === true) {
+        logSuccess(`${endpoint}: PASSED`);
+        passed++;
+      } else if (result === false) {
+        logError(`${endpoint}: FAILED`);
+        failed++;
+      } else {
+        logWarning(`${endpoint}: ${result}`);
+        skipped++;
+      }
     });
 
     console.log('\n---');
     const totalExecuted = passed + failed;
-    if (totalExecuted === 0 && skipped > 0) { logWarning('No tests were executed.'); }
-    else if (failed === 0 && passed > 0) { logSuccess(`✨ All ${passed} executed tests passed! ✨`); }
-    else { logWarning(`⚠️ ${failed} out of ${totalExecuted} executed tests failed. Review logs. ⚠️`); }
+    if (totalExecuted === 0 && skipped > 0) {
+      logWarning('No tests were executed.');
+    } else if (failed === 0 && passed > 0) {
+      logSuccess(`✨ All ${passed} executed tests passed! ✨`);
+    } else {
+      logWarning(`⚠️ ${failed} out of ${totalExecuted} executed tests failed. Review logs. ⚠️`);
+    }
     if (skipped > 0) logInfo(`${skipped} tests were skipped.`);
     console.log('---');
-
   } catch (error) {
-    logError(`An unexpected error occurred in the main script: ${error instanceof Error ? error.message : String(error)}`);
+    logError(
+      `An unexpected error occurred in the main script: ${error instanceof Error ? error.message : String(error)}`,
+    );
     if (DEBUG_MODE && error instanceof Error) logDebug(`Stack: ${error.stack}`);
   } finally {
     rl.close();

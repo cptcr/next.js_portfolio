@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         const users = await listUsers(limit, offset);
 
         // Remove sensitive information
-        const safeUsers = users.map((user: { [x: string]: any; password: any; }) => {
+        const safeUsers = users.map((user: { [x: string]: any; password: any }) => {
           const { password, ...safeUser } = user;
           return safeUser;
         });
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
         console.error('Error listing users via API:', error);
         return NextResponse.json(
           { message: 'Failed to list users', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
-    { requiredPermissions: ['readUsers'] }
+    { requiredPermissions: ['readUsers'] },
   );
 }
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         if (!username || !email || !password) {
           return NextResponse.json(
             { message: 'Username, email, and password are required' },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -81,10 +81,10 @@ export async function POST(request: NextRequest) {
         console.error('Error creating user via API:', error);
         return NextResponse.json(
           { message: 'Failed to create user', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
-    { requiredPermissions: ['writeUsers'] }
+    { requiredPermissions: ['writeUsers'] },
   );
 }

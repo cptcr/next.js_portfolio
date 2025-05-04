@@ -9,12 +9,16 @@ export async function GET(request: NextRequest) {
   // ... (previous GET handler code is likely fine if it works)
   return apiAuthMiddleware(
     request,
-    async (req, userId) => { // Assuming middleware now passes userId
-        // Defensive check: Ensure middleware provided a valid userId
-        if (typeof userId !== 'number' || isNaN(userId)) {
-            console.error('[API GET /v1/posts] Auth middleware failed to provide valid userId.');
-            return NextResponse.json({ message: 'Internal Server Error: Invalid authentication context' }, { status: 500 });
-        }
+    async (req, userId) => {
+      // Assuming middleware now passes userId
+      // Defensive check: Ensure middleware provided a valid userId
+      if (typeof userId !== 'number' || isNaN(userId)) {
+        console.error('[API GET /v1/posts] Auth middleware failed to provide valid userId.');
+        return NextResponse.json(
+          { message: 'Internal Server Error: Invalid authentication context' },
+          { status: 500 },
+        );
+      }
       try {
         // Parse query parameters
         const { searchParams } = new URL(req.url);
@@ -55,14 +59,13 @@ export async function GET(request: NextRequest) {
         console.error('Error fetching posts via API:', error);
         return NextResponse.json(
           { message: 'Failed to fetch posts', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
-    { requiredPermissions: ['readPosts'] } // Ensure permission check is appropriate
+    { requiredPermissions: ['readPosts'] }, // Ensure permission check is appropriate
   );
 }
-
 
 // POST: Create a post (protected by API key with write permission)
 export async function POST(request: NextRequest) {
@@ -71,12 +74,16 @@ export async function POST(request: NextRequest) {
   // finds the associated user_id, and passes it as the second argument.
   return apiAuthMiddleware(
     request,
-    async (req, userId) => { // <--- Renamed parameter for clarity; MUST be the actual User ID
+    async (req, userId) => {
+      // <--- Renamed parameter for clarity; MUST be the actual User ID
       // Defensive check: Ensure middleware provided a valid userId
       if (typeof userId !== 'number' || isNaN(userId)) {
-         console.error('[API POST /v1/posts] Auth middleware failed to provide valid userId.');
-         // Return 500 or 401 depending on desired behavior if auth context is broken
-         return NextResponse.json({ message: 'Authentication Error: User ID not found for API key' }, { status: 500 });
+        console.error('[API POST /v1/posts] Auth middleware failed to provide valid userId.');
+        // Return 500 or 401 depending on desired behavior if auth context is broken
+        return NextResponse.json(
+          { message: 'Authentication Error: User ID not found for API key' },
+          { status: 500 },
+        );
       }
 
       try {
@@ -106,34 +113,37 @@ export async function POST(request: NextRequest) {
         });
 
         // Return a more detailed success response, including the created post object
-        return NextResponse.json({
-          message: 'Post created successfully',
-          post: { // Return the created post data matching structure of GET maybe
-            id: post.id,
-            slug: post.slug,
-            title: post.title,
-            excerpt: post.excerpt,
-            category: post.category,
-            featured: post.featured,
-            publishedAt: post.publishedAt,
-            createdAt: post.createdAt,
-            authorId: post.authorId, // Include authorId for confirmation
+        return NextResponse.json(
+          {
+            message: 'Post created successfully',
+            post: {
+              // Return the created post data matching structure of GET maybe
+              id: post.id,
+              slug: post.slug,
+              title: post.title,
+              excerpt: post.excerpt,
+              category: post.category,
+              featured: post.featured,
+              publishedAt: post.publishedAt,
+              createdAt: post.createdAt,
+              authorId: post.authorId, // Include authorId for confirmation
+            },
+            // Or keep the simpler response if preferred:
+            // id: post.id,
+            // slug: post.slug
           },
-         // Or keep the simpler response if preferred:
-         // id: post.id,
-         // slug: post.slug
-        }, { status: 201 }); // Use 201 Created status
-
+          { status: 201 },
+        ); // Use 201 Created status
       } catch (error) {
         console.error('Error creating post via API:', error);
         // Pass the full error string back for easier debugging
         return NextResponse.json(
           { message: 'Failed to create post', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
     // Ensure the permission check is correct for creating posts
-    { requiredPermissions: ['writePosts'] }
+    { requiredPermissions: ['writePosts'] },
   );
 }

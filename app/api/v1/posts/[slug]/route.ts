@@ -1,133 +1,165 @@
-// app/api/v1/posts/[slug]/route.ts
-
-import { NextRequest, NextResponse } from 'next/server';
-import { apiAuthMiddleware } from '@/lib/middleware/apiAuth';
+import { NextResponse, NextRequest } from 'next/server';
+import { verify } from 'jsonwebtoken';
 import { postsService } from '@/lib/services/posts';
 
-// GET: Get post by slug (protected by API key)
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
-  return apiAuthMiddleware(
-    request,
-    async (req, apiKeyId) => {
-      try {
-        // Get slug from params
-        const { slug } = params;
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-me';
+type SlugParams = { params: Promise<{ slug: string }> };
 
-        if (!slug) {
-          return NextResponse.json({ message: 'Slug is required' }, { status: 400 });
-        }
-
-        // Get post from database service
-        const post = await postsService.getPostBySlug(slug);
-
-        if (!post) {
-          return NextResponse.json({ message: 'Post not found' }, { status: 404 });
-        }
-
-        return NextResponse.json({ post });
-      } catch (error) {
-        console.error('Error fetching post via API:', error);
-        return NextResponse.json(
-          { message: 'Failed to fetch post', error: String(error) },
-          { status: 500 }
-        );
-      }
-    },
-    { requiredPermissions: ['readPosts'] }
-  );
+// Shared authentication logic
+async function verifyAuth(request: NextRequest | Request) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { authenticated: false, error: 'Missing or invalid authorization header', userId: null };
+  }
+  const token = authHeader.substring(7);
+  try {
+    const payload = verify(token, JWT_SECRET);
+    // Ensure userId is extracted correctly and is a number
+    const userId = (payload as any)?.userId;
+    if (typeof userId !== 'number') {
+      throw new Error('Invalid user ID in token payload');
+    }
+    return {
+      authenticated: true,
+      userId: userId, // Return only userId if that's all needed downstream
+    };
+  } catch (error) {
+    return { authenticated: false, error: 'Invalid or expired token', userId: null };
+  }
 }
 
-// PUT: Update a post by slug (protected by API key with write permission)
-export async function PUT(request: NextRequest, { params }: { params: { slug: string } }) {
-  return apiAuthMiddleware(
-    request,
-    async (req, apiKeyId) => {
-      try {
-        // Get slug from params
-        const { slug } = params;
+// GET Handler
+export async function GET(request: NextRequest, context: SlugParams) {
+  console.log(`>>> ENTERING GET /api/admin/posts/[slug]`);
+  try {
+    // Do an await operation before accessing params
+    const auth = await verifyAuth(request);
+    if (!auth.authenticated) {
+      return NextResponse.json({ message: auth.error }, { status: 401 });
+    }
 
-        if (!slug) {
-          return NextResponse.json({ message: 'Slug is required' }, { status: 400 });
-        }
+    // Now it's safe to access params
+    const { slug } = await context.params;
+    console.log(`>>> GET slug accessed: ${slug}`);
 
-        // Get post to check if exists and get ID
-        const existingPost = await postsService.getPostBySlug(slug);
+    if (!slug) {
+      return NextResponse.json({ message: 'Slug parameter is missing' }, { status: 400 });
+    }
 
-        if (!existingPost) {
-          return NextResponse.json({ message: 'Post not found' }, { status: 404 });
-        }
-
-        // Parse request body
-        const body = await req.json();
-        const { title, excerpt, category, content, featured, date } = body;
-
-        // Update post
-        const updatedPost = await postsService.updatePost(
-          existingPost.id,
-          {
-            title,
-            excerpt,
-            category,
-            content,
-            featured,
-            publishedAt: date ? new Date(date) : undefined,
-          },
-          apiKeyId || existingPost.authorId // Fallback to original author if apiKeyId not provided
-        );
-
-        return NextResponse.json({
-          message: 'Post updated successfully',
-          post: updatedPost,
-        });
-      } catch (error) {
-        console.error('Error updating post via API:', error);
-        return NextResponse.json(
-          { message: 'Failed to update post', error: String(error) },
-          { status: 500 }
-        );
-      }
-    },
-    { requiredPermissions: ['writePosts'] }
-  );
+    const post = await postsService.getPostBySlug(slug);
+    if (!post) {
+      return NextResponse.json({ message: 'Post not found' }, { status: 404 });
+    }
+    // Return only the necessary post data
+    return NextResponse.json(post);
+  } catch (error) {
+    console.error(`Error fetching post (admin):`, error);
+    return NextResponse.json(
+      { message: 'Failed to fetch post', error: String(error) },
+      { status: 500 },
+    );
+  }
 }
 
-// DELETE: Delete a post by slug (protected by API key with write permission)
-export async function DELETE(request: NextRequest, { params }: { params: { slug: string } }) {
-  return apiAuthMiddleware(
-    request,
-    async (req, apiKeyId) => {
-      try {
-        // Get slug from params
-        const { slug } = params;
+// PUT Handler
+export async function PUT(request: NextRequest, context: SlugParams) {
+  console.log(`>>> ENTERING PUT /api/admin/posts/[slug]`);
+  try {
+    // Do an await operation before accessing params
+    const auth = await verifyAuth(request);
+    if (!auth.authenticated || !auth.userId) {
+      return NextResponse.json(
+        { message: auth.error || 'Authentication failed or User ID missing' },
+        { status: 401 },
+      );
+    }
 
-        if (!slug) {
-          return NextResponse.json({ message: 'Slug is required' }, { status: 400 });
-        }
+    // Now it's safe to access params
+    const { slug } = await context.params;
+    console.log(`>>> PUT slug accessed: ${slug}`);
 
-        // Get post to check if exists and get ID
-        const existingPost = await postsService.getPostBySlug(slug);
+    if (!slug) {
+      return NextResponse.json({ message: 'Slug parameter is missing' }, { status: 400 });
+    }
 
-        if (!existingPost) {
-          return NextResponse.json({ message: 'Post not found' }, { status: 404 });
-        }
+    const body = await request.json();
+    const { title, excerpt, category, content, date, featured } = body;
 
-        // Delete post
-        await postsService.deletePost(
-          existingPost.id, 
-          apiKeyId || existingPost.authorId // Fallback to original author if apiKeyId not provided
-        );
+    const existingPost = await postsService.getPostBySlug(slug);
+    if (!existingPost) {
+      return NextResponse.json({ message: 'Post not found' }, { status: 404 });
+    }
 
-        return NextResponse.json({
-          message: 'Post deleted successfully',
-        });
-      } catch (error) {
-        console.error('Error deleting post via API:', error);
-        return NextResponse.json(
-          { message: 'Failed to delete post', error: String(error) },
-          { status: 500 }
-        );
-      }
-    },
-    { requiredPermissions: ['writePosts'] }
-  );
+    const updatedPost = await postsService.updatePost(
+      existingPost.id,
+      {
+        title,
+        excerpt,
+        category,
+        content,
+        featured,
+        publishedAt: date ? new Date(date) : undefined,
+      },
+      auth.userId, // Use validated userId
+    );
+
+    return NextResponse.json({ message: 'Post updated successfully', post: updatedPost });
+  } catch (error) {
+    console.error(`Error updating post (admin):`, error);
+    if (error instanceof Error && error.message.includes('Not authorized')) {
+      return NextResponse.json(
+        { message: 'Permission denied', error: error.message },
+        { status: 403 },
+      );
+    }
+    return NextResponse.json(
+      { message: 'Failed to update post', error: String(error) },
+      { status: 500 },
+    );
+  }
+}
+
+// DELETE Handler
+export async function DELETE(request: NextRequest, context: SlugParams) {
+  console.log(`>>> ENTERING DELETE /api/admin/posts/[slug]`);
+  try {
+    // Do an await operation before accessing params
+    const auth = await verifyAuth(request);
+    if (!auth.authenticated || !auth.userId) {
+      return NextResponse.json(
+        { message: auth.error || 'Authentication failed or User ID missing' },
+        { status: 401 },
+      );
+    }
+
+    // Now it's safe to access params
+    const { slug } = await context.params;
+    console.log(`>>> DELETE slug accessed: ${slug}`);
+
+    if (!slug) {
+      console.error('>>> DELETE handler missing slug in params');
+      return NextResponse.json({ message: 'Slug parameter is missing' }, { status: 400 });
+    }
+
+    const existingPost = await postsService.getPostBySlug(slug);
+    if (!existingPost) {
+      return NextResponse.json({ message: 'Post not found' }, { status: 404 });
+    }
+
+    await postsService.deletePost(existingPost.id, auth.userId); // Use validated userId
+
+    return NextResponse.json({ message: 'Post deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error(`Error deleting post (admin):`, error);
+    if (error instanceof Error && error.message.includes('Not authorized')) {
+      return NextResponse.json(
+        { message: 'Permission denied', error: error.message },
+        { status: 403 },
+      );
+    }
+    return NextResponse.json(
+      { message: 'Failed to delete post', error: String(error) },
+      { status: 500 },
+    );
+  }
 }

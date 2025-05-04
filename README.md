@@ -92,33 +92,6 @@ Upon first run, you'll be prompted to create an admin account through the admin 
 2. Complete the setup form to create your admin account.
 3. Once created, log in to access the dashboard.
 
-## Project Structure
-
-```
-├── app/                     # Next.js App Router
-│   ├── admin/               # Admin dashboard pages
-│   ├── api/                 # API routes
-│   ├── blog/                # Blog pages
-│   ├── about/               # About page
-│   ├── contact/             # Contact page
-│   ├── projects/            # Projects page
-│   └── ...
-├── components/              # React components
-│   ├── admin/               # Admin dashboard components
-│   ├── blog/                # Blog components
-│   ├── ui/                  # UI components (ShadCN)
-│   └── ...
-├── lib/                     # Utility functions, services, and API
-│   ├── api/                 # API integrations
-│   ├── auth/                # Authentication utilities
-│   ├── db/                  # Database models and schema
-│   ├── services/            # Business logic services
-│   └── utils/               # Helper utilities
-├── public/                  # Static assets
-├── scripts/                 # Utility scripts
-└── ...
-```
-
 ## Database Setup
 
 This project uses Neon Postgres with Drizzle ORM. Follow these steps to set up the database:
@@ -194,6 +167,7 @@ For other hosting platforms, ensure you:
 - `npm run lint` - Run ESLint.
 - `npm run create_user` - Create a new user.
 - `npm run delete_user` - Delete a user.
+- `npm run test_api` - Test a API Key
 
 ## Contributing
 

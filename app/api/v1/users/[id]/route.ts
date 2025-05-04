@@ -11,31 +11,31 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     async (req, apiKeyId) => {
       try {
         const id = parseInt(params.id);
-        
+
         if (isNaN(id)) {
           return NextResponse.json({ message: 'Invalid user ID' }, { status: 400 });
         }
-        
+
         // Get user
         const user = await getUserById(id);
-        
+
         if (!user) {
           return NextResponse.json({ message: 'User not found' }, { status: 404 });
         }
-        
+
         // Remove password from response
         const { password, ...safeUser } = user;
-        
+
         return NextResponse.json({ user: safeUser });
       } catch (error) {
         console.error('Error getting user via API:', error);
         return NextResponse.json(
           { message: 'Failed to get user', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
-    { requiredPermissions: ['readUsers'] }
+    { requiredPermissions: ['readUsers'] },
   );
 }
 
@@ -46,21 +46,21 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     async (req, apiKeyId) => {
       try {
         const id = parseInt(params.id);
-        
+
         if (isNaN(id)) {
           return NextResponse.json({ message: 'Invalid user ID' }, { status: 400 });
         }
-        
+
         // Parse request body
         const body = await req.json();
         const { username, email, password, realName, role } = body;
-        
+
         // Check if user exists
         const existingUser = await getUserById(id);
         if (!existingUser) {
           return NextResponse.json({ message: 'User not found' }, { status: 404 });
         }
-        
+
         // Prepare updates
         const updates: any = {};
         if (username) updates.username = username;
@@ -68,17 +68,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         if (password) updates.password = password;
         if (realName !== undefined) updates.realName = realName;
         if (role) updates.role = role;
-        
+
         // Update user
         const updatedUser = await updateUser(id, updates);
-        
+
         if (!updatedUser) {
           return NextResponse.json({ message: 'Failed to update user' }, { status: 500 });
         }
-        
+
         // Remove password from response
         const { password: _, ...safeUser } = updatedUser;
-        
+
         return NextResponse.json({
           message: 'User updated successfully',
           user: safeUser,
@@ -87,11 +87,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         console.error('Error updating user via API:', error);
         return NextResponse.json(
           { message: 'Failed to update user', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
-    { requiredPermissions: ['writeUsers'] }
+    { requiredPermissions: ['writeUsers'] },
   );
 }
 
@@ -102,20 +102,20 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     async (req, apiKeyId) => {
       try {
         const id = parseInt(params.id);
-        
+
         if (isNaN(id)) {
           return NextResponse.json({ message: 'Invalid user ID' }, { status: 400 });
         }
-        
+
         // Check if user exists
         const existingUser = await getUserById(id);
         if (!existingUser) {
           return NextResponse.json({ message: 'User not found' }, { status: 404 });
         }
-        
+
         // Delete the user
         await deleteUser(id);
-        
+
         return NextResponse.json({
           message: 'User deleted successfully',
         });
@@ -123,10 +123,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         console.error('Error deleting user via API:', error);
         return NextResponse.json(
           { message: 'Failed to delete user', error: String(error) },
-          { status: 500 }
+          { status: 500 },
         );
       }
     },
-    { requiredPermissions: ['writeUsers'] }
+    { requiredPermissions: ['writeUsers'] },
   );
 }
