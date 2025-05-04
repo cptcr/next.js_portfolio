@@ -51,9 +51,17 @@ export default function AdminDashboardLayout({
     const tabParam = searchParams.get('tab');
     if (
       tabParam &&
-      ['analytics', 'posts', 'create', 'calendar', 'settings', 'users', 'api-keys', 'url-shortener', 'snippets'].includes(
-        tabParam,
-      )
+      [
+        'analytics',
+        'posts',
+        'create',
+        'calendar',
+        'settings',
+        'users',
+        'api-keys',
+        'url-shortener',
+        'snippets',
+      ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
     }
@@ -63,12 +71,12 @@ export default function AdminDashboardLayout({
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setSidebarOpen(false);
-    
+
     // Update URL without refreshing the page
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.pushState({}, '', url.toString());
-    
+
     // Also update the router (for Next.js)
     router.push(`/admin/dashboard?tab=${value}`);
   };
@@ -144,7 +152,7 @@ export default function AdminDashboardLayout({
       color: 'text-gray-500',
       visible: canAccessSettings,
     },
-  ].filter(item => item.visible);
+  ].filter((item) => item.visible);
 
   return (
     <div className="flex h-full min-h-screen">
@@ -183,11 +191,7 @@ export default function AdminDashboardLayout({
                 ))}
               </nav>
               <div className="p-4 border-t">
-                <Button
-                  variant="outline"
-                  className="justify-start w-full"
-                  onClick={handleLogout}
-                >
+                <Button variant="outline" className="justify-start w-full" onClick={handleLogout}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </Button>
@@ -223,11 +227,7 @@ export default function AdminDashboardLayout({
           ))}
         </nav>
         <div className="p-4 border-t">
-          <Button
-            variant="outline"
-            className="justify-start w-full"
-            onClick={handleLogout}
-          >
+          <Button variant="outline" className="justify-start w-full" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
@@ -238,17 +238,15 @@ export default function AdminDashboardLayout({
       <div className="flex-1">
         <div className="container max-w-6xl p-4 pt-16 pb-12 mx-auto md:pt-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-8 ">
             <div>
-              <h1 className="text-2xl font-bold md:text-3xl">Admin Dashboard</h1>
+              <h1 className="text-2xl font-bold md:text-3xl mt-9">Admin Dashboard</h1>
               <p className="text-muted-foreground">Manage your blog content and settings</p>
             </div>
           </div>
-          
+
           {/* Content */}
-          <div className="mt-6">
-            {children}
-          </div>
+          <div className="mt-6">{children}</div>
         </div>
       </div>
     </div>

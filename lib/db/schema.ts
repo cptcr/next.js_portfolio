@@ -208,3 +208,29 @@ export const urlShortenerRelations = relations(urlShortener, ({ one }) => ({
 // Export types
 export type UrlShortener = InferSelectModel<typeof urlShortener>;
 export type NewUrlShortener = InferInsertModel<typeof urlShortener>;
+
+export const codeSnippets = pgTable('code_snippets', {
+  id: serial('id').primaryKey(),
+  snippetId: varchar('snippet_id', { length: 10 }).notNull().unique(),
+  title: varchar('title', { length: 255 }).notNull(),
+  code: text('code').notNull(),
+  language: varchar('language', { length: 50 }),
+  userId: integer('user_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at'),
+  isPublic: boolean('is_public').default(false).notNull(),
+  viewCount: integer('view_count').default(0).notNull(),
+  lastViewedAt: timestamp('last_viewed_at'),
+});
+
+// Relations
+export const codeSnippetsRelations = relations(codeSnippets, ({ one }) => ({
+  user: one(users, {
+    fields: [codeSnippets.userId],
+    references: [users.id],
+  }),
+}));
+
+// Export types
+export type CodeSnippet = InferSelectModel<typeof codeSnippets>;
+export type NewCodeSnippet = InferInsertModel<typeof codeSnippets>;

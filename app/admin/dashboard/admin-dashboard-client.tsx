@@ -3,19 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Loader2,
-  AlertCircle,
-  Hexagon,
-} from 'lucide-react';
+import { Loader2, AlertCircle, Hexagon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -66,9 +57,17 @@ export default function AdminDashboardClient() {
     const tabParam = searchParams.get('tab');
     if (
       tabParam &&
-      ['analytics', 'posts', 'create', 'calendar', 'settings', 'users', 'api-keys', 'url-shortener', 'snippets'].includes(
-        tabParam,
-      )
+      [
+        'analytics',
+        'posts',
+        'create',
+        'calendar',
+        'settings',
+        'users',
+        'api-keys',
+        'url-shortener',
+        'snippets',
+      ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
     }
@@ -295,9 +294,9 @@ export default function AdminDashboardClient() {
             )}
           </TabsContent>
           <TabsContent value="api-keys">
-            {userRole === 'admin' || 
-             userPermissions?.canManageApiKeys || 
-             userPermissions?.canCreateApiKeys ? (
+            {userRole === 'admin' ||
+            userPermissions?.canManageApiKeys ||
+            userPermissions?.canCreateApiKeys ? (
               searchParams.get('key') ? (
                 <ApiKeyLogs />
               ) : (
@@ -321,9 +320,7 @@ export default function AdminDashboardClient() {
               <Card>
                 <CardHeader>
                   <CardTitle>Access Denied</CardTitle>
-                  <CardDescription>
-                    You do not have permission to access settings.
-                  </CardDescription>
+                  <CardDescription>You do not have permission to access settings.</CardDescription>
                 </CardHeader>
               </Card>
             )}

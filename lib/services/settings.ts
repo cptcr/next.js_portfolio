@@ -125,7 +125,7 @@ export const settingsService = {
     const settings: Record<string, any> = { ...DEFAULT_SETTINGS };
 
     // Override with saved settings
-    allSettings.forEach((setting: { key: string | number; value: any; }) => {
+    allSettings.forEach((setting: { key: string | number; value: any }) => {
       settings[setting.key] = setting.value;
     });
 
