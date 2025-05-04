@@ -21,9 +21,13 @@ const createCodeSnippetSchema = z.object({
 async function verifyAuth(request: NextRequest | Request) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { authenticated: false, error: 'Missing or invalid authorization header', userId: undefined };
+    return {
+      authenticated: false,
+      error: 'Missing or invalid authorization header',
+      userId: undefined,
+    };
   }
-  
+
   const token = authHeader.substring(7);
   try {
     const payload = verify(token, JWT_SECRET);
@@ -31,7 +35,7 @@ async function verifyAuth(request: NextRequest | Request) {
     if (typeof userId !== 'number') {
       throw new Error('Invalid user ID in token payload');
     }
-    
+
     return {
       authenticated: true,
       userId: userId,
@@ -49,13 +53,13 @@ export async function GET(request: NextRequest) {
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
-    
+
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0;
     const includeExpired = searchParams.get('includeExpired') === 'true';
-    
+
     // Get snippets from service
     const snippets = await codeSnippetsService.listCodeSnippets({
       userId: auth.userId,
@@ -63,14 +67,14 @@ export async function GET(request: NextRequest) {
       offset,
       includeExpired,
     });
-    
+
     // Return the snippets
     return NextResponse.json({ snippets });
   } catch (error) {
     console.error('Error listing code snippets:', error);
     return NextResponse.json(
       { message: 'Failed to list code snippets', error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -83,21 +87,21 @@ export async function POST(request: NextRequest) {
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
-    
+
     // Parse request body
     const body = await request.json();
-    
+
     // Validate request
     const result = createCodeSnippetSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
         { message: 'Invalid request data', errors: result.error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     const { title, code, language, expiresIn, isPublic, customId } = result.data;
-    
+
     // Create the code snippet
     const snippet = await codeSnippetsService.createCodeSnippet(title, code, {
       language,
@@ -106,9 +110,9 @@ export async function POST(request: NextRequest) {
       isPublic,
       customId,
     });
-    
+
     // Return the created code snippet
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Code snippet created successfully',
       snippet,
     });
@@ -116,7 +120,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating code snippet:', error);
     return NextResponse.json(
       { message: 'Failed to create code snippet', error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -129,32 +133,32 @@ export async function DELETE(request: NextRequest) {
     if (!auth.authenticated) {
       return NextResponse.json({ message: auth.error }, { status: 401 });
     }
-    
+
     // Parse request body
     const body = await request.json();
     const { id } = body;
-    
+
     if (!id || typeof id !== 'number') {
       return NextResponse.json({ message: 'Invalid snippet ID' }, { status: 400 });
     }
-    
+
     // Delete the code snippet
     const deleted = await codeSnippetsService.deleteCodeSnippet(id, auth.userId);
-    
+
     if (!deleted) {
       return NextResponse.json(
         { message: 'Code snippet not found or you do not have permission to delete it' },
-        { status: 404 }
+        { status: 404 },
       );
     }
-    
+
     // Return success
     return NextResponse.json({ message: 'Code snippet deleted successfully' });
   } catch (error) {
     console.error('Error deleting code snippet:', error);
     return NextResponse.json(
       { message: 'Failed to delete code snippet', error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

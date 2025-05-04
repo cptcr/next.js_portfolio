@@ -6,7 +6,7 @@ import { codeSnippetsService } from '@/lib/services/codeSnippets';
 export async function GET(
   request: NextRequest,
   // Using 'context' which contains 'params' is a common pattern
-  context: { params: { snippetId: string } }
+  context: { params: { snippetId: string } },
 ) {
   try {
     // --- FIX 1: Direct access to params property ---
@@ -25,7 +25,10 @@ export async function GET(
 
     // --- Handle Not Found ---
     if (!snippet) {
-      return NextResponse.json({ message: `Code snippet '${snippetId}' not found` }, { status: 404 });
+      return NextResponse.json(
+        { message: `Code snippet '${snippetId}' not found` },
+        { status: 404 },
+      );
     }
 
     // --- Handle Expired ---
@@ -35,26 +38,29 @@ export async function GET(
 
     // --- Record View (Asynchronously) ---
     // This runs in the background and doesn't block the response
-    codeSnippetsService.recordView(snippetId).catch(err => {
+    codeSnippetsService.recordView(snippetId).catch((err) => {
       console.error(`Non-blocking error: Failed to record view for ${snippetId}:`, err);
     });
 
     // --- FIX 2: Always return JSON on success (No NextResponse.next()) ---
     // Removed the Accept header check and NextResponse.next().
     // This API route's purpose is to return snippet data.
-    return NextResponse.json({
-      // Selectively return fields needed by the client
-      id: snippet.id,
-      snippetId: snippet.snippetId,
-      title: snippet.title,
-      code: snippet.code,
-      language: snippet.language,
-      createdAt: snippet.createdAt,
-      expiresAt: snippet.expiresAt,
-      viewCount: snippet.viewCount, // Return the count *before* the async increment
-    }, { status: 200 }); // OK status
-
-  } catch (error: unknown) { // Catch unknown for robust error handling
+    return NextResponse.json(
+      {
+        // Selectively return fields needed by the client
+        id: snippet.id,
+        snippetId: snippet.snippetId,
+        title: snippet.title,
+        code: snippet.code,
+        language: snippet.language,
+        createdAt: snippet.createdAt,
+        expiresAt: snippet.expiresAt,
+        viewCount: snippet.viewCount, // Return the count *before* the async increment
+      },
+      { status: 200 },
+    ); // OK status
+  } catch (error: unknown) {
+    // Catch unknown for robust error handling
     console.error(`Error fetching code snippet ${context?.params?.snippetId}:`, error);
 
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';

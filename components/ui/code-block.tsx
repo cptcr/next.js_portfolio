@@ -31,18 +31,20 @@ export function CodeBlock({ language, code, className = '' }: CodeBlockProps) {
     navigator.clipboard.writeText(code).then(
       () => {
         setCopied(true);
-        toast({ // Optional feedback
-            description: "Code copied to clipboard!",
+        toast({
+          // Optional feedback
+          description: 'Code copied to clipboard!',
         });
         setTimeout(() => setCopied(false), 2000); // Reset icon after 2 seconds
       },
       (err) => {
         console.error('Failed to copy code: ', err);
-         toast({ // Optional feedback
-            variant: "destructive",
-            description: "Failed to copy code.",
+        toast({
+          // Optional feedback
+          variant: 'destructive',
+          description: 'Failed to copy code.',
         });
-      }
+      },
     );
   };
 
@@ -50,13 +52,17 @@ export function CodeBlock({ language, code, className = '' }: CodeBlockProps) {
   const mapLanguage = (lang: string): string => {
     const lowerLang = lang?.toLowerCase() || 'text';
     switch (lowerLang) {
-        case 'js': return 'javascript';
-        case 'ts': return 'typescript';
-        case 'py': return 'python';
-        // Add more aliases as needed
-        default: return lowerLang;
+      case 'js':
+        return 'javascript';
+      case 'ts':
+        return 'typescript';
+      case 'py':
+        return 'python';
+      // Add more aliases as needed
+      default:
+        return lowerLang;
     }
-  }
+  };
 
   return (
     <div className={`relative group ${className}`}>
@@ -89,9 +95,11 @@ export function CodeBlock({ language, code, className = '' }: CodeBlockProps) {
           // Add any other custom styles if needed
         }}
         codeTagProps={{
-            style: { // Ensure code tag uses a common monospace font
-                fontFamily: 'var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            }
+          style: {
+            // Ensure code tag uses a common monospace font
+            fontFamily:
+              'var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          },
         }}
       >
         {code}
