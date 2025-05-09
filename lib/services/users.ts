@@ -39,6 +39,8 @@ export async function createUser(userData: Omit<NewUser, 'password'> & { passwor
       canDeleteAllPosts: isAdmin,
       canManageUsers: isAdmin,
       canManageSettings: isAdmin,
+      canCreateApiKeys: isAdmin,
+      canManageApiKeys: isAdmin,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
