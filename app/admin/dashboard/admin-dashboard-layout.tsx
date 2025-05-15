@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils/helpers';
+import { useMediaQuery } from '@/lib/hooks/use-media-query';
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode;
@@ -39,6 +40,16 @@ export default function AdminDashboardLayout({
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>('analytics');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Use a media query hook to detect screen size
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
+  // Auto-close sidebar on navigation in mobile view
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, searchParams, isMobile]);
 
   // Check permissions
   const canAccessUsers = userRole === 'admin' || userPermissions?.canManageUsers;
@@ -155,12 +166,12 @@ export default function AdminDashboardLayout({
   ].filter((item) => item.visible);
 
   return (
-    <div className="flex h-full min-h-screen">
-      {/* Mobile Sidebar Toggle */}
-      <div className="fixed z-40 top-4 left-4 md:hidden">
+    <div className="flex min-h-screen bg-background">
+      {/* Mobile Sidebar Toggle - Fixed position in the header */}
+      <div className="fixed z-50 top-4 left-4 md:hidden">
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="rounded-full">
+            <Button variant="outline" size="icon" className="rounded-full shadow-md">
               <Menu className="w-5 h-5" />
               <span className="sr-only">Toggle Menu</span>
             </Button>
@@ -201,8 +212,8 @@ export default function AdminDashboardLayout({
         </Sheet>
       </div>
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:flex-col md:w-64 md:border-r bg-card">
+      {/* Desktop Sidebar - Fixed position */}
+      <div className="fixed inset-y-0 left-0 z-10 hidden md:flex md:flex-col md:w-64 md:min-w-64 md:border-r bg-card">
         <div className="p-4 border-b">
           <div className="flex items-center">
             <Hexagon className="w-6 h-6 mr-2 text-primary" />
@@ -234,13 +245,13 @@ export default function AdminDashboardLayout({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1">
+      {/* Main Content - With padding to account for fixed sidebar */}
+      <div className="flex-1 w-full min-h-screen md:ml-64">
         <div className="container max-w-6xl p-4 pt-16 pb-12 mx-auto md:pt-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8 ">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-2xl font-bold md:text-3xl mt-9">Admin Dashboard</h1>
+              <h1 className="text-2xl font-bold md:text-3xl mt-9 md:mt-2">Admin Dashboard</h1>
               <p className="text-muted-foreground">Manage your blog content and settings</p>
             </div>
           </div>
