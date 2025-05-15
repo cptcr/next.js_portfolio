@@ -18,6 +18,7 @@ import {
   Key,
   Link,
   FileCode,
+  CloudUpload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -72,6 +73,7 @@ export default function AdminDashboardLayout({
         'api-keys',
         'url-shortener',
         'snippets',
+        'cdn',
       ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
@@ -140,6 +142,13 @@ export default function AdminDashboardLayout({
       value: 'snippets',
       icon: <FileCode className="w-5 h-5" />,
       color: 'text-pink-500',
+      visible: true,
+    },
+    {
+      name: 'CDN Assets',
+      value: 'cdn',
+      icon: <CloudUpload className="w-5 h-5" />,
+      color: 'text-cyan-500',
       visible: true,
     },
     {

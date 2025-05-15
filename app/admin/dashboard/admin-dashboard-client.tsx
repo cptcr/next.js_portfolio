@@ -33,6 +33,7 @@ import ApiKeysManagement from '@/components/admin/api-key-management';
 import ApiKeyLogs from '@/components/admin/api-key-logs';
 import UrlShortenerAdmin from '@/components/admin/url-shortener';
 import CodeSnippetsAdmin from '@/components/admin/code-snippets';
+import CdnAssetsAdmin from '@/components/admin/cdn-assets';
 
 export default function AdminDashboardClient() {
   const router = useRouter();
@@ -67,6 +68,7 @@ export default function AdminDashboardClient() {
         'api-keys',
         'url-shortener',
         'snippets',
+        'cdn',
       ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
@@ -278,6 +280,9 @@ export default function AdminDashboardClient() {
           </TabsContent>
           <TabsContent value="snippets">
             <CodeSnippetsAdmin />
+          </TabsContent>
+          <TabsContent value="cdn">
+            <CdnAssetsAdmin />
           </TabsContent>
           <TabsContent value="users">
             {userRole === 'admin' || userPermissions?.canManageUsers ? (
