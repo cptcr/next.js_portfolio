@@ -1,3 +1,4 @@
+// components/admin/discord-webhooks.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,7 +14,6 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -35,7 +35,21 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Loader2, Plus, Trash2, Edit, Send, AlertCircle } from 'lucide-react';
+import { Check, Loader2, Plus, Trash2, Edit, Send, AlertCircle, X } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface WebhookData {
   id: number;
@@ -64,7 +78,8 @@ export default function DiscordWebhooks() {
   const [isTesting, setIsTesting] = useState(false);
 
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categorySelectOpen, setCategorySelectOpen] = useState(false);
 
   const [selectedWebhook, setSelectedWebhook] = useState<WebhookData | null>(null);
   const [newWebhook, setNewWebhook] = useState({
@@ -136,6 +151,15 @@ export default function DiscordWebhooks() {
     fetchCategories();
   }, []);
 
+  // Set selected categories when editing a webhook
+  useEffect(() => {
+    if (selectedWebhook && selectedWebhook.categories) {
+      setSelectedCategories(selectedWebhook.categories);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [selectedWebhook]);
+
   const handleCreateWebhook = async () => {
     if (!newWebhook.name.trim() || !newWebhook.url.trim()) {
       toast({
@@ -165,8 +189,9 @@ export default function DiscordWebhooks() {
 
       const webhookData = {
         ...newWebhook,
-        // If no category is selected, treat it as "All Categories"
-        categories: selectedCategory ? [selectedCategory] : null, // null represents all categories
+        // If no categories selected, treat it as "All Categories" (null)
+        // Otherwise, send the array of selected categories
+        categories: selectedCategories.length > 0 ? selectedCategories : null,
       };
 
       const response = await fetch('/api/admin/webhooks', {
@@ -193,9 +218,9 @@ export default function DiscordWebhooks() {
         url: '',
         avatar: '',
         enabled: true,
-        categories: [] as string[], // Clear categories
+        categories: [],
       });
-      setSelectedCategory(null); // Clear selected category
+      setSelectedCategories([]);
       setCreateDialogOpen(false);
       fetchWebhooks();
     } catch (err) {
@@ -243,8 +268,9 @@ export default function DiscordWebhooks() {
         url: selectedWebhook.url,
         avatar: selectedWebhook.avatar,
         enabled: selectedWebhook.enabled,
-        // If no category is selected, treat it as "All Categories"
-        categories: selectedCategory ? [selectedCategory] : null, // null represents all categories
+        // If no categories selected, treat it as "All Categories" (null)
+        // Otherwise, send the array of selected categories
+        categories: selectedCategories.length > 0 ? selectedCategories : null,
       };
 
       const response = await fetch(`/api/admin/webhooks/${selectedWebhook.id}`, {
@@ -403,10 +429,22 @@ export default function DiscordWebhooks() {
 
   const handleEditWebhook = (webhook: WebhookData) => {
     setSelectedWebhook(webhook);
-    setSelectedCategory(
-      webhook.categories && webhook.categories.length > 0 ? webhook.categories[0] : null,
-    );
+    // Set selected categories if they exist, otherwise empty array
+    setSelectedCategories(webhook.categories || []);
     setEditDialogOpen(true);
+  };
+
+  // Handle selecting and removing categories
+  const handleSelectCategory = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter((c) => c !== category));
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
+
+  const handleRemoveCategory = (category: string) => {
+    setSelectedCategories(selectedCategories.filter((c) => c !== category));
   };
 
   if (isLoading) {
@@ -456,7 +494,7 @@ export default function DiscordWebhooks() {
           </Card>
         ) : (
           webhooks.map((webhook) => (
-            <Card key={webhook.id}>
+            <Card key={webhook.id} className="transition-all hover:shadow-md">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <div>
                   <CardTitle className="text-lg">{webhook.name}</CardTitle>
@@ -470,7 +508,7 @@ export default function DiscordWebhooks() {
                 <p className="text-sm break-words text-muted-foreground">{webhook.url}</p>
 
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {webhook.categories?.length ? (
+                  {webhook.categories && webhook.categories.length > 0 ? (
                     webhook.categories.map((cat) => (
                       <Badge key={cat} variant="outline">
                         {cat}
@@ -521,7 +559,7 @@ export default function DiscordWebhooks() {
 
       {/* Create Webhook Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create Webhook</DialogTitle>
             <DialogDescription>
@@ -531,8 +569,9 @@ export default function DiscordWebhooks() {
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Name*</Label>
+              <Label htmlFor="webhook-name">Name*</Label>
               <Input
+                id="webhook-name"
                 value={newWebhook.name}
                 onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })}
                 placeholder="Webhook Name"
@@ -540,8 +579,9 @@ export default function DiscordWebhooks() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Discord Webhook URL*</Label>
+              <Label htmlFor="webhook-url">Discord Webhook URL*</Label>
               <Input
+                id="webhook-url"
                 value={newWebhook.url}
                 onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })}
                 placeholder="https://discord.com/api/webhooks/..."
@@ -553,8 +593,9 @@ export default function DiscordWebhooks() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Avatar URL (optional)</Label>
+              <Label htmlFor="webhook-avatar">Avatar URL (optional)</Label>
               <Input
+                id="webhook-avatar"
                 value={newWebhook.avatar}
                 onChange={(e) => setNewWebhook({ ...newWebhook, avatar: e.target.value })}
                 placeholder="https://cdn.discordapp.com/..."
@@ -562,27 +603,83 @@ export default function DiscordWebhooks() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Category Filter (optional)</Label>
-              <Select value={selectedCategory || ''} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Removed the item with value="" */}
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
+              <Label htmlFor="webhook-categories">Category Filters (optional)</Label>
+              <Popover open={categorySelectOpen} onOpenChange={setCategorySelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={categorySelectOpen}
+                    className="justify-between w-full"
+                  >
+                    {selectedCategories.length > 0
+                      ? `${selectedCategories.length} categories selected`
+                      : "All categories"}
+                    <X
+                      className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${
+                        selectedCategories.length === 0 ? "hidden" : "inline-block"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCategories([]);
+                      }}
+                    />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Search categories..." />
+                    <CommandEmpty>No categories found.</CommandEmpty>
+                    <CommandGroup>
+                      <ScrollArea className="h-60">
+                        {categories.map((category) => (
+                          <CommandItem
+                            key={category}
+                            value={category}
+                            onSelect={() => handleSelectCategory(category)}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                selectedCategories.includes(category) 
+                                  ? "opacity-100" 
+                                  : "opacity-0"
+                              }`}
+                            />
+                            {category}
+                          </CommandItem>
+                        ))}
+                      </ScrollArea>
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              
+              {selectedCategories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {selectedCategories.map((category) => (
+                    <Badge key={category} variant="secondary" className="text-xs">
+                      {category}
+                      <button
+                        className="ml-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleRemoveCategory(category)}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+              
               <p className="text-xs text-muted-foreground">
-                If selected, notifications will only be sent for posts in this category
+                If no categories are selected, notifications will be sent for all post categories
               </p>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreateWebhook} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -599,7 +696,7 @@ export default function DiscordWebhooks() {
 
       {/* Edit Webhook Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Webhook</DialogTitle>
           </DialogHeader>
@@ -607,8 +704,9 @@ export default function DiscordWebhooks() {
           {selectedWebhook && (
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label>Name*</Label>
+                <Label htmlFor="edit-webhook-name">Name*</Label>
                 <Input
+                  id="edit-webhook-name"
                   value={selectedWebhook.name}
                   onChange={(e) =>
                     setSelectedWebhook({
@@ -620,8 +718,9 @@ export default function DiscordWebhooks() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Discord Webhook URL*</Label>
+                <Label htmlFor="edit-webhook-url">Discord Webhook URL*</Label>
                 <Input
+                  id="edit-webhook-url"
                   value={selectedWebhook.url}
                   onChange={(e) =>
                     setSelectedWebhook({
@@ -633,8 +732,9 @@ export default function DiscordWebhooks() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Avatar URL (optional)</Label>
+                <Label htmlFor="edit-webhook-avatar">Avatar URL (optional)</Label>
                 <Input
+                  id="edit-webhook-avatar"
                   value={selectedWebhook.avatar || ''}
                   onChange={(e) =>
                     setSelectedWebhook({
@@ -646,22 +746,75 @@ export default function DiscordWebhooks() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Category Filter (optional)</Label>
-                <Select value={selectedCategory || ''} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Removed the item with value="" */}
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
+                <Label htmlFor="edit-webhook-categories">Category Filters (optional)</Label>
+                <Popover open={categorySelectOpen} onOpenChange={setCategorySelectOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={categorySelectOpen}
+                      className="justify-between w-full"
+                    >
+                      {selectedCategories.length > 0
+                        ? `${selectedCategories.length} categories selected`
+                        : "All categories"}
+                      <X
+                        className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${
+                          selectedCategories.length === 0 ? "hidden" : "inline-block"
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCategories([]);
+                        }}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Search categories..." />
+                      <CommandEmpty>No categories found.</CommandEmpty>
+                      <CommandGroup>
+                        <ScrollArea className="h-60">
+                          {categories.map((category) => (
+                            <CommandItem
+                              key={category}
+                              value={category}
+                              onSelect={() => handleSelectCategory(category)}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  selectedCategories.includes(category) 
+                                    ? "opacity-100" 
+                                    : "opacity-0"
+                                }`}
+                              />
+                              {category}
+                            </CommandItem>
+                          ))}
+                        </ScrollArea>
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                
+                {selectedCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {selectedCategories.map((category) => (
+                      <Badge key={category} variant="secondary" className="text-xs">
+                        {category}
+                        <button
+                          className="ml-1 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleRemoveCategory(category)}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                )}
+                
                 <p className="text-xs text-muted-foreground">
-                  If selected, notifications will only be sent for posts in this category
+                  If no categories are selected, notifications will be sent for all post categories
                 </p>
               </div>
 
@@ -681,7 +834,10 @@ export default function DiscordWebhooks() {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleUpdateWebhook} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -709,7 +865,7 @@ export default function DiscordWebhooks() {
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteWebhook} disabled={isSubmitting}>
+            <AlertDialogAction onClick={handleDeleteWebhook} disabled={isSubmitting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -725,7 +881,7 @@ export default function DiscordWebhooks() {
 
       {/* Test Webhook Dialog */}
       <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Send Test Message</DialogTitle>
             <DialogDescription>
@@ -745,7 +901,10 @@ export default function DiscordWebhooks() {
             </p>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleTestWebhook} disabled={isTesting}>
               {isTesting ? (
                 <>
